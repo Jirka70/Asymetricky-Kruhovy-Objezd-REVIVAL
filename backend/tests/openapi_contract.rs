@@ -39,7 +39,16 @@ fn assert_valid(schema: &Value, body: &Value) {
     );
 }
 async fn request(uri: &str, method: Method) -> axum::response::Response {
-    contract::router()
+    // No connection is opened for validation, docs, or analytical stub tests.
+    let pool = diesel::r2d2::Pool::builder()
+        .max_size(1)
+        .connection_timeout(std::time::Duration::from_millis(50))
+        .build_unchecked(
+            diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(
+                "postgres://localhost:1/unused_contract_test",
+            ),
+        );
+    contract::router(pool)
         .oneshot(
             Request::builder()
                 .method(method)
@@ -122,11 +131,16 @@ fn operation_and_success_fixture_coverage_matches_spec() {
 }
 
 #[tokio::test]
-async fn all_stubs_return_documented_501_and_reject_wrong_method() {
+async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_method() {
     for fixture in fixtures() {
         let uri = fixture["request"].as_str().unwrap();
         let path = fixture["path"].as_str().unwrap();
-        check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
+        if !matches!(
+            path,
+            "/skoly" | "/skoly/{redizo}" | "/obory/{kod}/zamestnavatele"
+        ) {
+            check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
+        }
         assert_eq!(
             request(uri, Method::POST).await.status(),
             StatusCode::METHOD_NOT_ALLOWED
@@ -869,4 +883,18 @@ fn simulation_area_codes_bands_and_required_nullable_times_match_new_contract() 
         assert_eq!(serde_json::to_value(typed).unwrap(), json!(band));
     }
     assert!(serde_json::from_value::<dto::Pasmo>(json!(3045)).is_err());
+}
+
+#[tokio::test]
+async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
+    for (uri, path) in [
+        ("/api/v1/skoly", "/skoly"),
+        ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
+        (
+            "/api/v1/obory/65-51-H%2F01/zamestnavatele",
+            "/obory/{kod}/zamestnavatele",
+        ),
+    ] {
+        check_error(uri, path, StatusCode::SERVICE_UNAVAILABLE, None).await;
+    }
 }

@@ -54,7 +54,8 @@ paths:
         - $ref: '#/components/parameters/Stupen'
         - $ref: '#/components/parameters/Forma'
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
           description: GeoJSON bodů škol.
           content:
@@ -76,7 +77,8 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
           description: Detail školy.
           content:
@@ -272,7 +274,8 @@ paths:
           description: Vynechat místa vyžadující vyšší odborné nebo vysokoškolské vzdělání (vyssOdbor, bakal, vysoka, doktor).
           schema: { type: boolean, default: true }
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
           description: GeoJSON bodů pracovišť.
           content:
@@ -405,6 +408,16 @@ components:
       schema: { type: string, enum: [den, dal], default: den }
 
   responses:
+    InterniChyba:
+      description: Nepodařilo se načíst data nebo uložená data neodpovídají požadovanému formátu.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Chyba' }
+    DatabazeNedostupna:
+      description: Databázové připojení je dočasně nedostupné.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Chyba' }
     Neimplementovano:
       description: Endpoint je zatím pouze stub; jeho aplikační logika není implementovaná.
       content:

@@ -42,7 +42,7 @@ Use a fresh database for initial setup. The existing scripts replace demand and 
 
 After a migration has been applied, add a new migration for subsequent schema/data changes instead of editing its SQL. Diesel records completed versions in `__diesel_schema_migrations` and will not rerun them.
 
-## OpenAPI contract and stubs
+## OpenAPI endpoints
 
 The root `openapi.yaml` is the public API contract. All nine GET operations are mounted under `http://localhost:8000/api/v1`:
 
@@ -50,7 +50,15 @@ The root `openapi.yaml` is the public API contract. All nine GET operations are 
 - `/student/skoly`, `/student/trasa`
 - `/zsj`, `/obory`, `/obory/{kod}`, `/obory/{kod}/zamestnavatele`, `/simulace`
 
-These handlers are **stubs**: valid requests return documented HTTP **501** with the `Chyba` error schema and `error.kod = neimplementovano`. Invalid parameters return **422** in the same error format. Parameters are validated directly against the YAML schemas, including required values, identifier patterns, enums and numeric bounds. Domain checks such as whether a school/scenario exists or whether a point lies within the region require the future business implementation.
+Database reads are implemented for:
+
+- `GET /skoly`: GeoJSON school points, filtered offerings (`obor`, CSV `stupen`, `forma`), and offering/capacity/application totals. Without `obor` or `stupen`, schools without matching offerings remain included. Municipality names and pressure indices are omitted until the supporting lookup/calculation is implemented.
+- `GET /skoly/{redizo}`: school details and study offerings. Catchment data is still uncomputed (`spadovost: {}`); `max_min` and `scenar` do not yet affect this response.
+- `GET /obory/{kod}/zamestnavatele`: profession mappings joined to demand and workplaces, filtered by `vhodnost` and `jen_ss`. Education categories are summed per profession/workplace without double-counting. Metadata includes distinct company/workplace counts, jobs, and workplaces without coordinates grouped by municipality. No mapping means `existuje: null`; a mapping with no matching demand means `existuje: false`. Workplace IDs are strings to retain integer precision.
+
+The other six operations remain **stubs**: valid requests return documented HTTP **501** with the `Chyba` error schema and `error.kod = neimplementovano`. They require travel-time, demographic, bilance, or simulation logic. The read handlers are in `src/contract.rs`, with catalog queries in `src/catalog.rs`; synchronous Diesel work runs on blocking threads and does not call OTP.
+
+Invalid parameters return **422** in the same error format. Parameters are validated directly against the YAML schemas, including required values, identifier patterns, enums and numeric bounds. Implemented detail routes return **404** for missing records. Database connection failures return **503**; query or required-data failures return **500**. Geographic/domain checks for analytical routes still require their business implementation.
 
 `src/requests.rs` defines query structs for every operation, plus Redizo/KodOboru identifier newtypes and Scenar/Uroven/Forma/Format/Razeni enums. The `ContractQuery<T>` extractor validates raw values against OpenAPI, then deserializes them and applies defaults: `max_min = 120`, `scenar = rano`, `kandidatu = 5`, `razeni = nazev`, and `format = slovnik` on the corresponding endpoints. `stupen=H,M` becomes `Stupne(Vec<Stupen>)`; `signal=pretlak,spatna_dostupnost` becomes a SignalFilter list. Signals remain extensible according to their string schema; Scenar is now an enum allowing only rano. Forma defaults to den, and Uroven defaults to obec. The employer endpoint uses numeric Vhodnost (1 or 2, default 2) and jen_ss (default true). The school, program and employer detail routes use typed path identifiers separately from their query structs.
 
@@ -66,7 +74,7 @@ curl -i 'http://localhost:8000/api/v1/student/skoly?lat=50.2312&lon=12.8711'
 cargo test --test openapi_contract
 ```
 
-The fourteen contract tests run without PostgreSQL or OTP. They compare route/operation coverage and every success response media type; compare all response DTO properties and query fields, Rust field types, enums, required fields and query defaults with the specification; validate independent representative fixtures before and after Rust serialization; and exercise actual stub/error responses and documentation routes. Negative cases check missing fields, nullable/non-nullable values, identifiers, coordinate dimensions, dates, enums, dictionary keys and array limits. Numeric bounds, formats, patterns and nullability are checked by the YAML JSON Schema validator; plain Rust String/Vec types do not encode every value constraint. These tests verify structural contracts and representative payloads, not business calculations or correctness for every possible future response.
+The fifteen contract tests run without PostgreSQL or OTP. They compare route/operation coverage and every success response media type; compare all response DTO properties and query fields, Rust field types, enums, required fields and query defaults with the specification; validate independent representative fixtures before and after Rust serialization; and exercise actual stub/error responses, database-unavailable responses, and documentation routes. The disposable-database test additionally validates real read responses against OpenAPI and checks catalog filters, counts, missing coordinates, mapping semantics, and required-data failures. Negative cases check missing fields, nullable/non-nullable values, identifiers, coordinate dimensions, dates, enums, dictionary keys and array limits. Numeric bounds, formats, patterns and nullability are checked by the YAML JSON Schema validator; plain Rust String/Vec types do not encode every value constraint. These tests verify structural contracts and representative payloads, not business calculations or correctness for every possible future response.
 
 ## Database inspection API
 

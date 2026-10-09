@@ -1,4 +1,5 @@
 pub mod api;
+mod catalog;
 pub mod contract;
 pub mod db;
 pub mod dto;

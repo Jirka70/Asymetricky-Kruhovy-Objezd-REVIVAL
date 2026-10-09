@@ -166,8 +166,8 @@ pub fn router(pool: DbPool) -> Router {
         .route("/api/profesni-skupiny", get(list_profesni_skupiny))
         .route("/api/poptavka-profesi", get(list_poptavka))
         .route("/api/obor-profese", get(list_obor_profese))
-        .with_state(pool)
-        .merge(crate::contract::router())
+        .with_state(pool.clone())
+        .merge(crate::contract::router(pool))
 }
 
 #[cfg(test)]

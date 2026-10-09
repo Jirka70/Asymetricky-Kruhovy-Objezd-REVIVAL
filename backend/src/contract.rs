@@ -1,15 +1,19 @@
-//! OpenAPI-first API scaffolding. Business logic is deliberately unimplemented.
+//! OpenAPI handlers, query validation, and stubs for analytical operations.
 use crate::{
-    dto,
+    db::DbPool,
+    dto, models,
     requests::{self, RequestQuery},
+    schema,
 };
 use axum::{
     Json, Router,
-    extract::{FromRequestParts, Path, Query},
+    extract::{FromRequestParts, Path, Query, State},
     http::{StatusCode, header, request::Parts},
     response::{Html, IntoResponse, Response},
     routing::get,
 };
+use bigdecimal::ToPrimitive;
+use diesel::prelude::*;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -157,6 +161,27 @@ impl IntoResponse for StubError {
     }
 }
 
+pub(crate) fn api_error(status: StatusCode, kod: &str, zprava: &str) -> StubError {
+    StubError {
+        status,
+        body: dto::Chyba {
+            error: dto::ChybaError {
+                kod: kod.into(),
+                zprava: zprava.into(),
+                pole: None,
+            },
+        },
+    }
+}
+
+fn internal_error() -> StubError {
+    api_error(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "interni_chyba",
+        "Nepodařilo se načíst detail školy.",
+    )
+}
+
 fn validate_query(operation: &str, raw_query: Option<String>) -> Result<(), StubError> {
     let pairs: Vec<(String, String)> =
         serde_urlencoded::from_str(raw_query.as_deref().unwrap_or_default())
@@ -246,9 +271,10 @@ fn validate_path(operation: &str, field: &str, value: &str) -> Result<(), StubEr
 
 // Add business logic using `params`, then return the declared response DTO.
 pub async fn list_skoly(
-    ContractQuery(_params): ContractQuery<requests::SkolyQuery>,
+    State(pool): State<DbPool>,
+    ContractQuery(params): ContractQuery<requests::SkolyQuery>,
 ) -> Result<GeoJson<dto::SkolyFeatureCollection>, StubError> {
-    Err(StubError::unimplemented("listSkoly"))
+    crate::catalog::schools(pool, params).await.map(GeoJson)
 }
 pub async fn list_student_skoly(
     ContractQuery(_params): ContractQuery<requests::StudentSkolyQuery>,
@@ -276,11 +302,110 @@ pub async fn get_simulace(
     Err(StubError::unimplemented("getSimulace"))
 }
 pub async fn get_skola(
+    State(pool): State<DbPool>,
     Path(redizo): Path<requests::Redizo>,
     ContractQuery(_params): ContractQuery<requests::SkolaQuery>,
 ) -> Result<Json<dto::SkolaDetail>, StubError> {
     validate_path("getSkola", "redizo", &redizo.0)?;
-    Err(StubError::unimplemented("getSkola"))
+
+    let detail = tokio::task::spawn_blocking(move || {
+        let mut conn = pool.get().map_err(|error| {
+            tracing::error!(%error, "Cannot obtain database connection");
+            api_error(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "databaze_nedostupna",
+                "Databáze je dočasně nedostupná.",
+            )
+        })?;
+
+        let school = schema::stredni_skoly::table
+            .find(&redizo.0)
+            .select(models::Skola::as_select())
+            .first::<models::Skola>(&mut conn)
+            .optional()
+            .map_err(|error| {
+                tracing::error!(%error, "Cannot load school");
+                internal_error()
+            })?
+            .ok_or_else(|| {
+                api_error(
+                    StatusCode::NOT_FOUND,
+                    "skola_nenalezena",
+                    "Škola nebyla nalezena.",
+                )
+            })?;
+
+        let offers = schema::nabidka_oboru::table
+            .inner_join(schema::obory::table)
+            .filter(schema::nabidka_oboru::redizo.eq(&redizo.0))
+            .select((models::NabidkaOboru::as_select(), models::Obor::as_select()))
+            .load::<(models::NabidkaOboru, models::Obor)>(&mut conn)
+            .map_err(|error| {
+                tracing::error!(%error, "Cannot load school offerings");
+                internal_error()
+            })?;
+
+        let nabidky = offers
+            .into_iter()
+            .map(|(offer, obor)| {
+                let forma = match offer.forma_studia.as_str() {
+                    "den" => dto::NabidkaForma::Den,
+                    "dal" => dto::NabidkaForma::Dal,
+                    _ => return Err(internal_error()),
+                };
+
+                Ok(dto::Nabidka {
+                    kod_oboru: obor.kod,
+                    nazev_oboru: obor.nazev,
+                    zamereni: offer.display_name,
+                    stupen: None,
+                    forma,
+                    delka_let: Some(i64::from(offer.delka_studia)),
+                    kapacita: i64::from(offer.pocet_prijimanych),
+                    prihlasky: i64::from(offer.loni_pocet_prihlasek),
+                    prihlasky_na_misto: (offer.pocet_prijimanych > 0).then(|| {
+                        f64::from(offer.loni_pocet_prihlasek) / f64::from(offer.pocet_prijimanych)
+                    }),
+                    index_pretlaku: None,
+                })
+            })
+            .collect::<Result<Vec<_>, StubError>>()?;
+
+        // These fields are nullable in the DB but required by the API.
+        let nazev = school.nazev.ok_or_else(internal_error)?;
+        let lat = school
+            .lat
+            .and_then(|value| value.to_f64())
+            .filter(|value| value.is_finite())
+            .ok_or_else(internal_error)?;
+        let lon = school
+            .lon
+            .and_then(|value| value.to_f64())
+            .filter(|value| value.is_finite())
+            .ok_or_else(internal_error)?;
+
+        Ok::<_, StubError>(dto::SkolaDetail {
+            redizo: school.redizo,
+            nazev,
+            adresa: school.adresa,
+            web: school.web,
+            lat,
+            lon,
+            nabidky,
+            spadovost: dto::SkolaDetailSpadovost {
+                deti_v_dosahu: None,
+                obce: None,
+            },
+            meta: None,
+        })
+    })
+    .await
+    .map_err(|error| {
+        tracing::error!(%error, "School query task failed");
+        internal_error()
+    })??;
+
+    Ok(Json(detail))
 }
 pub async fn get_obor(
     Path(kod): Path<requests::KodOboru>,
@@ -291,15 +416,18 @@ pub async fn get_obor(
 }
 
 pub async fn list_obor_zamestnavatele(
+    State(pool): State<DbPool>,
     Path(kod): Path<requests::KodOboru>,
-    ContractQuery(_params): ContractQuery<requests::OborZamestnavateleQuery>,
+    ContractQuery(params): ContractQuery<requests::OborZamestnavateleQuery>,
 ) -> Result<GeoJson<dto::ZamestnavateleOboru>, StubError> {
     validate_path("listOborZamestnavatele", "kod", &kod.0)?;
-    Err(StubError::unimplemented("listOborZamestnavatele"))
+    crate::catalog::employers(pool, kod.0, params)
+        .await
+        .map(GeoJson)
 }
 
-/// Can be tested independently of PostgreSQL and OTP.
-pub fn router() -> Router {
+/// Database reads use the supplied pool; analytical operations remain stubs.
+pub fn router(pool: DbPool) -> Router {
     let routes = Router::new()
         .route("/skoly", get(list_skoly))
         .route("/skoly/{redizo}", get(get_skola))
@@ -320,4 +448,5 @@ pub fn router() -> Router {
             "/docs",
             get(|| async { Html(include_str!("../../swagger.html")) }),
         )
+        .with_state(pool)
 }

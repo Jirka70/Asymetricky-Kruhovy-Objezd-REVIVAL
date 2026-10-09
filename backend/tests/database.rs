@@ -140,6 +140,7 @@ async fn migrations_and_api() {
         assert_eq!(response.status(), expected, "{uri}");
     }
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/zsj?limit=2&offset=1")
@@ -152,6 +153,8 @@ async fn migrations_and_api() {
     let rows: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
     assert_eq!(rows.len(), 2);
     assert_eq!(rows[0]["kod"], "000027");
+
+    catalog_api(&app, &mut connection).await;
 
     assert_eq!(
         connection
@@ -175,6 +178,247 @@ async fn migrations_and_api() {
             .unwrap(),
         641
     );
+}
+
+// Validate actual HTTP bodies against the YAML, not only serialized DTO fixtures.
+async fn contract_response(
+    app: &axum::Router,
+    uri: &str,
+    path: &str,
+    status: StatusCode,
+) -> serde_json::Value {
+    use obor_backend::contract::{self, SPEC};
+    let response = app
+        .clone()
+        .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(response.status(), status, "{uri}");
+    let media = if status == StatusCode::OK && path != "/skoly/{redizo}" {
+        "application/geo+json"
+    } else {
+        "application/json"
+    };
+    assert_eq!(response.headers()["content-type"], media);
+    let body: serde_json::Value =
+        serde_json::from_slice(&to_bytes(response.into_body(), 2_000_000).await.unwrap()).unwrap();
+    let declared = contract::resolve(&SPEC["paths"][path]["get"]["responses"][status.as_str()]);
+    let validator = contract::schema_validator(&declared["content"][media]["schema"]);
+    let errors: Vec<_> = validator
+        .iter_errors(&body)
+        .map(|error| error.to_string())
+        .collect();
+    assert!(errors.is_empty(), "{uri}: {}", errors.join("; "));
+    body
+}
+
+async fn catalog_api(app: &axum::Router, connection: &mut diesel::PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::json;
+    use std::collections::BTreeSet;
+    let schools = contract_response(app, "/api/v1/skoly", "/skoly", StatusCode::OK).await;
+    let features = schools["features"].as_array().unwrap();
+    assert_eq!(features.len(), 34);
+    assert_eq!(
+        features
+            .iter()
+            .filter(|feature| feature["properties"]["pocet_nabidek"] == 0)
+            .count(),
+        4
+    );
+    // Form and level filters combine, and totals cover only matching offers.
+    for (uri, form, levels, obor) in [
+        ("/api/v1/skoly?stupen=H,M", "den", vec!["H", "M"], None),
+        (
+            "/api/v1/skoly?stupen=H,M&forma=dal",
+            "dal",
+            vec!["H", "M"],
+            None,
+        ),
+        (
+            "/api/v1/skoly?obor=65-51-H%2F01",
+            "den",
+            vec!["H"],
+            Some("65-51-H/01"),
+        ),
+        (
+            "/api/v1/skoly?obor=65-51-H%2F01&stupen=M",
+            "den",
+            vec!["M"],
+            Some("65-51-H/01"),
+        ),
+    ] {
+        let matching: Vec<NabidkaOboru> = nabidka_oboru::table
+            .select(NabidkaOboru::as_select())
+            .load(connection)
+            .unwrap()
+            .into_iter()
+            .filter(|offer: &NabidkaOboru| {
+                offer.forma_studia == form
+                    && levels.contains(&&offer.kod_oboru[6..7])
+                    && obor.is_none_or(|code| offer.kod_oboru == code)
+            })
+            .collect();
+        let expected: BTreeSet<_> = matching.iter().map(|offer| offer.redizo.as_str()).collect();
+        let body = contract_response(app, uri, "/skoly", StatusCode::OK).await;
+        let features = body["features"].as_array().unwrap();
+        let actual: BTreeSet<_> = features
+            .iter()
+            .map(|feature| feature["properties"]["redizo"].as_str().unwrap())
+            .collect();
+        assert_eq!(actual, expected, "{uri}");
+        assert_eq!(
+            features
+                .iter()
+                .map(|feature| feature["properties"]["kapacita"].as_i64().unwrap())
+                .sum::<i64>(),
+            matching
+                .iter()
+                .map(|offer| i64::from(offer.pocet_prijimanych))
+                .sum::<i64>()
+        );
+        assert_eq!(
+            features
+                .iter()
+                .map(|feature| feature["properties"]["prihlasky"].as_i64().unwrap())
+                .sum::<i64>(),
+            matching
+                .iter()
+                .map(|offer| i64::from(offer.loni_pocet_prihlasek))
+                .sum::<i64>()
+        );
+    }
+    for feature in features {
+        let redizo = feature["properties"]["redizo"].as_str().unwrap();
+        let body = contract_response(
+            app,
+            &format!("/api/v1/skoly/{redizo}"),
+            "/skoly/{redizo}",
+            StatusCode::OK,
+        )
+        .await;
+        assert_eq!(body["redizo"], redizo);
+        assert_eq!(
+            feature["geometry"]["coordinates"],
+            json!([body["lon"], body["lat"]])
+        );
+        assert_eq!(body["spadovost"], json!({}));
+    }
+    contract_response(
+        app,
+        "/api/v1/skoly/999999999",
+        "/skoly/{redizo}",
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    contract_response(
+        app,
+        "/api/v1/obory/65-51-H%2F01/zamestnavatele",
+        "/obory/{kod}/zamestnavatele",
+        StatusCode::OK,
+    )
+    .await;
+
+    // Controlled data tests deduplication, education filtering, mapping semantics,
+    // multiple workplaces per company, missing coordinates, and large integer IDs.
+    connection.batch_execute(r#"
+        INSERT INTO "OBORY" (kod, nazev) VALUES
+            ('99-99-H/01', 'Catalog test'), ('99-99-H/02', 'Unmapped test'), ('99-99-H/03', 'No demand test');
+        INSERT INTO "PROFESNI_SKUPINY" (cz_isco3, nazev) VALUES
+            ('991', 'Test profession A'), ('992', 'Test profession B'), ('993', 'No demand profession');
+        INSERT INTO "OBOR_PROFESE" (cz_isco3, kod_oboru, vhodnost) VALUES
+            ('991', '99-99-H/01', 1), ('992', '99-99-H/01', 2), ('993', '99-99-H/03', 1);
+        INSERT INTO "ZAMESTNAVATELE" (id, ico, nazev, kod_obce, lat, lon) VALUES
+            (900000000000000001, '00000001', 'Test company A', '554961', 50.2, 12.8),
+            (900000000000000002, '00000001', 'Test company A - missing coordinates', '554961', NULL, NULL),
+            (900000000000000003, '00000002', 'Test company B', '554961', 50.3, 12.9);
+        INSERT INTO "POPTAVKA_PROFESI" (zamestnavatel_id, cz_isco3, min_vzdelani, pocet_mist, importovano_at) VALUES
+            (900000000000000001, '991', 'zakl', 5, '2026-10-10T10:00:00Z'),
+            (900000000000000001, '991', 'stredni', 3, '2026-10-10T10:00:00Z'),
+            (900000000000000001, '991', 'vyssOdbor', 7, '2026-10-10T10:00:00Z'),
+            (900000000000000001, '992', 'stredni', 11, '2026-10-10T10:00:00Z'),
+            (900000000000000002, '991', 'stredni', 13, '2026-10-10T10:00:00Z'),
+            (900000000000000003, '991', 'vysoka', 17, '2026-10-10T10:00:00Z');
+    "#).unwrap();
+    let path = "/obory/{kod}/zamestnavatele";
+    let uri = "/api/v1/obory/99-99-H%2F01/zamestnavatele";
+    let body = contract_response(app, uri, path, StatusCode::OK).await;
+    assert_eq!(body["meta"]["existuje"], true);
+    assert_eq!(body["meta"]["zamestnavatelu"], 1);
+    assert_eq!(body["meta"]["pracovist"], 2);
+    assert_eq!(body["meta"]["pocet_mist"], 32);
+    assert_eq!(
+        body["meta"]["bez_souradnic"],
+        json!([{"kod_obce":"554961", "pracovist":1, "pocet_mist":13}])
+    );
+    let feature = &body["features"][0];
+    assert_eq!(body["features"].as_array().unwrap().len(), 1);
+    assert_eq!(feature["properties"]["id"], "900000000000000001");
+    assert_eq!(feature["properties"]["pocet_mist"], 19);
+    assert_eq!(feature["properties"]["profese"][0]["pocet_mist"], 8);
+    assert_eq!(feature["geometry"]["coordinates"], json!([12.8, 50.2]));
+    assert_eq!(body["meta"]["importovano"], "2026-10-10T10:00:00+00:00");
+    let body = contract_response(app, &format!("{uri}?vhodnost=1"), path, StatusCode::OK).await;
+    assert_eq!(body["meta"]["pocet_mist"], 21);
+    assert_eq!(body["meta"]["skupiny"].as_array().unwrap().len(), 1);
+    let body = contract_response(app, &format!("{uri}?jen_ss=false"), path, StatusCode::OK).await;
+    assert_eq!(body["meta"]["pocet_mist"], 56);
+    assert_eq!(body["meta"]["zamestnavatelu"], 2);
+    assert_eq!(body["meta"]["pracovist"], 3);
+    assert_eq!(body["features"].as_array().unwrap().len(), 2);
+    let body = contract_response(
+        app,
+        "/api/v1/obory/99-99-H%2F02/zamestnavatele",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(body["meta"]["mapovani"], false);
+    assert!(body["meta"]["existuje"].is_null());
+    let body = contract_response(
+        app,
+        "/api/v1/obory/99-99-H%2F03/zamestnavatele",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(body["meta"]["mapovani"], true);
+    assert_eq!(body["meta"]["existuje"], false);
+    assert_eq!(body["meta"]["pocet_mist"], 0);
+    contract_response(
+        app,
+        "/api/v1/obory/99-99-H%2F04/zamestnavatele",
+        path,
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    contract_response(
+        app,
+        &format!("{uri}?vhodnost=3"),
+        path,
+        StatusCode::UNPROCESSABLE_ENTITY,
+    )
+    .await;
+
+    // A nullable DB field required by the API must fail visibly, not become 0.
+    diesel::update(stredni_skoly::table.find("600008975"))
+        .set(stredni_skoly::lat.eq(None::<bigdecimal::BigDecimal>))
+        .execute(connection)
+        .unwrap();
+    contract_response(
+        app,
+        "/api/v1/skoly",
+        "/skoly",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    contract_response(
+        app,
+        "/api/v1/skoly/600008975",
+        "/skoly/{redizo}",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
 }
 
 /// Owns one disposable PostGIS container, including cleanup when assertions panic.
