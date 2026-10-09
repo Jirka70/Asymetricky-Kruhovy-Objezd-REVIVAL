@@ -33,7 +33,7 @@ info:
     - Nový scénář dojezdu = nový řádek v tabulce `SCENAR`, nový předpočet a nová hodnota ve výčtu `scenar`.
 servers:
   - url: http://localhost:8000/api/v1
-    description: Lokální vývoj (uvicorn)
+    description: Lokální vývoj (Rust / Axum)
 tags:
   - name: Společné
     description: Školy, používají obě části.
@@ -54,6 +54,7 @@ paths:
         - $ref: '#/components/parameters/Stupen'
         - $ref: '#/components/parameters/Forma'
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: GeoJSON bodů škol.
           content:
@@ -75,6 +76,7 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Detail školy.
           content:
@@ -102,6 +104,7 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Školy se spojem.
           content:
@@ -128,6 +131,7 @@ paths:
           example: '600009084'
         - $ref: '#/components/parameters/Scenar'
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Spoje a jejich úseky.
           content:
@@ -165,6 +169,7 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: GeoJSON ploch s dobou dojezdu a pásmem.
           content:
@@ -195,6 +200,7 @@ paths:
                    mist_na_100_deti, -mist_na_100_deti, volna_mista_na_misto, -volna_mista_na_misto]
             default: nazev
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Řádek za každý obor.
           content:
@@ -228,6 +234,7 @@ paths:
           description: Kolik kandidátních škol vrátit.
           schema: { type: integer, minimum: 1, maximum: 34, default: 5 }
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Detail oboru.
           content:
@@ -265,6 +272,7 @@ paths:
           description: Vynechat místa vyžadující vyšší odborné nebo vysokoškolské vzdělání (vyssOdbor, bakal, vysoka, doktor).
           schema: { type: boolean, default: true }
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: GeoJSON bodů pracovišť.
           content:
@@ -315,6 +323,7 @@ paths:
           in: query
           schema: { type: string, enum: [slovnik, geojson], default: slovnik }
       responses:
+        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Výsledek simulace.
           content:
@@ -323,7 +332,7 @@ paths:
               example:
                 jednotky:
                   '555738': { nazev: Toužim, cas_ke_skole: 4, cas_min_puvodni: 52, cas_min: 4, zlepseni_min: 48,
-                              pasmo: do30, pasmo_puvodni: 45_60, deti: 38, potencialni_uchazeci: 1.0, novy_dosah: false }
+                              pasmo: do30, pasmo_puvodni: '45_60', deti: 38, potencialni_uchazeci: 1.0, novy_dosah: false }
                 souhrn:
                   jednotek_celkem: 100
                   v_limitu:
@@ -396,6 +405,11 @@ components:
       schema: { type: string, enum: [den, dal], default: den }
 
   responses:
+    Neimplementovano:
+      description: Endpoint je zatím pouze stub; jeho aplikační logika není implementovaná.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Chyba' }
     Nenalezeno:
       description: Záznam neexistuje.
       content:
@@ -426,7 +440,7 @@ components:
       enum: [pretlak, nizky_zajem, spatna_dostupnost, poptavka_trhu]
     Pasmo:
       type: string
-      enum: [do30, 30_45, 45_60, nad60, mimo_dosah, bez_spojeni]
+      enum: [do30, '30_45', '45_60', nad60, mimo_dosah, bez_spojeni]
     Cas:
       type: string
       pattern: '^\d{2}:\d{2}$'
@@ -793,7 +807,7 @@ components:
                 type: object
                 required: [id, ico, nazev, kod_obce, pocet_mist, profese]
                 properties:
-                  id: { type: string, description: ID pracoviště (63bitové číslo jako řetězec, JavaScript ho jako číslo nepřečte přesně). , example: '84980608601418621' }
+                  id: { type: string, description: 'ID pracoviště (63bitové číslo jako řetězec, JavaScript ho jako číslo nepřečte přesně).', example: '84980608601418621' }
                   ico: { type: string, pattern: '^\d{8}$', example: '21124311' }
                   nazev: { type: string, example: Linhart Gastro s.r.o. }
                   kod_obce: { $ref: '#/components/schemas/KodObce' }
@@ -814,7 +828,7 @@ components:
             obor: { $ref: '#/components/schemas/KodOboru' }
             mapovani: { type: boolean, description: false = obor nemá v NSP vazbu na žádnou profesní skupinu. }
             existuje: { type: [boolean, 'null'], description: null = obor nemá mapování. }
-            zamestnavatelu: { type: [integer, 'null'], description: Počet různých IČO. , example: 84 }
+            zamestnavatelu: { type: [integer, 'null'], description: 'Počet různých IČO.', example: 84 }
             pracovist: { type: [integer, 'null'], example: 91 }
             pocet_mist: { type: [integer, 'null'], example: 266 }
             bez_souradnic:

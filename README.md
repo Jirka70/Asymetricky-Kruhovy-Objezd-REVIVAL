@@ -199,3 +199,7 @@ For an interrupted run, repeat the same command with `--resume`.
 Resume checks the input hashes, date, slots and routing settings.
 Use a different output path for a new calculation; existing results are
 not overwritten. `--limit-zsj 2` allows a small smoke test.
+
+### Rust backend
+
+Backend s Axum, Diesel ORM a PostgreSQL/PostGIS je v `backend/`. Spuštění, migrace ze SQL skriptů a API jsou popsané v [backend/README.md](backend/README.md).
