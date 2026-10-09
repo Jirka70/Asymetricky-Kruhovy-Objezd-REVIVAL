@@ -1,0 +1,32 @@
+{
+  "config": {
+    "date": "2026-10-12",
+    "timezone": "Europe/Prague",
+    "slots": [
+      "07:00-08:00"
+    ],
+    "zsj_count": 2,
+    "school_count": 34,
+    "candidates": 50,
+    "api_url": "http://localhost:8080/otp/gtfs/v1",
+    "zsj_source": "/Users/albert.havlicek/Projects/Asymetricky-Kruhovy-Objezd-REVIVAL/scripts/sql/insert_zsj.sql",
+    "zsj_sha256": "9670c6a88a100f87b2f7f255f227a72a652c16550519146eb81c9c7658101412",
+    "schools_source": "/Users/albert.havlicek/Projects/Asymetricky-Kruhovy-Objezd-REVIVAL/datasety/skoly.csv",
+    "schools_sha256": "5b287d45252beddd11f89a5a4b3426c3730d992fce2bb6ddf3cb39f7f1ac14ca",
+    "origin_method": "interior scanline midpoint",
+    "departure_rule": "same calendar date",
+    "arrival_rule": "slot start inclusive, slot end exclusive",
+    "duration_rule": "minimum returned candidate duration; includes walking and transfer waits",
+    "modes": "OTP defaults: transit + walking, walking-only allowed"
+  },
+  "workers": 1,
+  "expected_rows": 68,
+  "completed_rows": 68,
+  "status_counts": {
+    "ok": 30,
+    "no_route": 38
+  },
+  "elapsed_seconds": 2.06,
+  "complete": true,
+  "limitation": "OTP filters and limits candidates; this is not an exhaustive global optimum."
+}

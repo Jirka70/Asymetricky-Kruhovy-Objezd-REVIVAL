@@ -157,3 +157,45 @@ with Git LFS. Install Git LFS before cloning; for an existing checkout, run:
 git lfs install --local
 git lfs pull
 ```
+
+## ZSJ-to-school travel times
+
+Calculate every ZSJ-to-school pair for Monday 12 October 2026:
+
+```bash
+python3 scripts/calculate_zsj_school_times.py --date 2026-10-12 --slot 07:00-08:00 --workers 6
+```
+
+Repeat `--slot` to add arrival periods:
+
+```bash
+python3 scripts/calculate_zsj_school_times.py --date 2026-10-12 --slot 07:00-08:00 --slot 09:00-10:00 --workers 6 --output datasety/zsj_skoly_vice_slotu.csv
+```
+
+The default origins are all 839 ZSJ polygons embedded in
+`scripts/sql/insert_zsj.sql`. One representative point inside each polygon
+is used (a scanline midpoint accounting for polygon holes); this is not an
+official definition point or a population-weighted origin. No SQL is executed.
+The calculated origins are saved next to the matrix as `*_origins.csv`.
+For explicit origin coordinates, use `--zsj-csv PATH` with columns
+`kod_zsj,lat,lon`. Schools come from `datasety/skoly.csv`; override with
+`--schools PATH` containing `redizo,lat,lon`.
+
+The main CSV has exactly `kod_zsj,redizo,slot_prijezdu,doba_jizdy`.
+A slot such as `07:00-08:00` includes arrival at 07:00 and excludes arrival
+at 08:00, in Europe/Prague. Departure must be on the specified date.
+Travel time in minutes is the shortest door-to-door duration among the
+qualifying itineraries OTP returns, including walking and transfer waits.
+Walking-only itineraries may qualify. OTP filters and limits candidates;
+this is not a guarantee of a global optimum. Adjust `--candidates` (default 50)
+to change the requested number of alternatives.
+
+A blank `doba_jizdy` means no qualifying route or an API error; zero is never
+used as a missing-data marker. Reasons and actual departure/arrival times are
+stored in `*_diagnostics.csv`; settings, source hashes, counts and completion
+status are stored in `*_summary.json`.
+The default output is `datasety/zsj_skoly_2026-10-12.csv`.
+For an interrupted run, repeat the same command with `--resume`.
+Resume checks the input hashes, date, slots and routing settings.
+Use a different output path for a new calculation; existing results are
+not overwritten. `--limit-zsj 2` allows a small smoke test.
