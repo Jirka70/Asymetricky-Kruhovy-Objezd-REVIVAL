@@ -31,8 +31,7 @@ INSERT INTO stredni_skoly (redizo, nazev, kod_zsj, adresa, lat, lon, web) VALUES
 ON CONFLICT (redizo) DO NOTHING;
 INSERT INTO stredni_skoly (redizo, nazev, kod_zsj, adresa, lat, lon, web) VALUES ('600009190', 'Obchodní akademie, vyšší odborná škola cestovního ruchu a jazyková škola s právem státní jazykové zkoušky Karlovy Vary, příspěvková organizace', '063592', 'Bezručova 1312/17, 36001 Karlovy Vary', 50.231556, 12.874274, 'https://www.oakv.cz')
 ON CONFLICT (redizo) DO NOTHING;
-INSERT INTO stredni_skoly (redizo, nazev, kod_zsj, adresa, lat, lon, web) VALUES ('600009122', 'Střední pedagogická škola, gymnázium a vyšší odborná škola Karlovy Vary, příspěvková organizace
-', '063622', 'Lidická 455/40, 36001 Karlovy Vary', 50.232575, 12.88918, 'https://www.pedgym-kv.cz')
+INSERT INTO stredni_skoly (redizo, nazev, kod_zsj, adresa, lat, lon, web) VALUES ('600009122', 'Střední pedagogická škola, gymnázium a vyšší odborná škola Karlovy Vary, příspěvková organizace', '063622', 'Lidická 455/40, 36001 Karlovy Vary', 50.232575, 12.88918, 'https://www.pedgym-kv.cz')
 ON CONFLICT (redizo) DO NOTHING;
 INSERT INTO stredni_skoly (redizo, nazev, kod_zsj, adresa, lat, lon, web) VALUES ('600009262', 'První české gymnázium v Karlových Varech, příspěvková organizace', '063622', 'Národní 445/25, 36001 Karlovy Vary', 50.233994, 12.887607, 'https://www.gymkvary.cz')
 ON CONFLICT (redizo) DO NOTHING;
