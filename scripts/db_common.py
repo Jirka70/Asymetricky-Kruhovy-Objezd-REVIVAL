@@ -11,7 +11,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def run(command, **kwargs):
-    return subprocess.run(command, check=True, capture_output=True, text=True, **kwargs)
+    # SQL files and Docker output use UTF-8 regardless of the caller's locale.
+    return subprocess.run(
+        command, check=True, capture_output=True, text=True, encoding="utf-8", **kwargs
+    )
 
 
 @dataclass(frozen=True)
@@ -23,7 +26,7 @@ class Database:
     def execute(self, source, *, maintenance=False):
         result = run(
             [
-                "docker", "exec", "-i", self.container,
+                "docker", "exec", "-i", "-e", "PGCLIENTENCODING=UTF8", self.container,
                 "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1",
                 "-v", "VERBOSITY=terse",
                 "-v", f"target_db={self.name}",
