@@ -1,0 +1,41 @@
+{
+  "points": 100,
+  "directed_pairs": 9900,
+  "seed": 42,
+  "workers": 12,
+  "arrival_deadline_exclusive": "2026-10-12T08:00:00+02:00",
+  "earliest_arrival": "2026-10-12T07:30:00+02:00",
+  "same_day_departures_only": true,
+  "api_url": "http://localhost:8080/otp/gtfs/v1",
+  "boundary": "/Users/albert.havlicek/Projects/Asymetricky-Kruhovy-Objezd-REVIVAL/location_data/karlovarsky_kraj.geojson",
+  "candidates_per_pair": 20,
+  "search_window_minutes": 120,
+  "status_counts": {
+    "no_route": 5158,
+    "ok": 3255,
+    "no_route_in_arrival_window": 1487
+  },
+  "fastest_pair": {
+    "origin": "P056",
+    "destination": "P082",
+    "origin_lat": 50.048465,
+    "origin_lon": 12.601549,
+    "destination_lat": 50.047405,
+    "destination_lon": 12.603601,
+    "candidates_returned": 1,
+    "candidates_in_arrival_window": 1,
+    "errors": "[{\"code\": \"NO_TRANSIT_CONNECTION\", \"description\": \"No trip found. There may be no transit service within the maximum specified distance or at the specified time, or your start or end point might not be safely accessible.\", \"inputField\": null}]",
+    "status": "ok",
+    "departure": "2026-10-12T07:57:37+02:00",
+    "arrival": "2026-10-12T07:59:59+02:00",
+    "duration_minutes": 2.37,
+    "minutes_before_deadline": 0.02,
+    "transfers": 0,
+    "walk_meters": 191.1,
+    "modes": "WALK",
+    "routes": "",
+    "api_seconds": 0.427
+  },
+  "elapsed_seconds": 207.251,
+  "selection": "Minimum duration among returned candidates in the arrival window; ties prefer later arrival. OTP filtering and candidate limits apply."
+}

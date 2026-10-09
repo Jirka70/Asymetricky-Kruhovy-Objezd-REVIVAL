@@ -1,0 +1,18 @@
+{
+  "points": 3,
+  "directed_pairs": 6,
+  "seed": 42,
+  "arrival_deadline_exclusive": "2026-10-12T08:00:00+02:00",
+  "earliest_arrival": "2026-10-12T07:30:00+02:00",
+  "same_day_departures_only": true,
+  "api_url": "http://localhost:8080/otp/gtfs/v1",
+  "boundary": "/Users/albert.havlicek/Projects/Asymetricky-Kruhovy-Objezd-REVIVAL/location_data/karlovarsky_kraj.geojson",
+  "candidates_per_pair": 20,
+  "search_window_minutes": 120,
+  "status_counts": {
+    "no_route": 6
+  },
+  "fastest_pair": null,
+  "elapsed_seconds": 1.159,
+  "selection": "Minimum duration among returned candidates in the arrival window; ties prefer later arrival. OTP filtering and candidate limits apply."
+}

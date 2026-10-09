@@ -1,4 +1,25 @@
+name: asymetricky-kruhovy-objezd
+
+x-otp-common: &otp-common
+  image: docker.io/opentripplanner/opentripplanner:latest
+  environment:
+    JAVA_TOOL_OPTIONS: "-Xmx8g"
+  volumes:
+    - ./location_data:/var/opentripplanner
+
 services:
+  otp-build:
+    <<: *otp-common
+    profiles: ["build"]
+    command: ["--build", "--save"]
+    restart: "no"
+
+  otp:
+    <<: *otp-common
+    command: ["--load", "--serve"]
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
   db:
     image: postgis/postgis:18-3.6
     platform: linux/amd64

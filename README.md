@@ -62,3 +62,70 @@ Kód: [MIT](LICENSE). Ostatní obsah: CC BY 4.0.
 
 ---
 Prototyp z Hackathonu otevřených dat Karlovarského kraje 2026. Není oficiální službou Karlovarského kraje ani KIC KK.
+
+## OpenTripPlanner
+
+Place OSM data (`*.osm.pbf`) and GTFS archives (`*gtfs*.zip`) in `location_data/`.
+
+Build or rebuild the graph after changing source data:
+
+```bash
+docker compose run --rm otp-build
+```
+
+Start the routing server using the saved graph:
+
+```bash
+docker compose up -d otp
+```
+
+Open http://localhost:8080. View logs with `docker compose logs -f otp`;
+stop the server with `docker compose down`.
+After rebuilding, load the updated graph with `docker compose restart otp`.
+Both services use an 8 GB maximum Java heap; Docker needs additional memory
+for the JVM and other running containers.
+
+The downloaded train feed contained 124 stop-time rows referencing 10 trip IDs
+absent from `trips.txt`. These rows were removed using
+`python3 scripts/repair_gtfs.py location_data/vlaky.gtfs.zip`.
+The original archive is preserved as `location_data/vlaky.gtfs.zip.original`;
+the repair script always uses that backup when it exists.
+The old invalid OSM download is retained as `location_data/kvk.redirect.html`.
+
+## Test the routing API
+
+Generate X random points inside the OpenStreetMap administrative boundary of
+Karlovarský kraj, then query every ordered pair (X × (X − 1) requests):
+
+```bash
+python3 scripts/test_otp_pairs.py --points 20 --seed 42 --workers 6
+```
+
+Use `--workers X` to limit concurrent API requests (default: 1).
+Output rows remain in deterministic pair order and the run summary records
+the worker count and elapsed time.
+
+Requires Python 3.9+ and a running OTP server; no extra Python packages.
+The boundary is downloaded once from Nominatim and cached as
+`location_data/karlovarsky_kraj.geojson` (© OpenStreetMap contributors, ODbL 1.0).
+Sampling is reproducible with the same seed and cached boundary. Points are
+sampled across the region, including rural or inaccessible locations; a point
+inside the region is not guaranteed to have a transit connection.
+
+Default target: Monday 12 October 2026, with arrival between 07:30:00 and
+07:59:59 in Europe/Prague. Only same-day departures qualify. Each pair selects
+the shortest-duration qualifying itinerary returned by OTP, breaking ties by
+latest arrival. OTP returns filtered candidates, so this does not guarantee an
+exhaustive global optimum. Walking-only itineraries are allowed alongside
+transit with walking. Errors and missing connections remain in the results.
+
+```bash
+python3 scripts/test_otp_pairs.py --points 10 --max-early-minutes 15
+python3 scripts/test_otp_pairs.py --points 20 --candidates 50 --search-window-minutes 180
+```
+
+Outputs are saved under `location_data/api_tests/<run timestamp>/`:
+`points.geojson`, `routes.csv`, `routes.jsonl` (full API responses and selected
+itineraries), and `summary.json`. Override this with `--output-dir PATH`.
+The CSV contains one row per directed pair, with travel times, departure,
+arrival, transfer counts, modes, route names and errors.
