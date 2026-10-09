@@ -1,0 +1,35 @@
+name: Rust backend contracts
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - 'openapi.yaml'
+      - 'swagger.html'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'openapi.yaml'
+      - 'swagger.html'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust tooling
+        run: rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+      - name: Check formatting
+        run: cargo +stable fmt --check
+      - name: Run unit, database and OpenAPI contract tests
+        run: cargo +stable test --locked
+      - name: Check Clippy
+        run: cargo +stable clippy --locked --all-targets -- -D warnings

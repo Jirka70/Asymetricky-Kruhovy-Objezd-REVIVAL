@@ -1,0 +1,2 @@
+DROP TABLE public."NABIDKA_OBORU";
+DROP TABLE public."OBORY";

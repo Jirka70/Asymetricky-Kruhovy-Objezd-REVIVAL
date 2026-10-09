@@ -1,0 +1,6 @@
+[print_schema]
+file = "src/schema.rs"
+filter = { only_tables = ["ZSJ", "stredni_skoly", "OBORY", "NABIDKA_OBORU", "ZAMESTNAVATELE", "PROFESNI_SKUPINY", "POPTAVKA_PROFESI", "OBOR_PROFESE"] }
+
+[migrations_directory]
+dir = "migrations"

@@ -1,0 +1,29 @@
+[package]
+name = "obor-backend"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.86"
+
+[dependencies]
+anyhow = "1"
+axum = "0.8"
+bigdecimal = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+diesel = { version = "2.3", features = ["postgres", "r2d2", "numeric", "chrono", "uuid"] }
+diesel_migrations = { version = "2.3", features = ["postgres"] }
+dotenvy = "0.15"
+pq-sys = { version = "0.7", features = ["bundled"] }
+openssl-sys = { version = "0.9", features = ["vendored"] }
+schemars = "1.2"
+serde_json = "1"
+serde_yaml_ng = "0.10"
+serde_urlencoded = "0.7"
+jsonschema = { version = "0.58", default-features = false }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["serde"] }
+
+[dev-dependencies]
+tower = { version = "0.5", features = ["util"] }

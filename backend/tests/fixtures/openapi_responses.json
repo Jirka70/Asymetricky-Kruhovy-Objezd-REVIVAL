@@ -1,0 +1,598 @@
+[
+  {
+    "path": "/skoly",
+    "request": "/api/v1/skoly?obor=23-68-H%2F01&stupen=H,M&forma=den",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              12.194203,
+              50.216618
+            ]
+          },
+          "properties": {
+            "redizo": "600008975",
+            "nazev": "Gymnázium Aš",
+            "obec": "Aš",
+            "pocet_nabidek": 1,
+            "kapacita": 30,
+            "prihlasky": 63,
+            "index_pretlaku": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "path": "/skoly/{redizo}",
+    "request": "/api/v1/skoly/600008975?max_min=60&scenar=rano",
+    "media_type": "application/json",
+    "body": {
+      "redizo": "600008975",
+      "nazev": "Gymnázium Aš",
+      "adresa": "Hlavní 2514/106, Aš",
+      "web": "https://www.gymas.cz",
+      "lat": 50.216618,
+      "lon": 12.194203,
+      "nabidky": [
+        {
+          "kod_oboru": "23-68-H/01",
+          "nazev_oboru": "Mechanik opravář motorových vozidel",
+          "zamereni": null,
+          "stupen": "H",
+          "forma": "den",
+          "delka_let": 3,
+          "kapacita": 30,
+          "prihlasky": 131,
+          "prihlasky_na_misto": 4.37,
+          "index_pretlaku": 1.64
+        }
+      ],
+      "spadovost": {
+        "deti_v_dosahu": 100,
+        "obce": [
+          {
+            "kod_obce": "554961",
+            "nazev": "Karlovy Vary",
+            "deti": 100,
+            "nejkratsi_cas_min": 36
+          }
+        ]
+      },
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120
+      }
+    }
+  },
+  {
+    "path": "/student/skoly",
+    "request": "/api/v1/student/skoly?lat=50.2312&lon=12.8711",
+    "media_type": "application/json",
+    "body": {
+      "data": [
+        {
+          "redizo": "600008975",
+          "nazev": "Gymnázium Aš",
+          "lat": 50.216618,
+          "lon": 12.194203,
+          "v_dosahu": true,
+          "spoj": {
+            "stav": "ok",
+            "odjezd": "07:11",
+            "prijezd": "07:47",
+            "cas_min": 36,
+            "prestupy": 0,
+            "chuze_m": 540,
+            "linky": [
+              "421"
+            ]
+          },
+          "nabidky": [
+            {
+              "kod_oboru": "23-68-H/01",
+              "nazev_oboru": "Mechanik opravář motorových vozidel",
+              "zamereni": null,
+              "stupen": "H",
+              "forma": "den",
+              "delka_let": 3,
+              "kapacita": 30,
+              "prihlasky": 131,
+              "prihlasky_na_misto": 4.37,
+              "index_pretlaku": 1.64
+            }
+          ]
+        },
+        {
+          "redizo": "600009084",
+          "nazev": "Škola",
+          "lat": 50.2,
+          "lon": 12.8,
+          "v_dosahu": false,
+          "spoj": {
+            "stav": "bez_spojeni",
+            "odjezd": null,
+            "prijezd": null,
+            "cas_min": null,
+            "prestupy": null,
+            "chuze_m": null,
+            "linky": []
+          },
+          "nabidky": []
+        }
+      ],
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120,
+        "zsj": "000540",
+        "v_dosahu": 1,
+        "mimo_dosah": 1,
+        "presnost": "Reprezentační bod ZSJ"
+      }
+    }
+  },
+  {
+    "path": "/student/trasa",
+    "request": "/api/v1/student/trasa?lat=50.2312&lon=12.8711&redizo=600008975",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                12.8,
+                50.2
+              ],
+              [
+                12.9,
+                50.3
+              ]
+            ]
+          },
+          "properties": {
+            "spoj": 0,
+            "usek": 0,
+            "druh": "BUS",
+            "linka": "421",
+            "od": "Karlovy Vary",
+            "do": "Ostrov",
+            "odjezd": "07:11",
+            "prijezd": "07:47",
+            "chuze_m": null
+          }
+        }
+      ],
+      "spoje": [
+        {
+          "spoj": 0,
+          "odjezd": "07:11",
+          "prijezd": "07:47",
+          "cas_min": 36,
+          "prestupy": 0,
+          "chuze_m": 540,
+          "rezerva_min": 13
+        }
+      ],
+      "meta": {
+        "scenar": "rano",
+        "okno_prijezdu": [
+          "07:00",
+          "08:00"
+        ],
+        "den": "2026-10-12"
+      }
+    }
+  },
+  {
+    "path": "/zsj",
+    "request": "/api/v1/zsj?uroven=obec&forma=den",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  12.1,
+                  50.1
+                ],
+                [
+                  12.2,
+                  50.1
+                ],
+                [
+                  12.2,
+                  50.2
+                ],
+                [
+                  12.1,
+                  50.1
+                ]
+              ]
+            ]
+          },
+          "properties": {
+            "kod": "554961",
+            "nazev": "Karlovy Vary",
+            "uroven": "obec",
+            "cas_min": null,
+            "pasmo": "bez_spojeni",
+            "v_dosahu": false,
+            "deti": 100,
+            "deti_v_dosahu": 0,
+            "podil_deti_v_dosahu": 0.0,
+            "nejblizsi_redizo": null
+          }
+        }
+      ],
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120,
+        "obor": null,
+        "forma": "den",
+        "uroven": "obec",
+        "jednotek_celkem": 100,
+        "v_limitu": [
+          {
+            "limit_min": 30,
+            "jednotek": 31
+          },
+          {
+            "limit_min": 45,
+            "jednotek": 46
+          },
+          {
+            "limit_min": 60,
+            "jednotek": 71
+          },
+          {
+            "limit_min": 120,
+            "jednotek": 94
+          }
+        ]
+      }
+    }
+  },
+  {
+    "path": "/obory",
+    "request": "/api/v1/obory?razeni=-index_pretlaku&signal=pretlak,spatna_dostupnost",
+    "media_type": "application/json",
+    "body": {
+      "data": [
+        {
+          "kod": "23-68-H/01",
+          "nazev": "Mechanik opravář motorových vozidel",
+          "stupen": "H",
+          "pocet_skol": 4,
+          "kapacita": 120,
+          "prihlasky": 455,
+          "prihlasky_na_misto": 3.79,
+          "index_pretlaku": 1.42,
+          "deti_v_dosahu": 300,
+          "deti_bez_oboru": 10,
+          "podil_deti_v_dosahu": 96.8,
+          "mist_na_100_deti": 40.0,
+          "volna_mista": null,
+          "volna_mista_na_misto": null,
+          "signaly": [
+            "pretlak",
+            "spatna_dostupnost"
+          ],
+          "zamestnavatelu": null
+        }
+      ],
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120,
+        "deti_celkem": 310,
+        "prumer_prihlasek_na_misto": 2.66,
+        "prahy": {
+          "pretlak": 1.5,
+          "nizky_zajem": 0.5,
+          "spatna_dostupnost": 50,
+          "poptavka_trhu": 2
+        },
+        "prijimaci_rizeni": {
+          "rok": 2026,
+          "kolo": 1
+        }
+      }
+    }
+  },
+  {
+    "path": "/obory/{kod}",
+    "request": "/api/v1/obory/23-68-H%2F01?kandidatu=5",
+    "media_type": "application/json",
+    "body": {
+      "obor": {
+        "kod": "23-68-H/01",
+        "nazev": "Mechanik opravář motorových vozidel",
+        "stupen": "H",
+        "pocet_skol": 4,
+        "kapacita": 120,
+        "prihlasky": 455,
+        "prihlasky_na_misto": 3.79,
+        "index_pretlaku": 1.42,
+        "deti_v_dosahu": 300,
+        "deti_bez_oboru": 10,
+        "podil_deti_v_dosahu": 96.8,
+        "mist_na_100_deti": 40.0,
+        "volna_mista": null,
+        "volna_mista_na_misto": null,
+        "signaly": [
+          "pretlak",
+          "spatna_dostupnost"
+        ],
+        "zamestnavatelu": null
+      },
+      "nabidky": [
+        {
+          "kod_oboru": "23-68-H/01",
+          "nazev_oboru": "Mechanik opravář motorových vozidel",
+          "zamereni": null,
+          "stupen": "H",
+          "forma": "den",
+          "delka_let": 3,
+          "kapacita": 30,
+          "prihlasky": 131,
+          "prihlasky_na_misto": 4.37,
+          "index_pretlaku": 1.64,
+          "redizo": "600008975",
+          "nazev_skoly": "Škola",
+          "deti_v_dosahu_skoly": 100
+        }
+      ],
+      "kandidati": [
+        {
+          "redizo": "600009271",
+          "nazev": "Škola",
+          "nove_dosazene_deti": 10,
+          "ma_pribuzny_obor": true,
+          "obec": "Toužim"
+        }
+      ],
+      "trh_prace": {
+        "volna_mista": 170,
+        "zamestnavatelu": 67,
+        "profese": [
+          {
+            "cz_isco3": "512",
+            "vhodnost": 1,
+            "nazev": "Kuchaři",
+            "pocet": 170
+          }
+        ]
+      },
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120
+      }
+    }
+  },
+  {
+    "path": "/simulace",
+    "request": "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=24&format=slovnik",
+    "media_type": "application/json",
+    "body": {
+      "jednotky": {
+        "000540": {
+          "nazev": "Aš",
+          "cas_ke_skole": 28,
+          "cas_min_puvodni": 52,
+          "cas_min": 28,
+          "zlepseni_min": 24,
+          "pasmo": "do30",
+          "pasmo_puvodni": "45_60",
+          "deti": 12,
+          "potencialni_uchazeci": 0.6,
+          "novy_dosah": false
+        }
+      },
+      "souhrn": {
+        "jednotek_celkem": 100,
+        "v_limitu": [
+          {
+            "limit_min": 30,
+            "pred": 31,
+            "po": 38
+          },
+          {
+            "limit_min": 45,
+            "pred": 46,
+            "po": 58
+          },
+          {
+            "limit_min": 60,
+            "pred": 71,
+            "po": 76
+          },
+          {
+            "limit_min": 120,
+            "pred": 94,
+            "po": 95
+          }
+        ],
+        "zlepsenych_jednotek": 12,
+        "prumerne_zkraceni_min": 18.0,
+        "potencialni_uchazeci": 41.2,
+        "blize_ke_skole": 17.5,
+        "kapacita": 24,
+        "uchazecu_na_misto": 1.72
+      },
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120,
+        "redizo": "600009271",
+        "obor": "23-68-H/01",
+        "uroven": "obec",
+        "podil_zajmu": 0.048,
+        "skola_obor_uz_uci": false
+      }
+    }
+  },
+  {
+    "path": "/simulace",
+    "request": "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=24&format=geojson",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  12.1,
+                  50.1
+                ],
+                [
+                  12.2,
+                  50.1
+                ],
+                [
+                  12.2,
+                  50.2
+                ],
+                [
+                  12.1,
+                  50.1
+                ]
+              ]
+            ]
+          },
+          "properties": {
+            "kod": "000540",
+            "uroven": "obec",
+            "v_dosahu": true,
+            "deti_v_dosahu": 12,
+            "podil_deti_v_dosahu": 100.0,
+            "nejblizsi_redizo": "600009271",
+            "nazev": "Aš",
+            "cas_ke_skole": 28,
+            "cas_min_puvodni": 52,
+            "cas_min": 28,
+            "zlepseni_min": 24,
+            "pasmo": "do30",
+            "pasmo_puvodni": "45_60",
+            "deti": 12,
+            "potencialni_uchazeci": 0.6,
+            "novy_dosah": false
+          }
+        }
+      ],
+      "souhrn": {
+        "jednotek_celkem": 100,
+        "v_limitu": [
+          {
+            "limit_min": 30,
+            "pred": 31,
+            "po": 38
+          },
+          {
+            "limit_min": 45,
+            "pred": 46,
+            "po": 58
+          },
+          {
+            "limit_min": 60,
+            "pred": 71,
+            "po": 76
+          },
+          {
+            "limit_min": 120,
+            "pred": 94,
+            "po": 95
+          }
+        ],
+        "zlepsenych_jednotek": 12,
+        "prumerne_zkraceni_min": 18.0,
+        "potencialni_uchazeci": 41.2,
+        "blize_ke_skole": 17.5,
+        "kapacita": 24,
+        "uchazecu_na_misto": 1.72
+      },
+      "meta": {
+        "scenar": "rano",
+        "max_min": 120,
+        "redizo": "600009271",
+        "obor": "23-68-H/01",
+        "uroven": "obec",
+        "podil_zajmu": 0.048,
+        "skola_obor_uz_uci": false
+      }
+    }
+  },
+  {
+    "path": "/obory/{kod}/zamestnavatele",
+    "request": "/api/v1/obory/65-51-H%2F01/zamestnavatele?vhodnost=1&jen_ss=false",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              12.366493,
+              50.078765
+            ]
+          },
+          "properties": {
+            "id": "84980608601418621",
+            "ico": "21124311",
+            "nazev": "Linhart Gastro s.r.o.",
+            "kod_obce": "554961",
+            "pocet_mist": 1,
+            "profese": [
+              {
+                "cz_isco3": "512",
+                "nazev": "Kuchaři",
+                "vhodnost": 1,
+                "pocet_mist": 1
+              }
+            ]
+          }
+        }
+      ],
+      "meta": {
+        "obor": "65-51-H/01",
+        "mapovani": true,
+        "existuje": true,
+        "zamestnavatelu": 67,
+        "pracovist": 71,
+        "pocet_mist": 170,
+        "bez_souradnic": [
+          {
+            "kod_obce": "554961",
+            "pracovist": 1,
+            "pocet_mist": 3
+          }
+        ],
+        "skupiny": [
+          {
+            "cz_isco3": "512",
+            "nazev": "Kuchaři",
+            "vhodnost": 2
+          }
+        ],
+        "importovano": "2026-10-10T08:00:00+02:00"
+      }
+    }
+  }
+]
