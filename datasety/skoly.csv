@@ -1,270 +1,35 @@
-id,kod_zsj,adresa,lat,lon,web
-1,063606,"Bezručova 1190/19, 36001 Karlovy Vary",50.232174,12.875231,https://www.zsnemkv.cz
-2,153851,"Vančurova 83/2, 36017 Karlovy Vary",50.248111,12.831028,https://www.specskoly.cz
-3,308790,"Krušnohorská 304, 36301 Ostrov",50.304747,12.94516,https://zsostrov-krusnohor.cz/cs
-4,001261,"Školní 338, 36464 Bečov nad Teplou",50.082758,12.837006,https://www.zusjlbecov.cz
-5,000540,"Hlavní 2514/106, 35201 Aš",50.216618,12.194203,https://www.gymas.cz
-6,024589,"Hlavní 114/29, 36263 Dalovice",50.246902,12.892417,https://www.logistickaskola.cz
-7,050920,"Hradební 58/10, 35002 Cheb",50.078765,12.366493,https://www.szsavoscheb.cz
-8,050938,"Nerudova 2283/7, 35002 Cheb",50.076275,12.362412,https://www.gymcheb.cz
-9,050920,"Obrněné brigády 2258/6, 35002 Cheb",50.07735,12.366284,https://www.iss-cheb.cz
-10,063592,"Bezručova 1312/17, 36001 Karlovy Vary",50.231556,12.874274,https://www.oakv.cz
-11,063622,"Lidická 455/40, 36001 Karlovy Vary",50.232575,12.88918,https://www.pedgym-kv.cz
-12,063622,"Národní 445/25, 36001 Karlovy Vary",50.233994,12.887607,https://www.gymkvary.cz
-13,063550,"nám. 17. listopadu 710/12, 36005 Karlovy Vary",50.234883,12.85184,https://supskv.cz/
-14,063452,"Ondřejská 1122/56, 36001 Karlovy Vary",50.227672,12.881997,https://www.ssstravovani.cz
-15,063444,"Poděbradská 1247/2, 36001 Karlovy Vary",50.226864,12.87576,https://www.zdravkakv.cz
-16,063622,"nám. K. Sabiny 159/16, 36001 Karlovy Vary",50.236186,12.885361,https://www.stavebniskolakv.cz
-17,091588,"Komenského 449/2, 35301 Mariánské Lázně",49.962248,12.700109,https://www.hotelovaskola.cz
-18,091570,"Ruská 355/7, 35301 Mariánské Lázně",49.973218,12.701646,https://www.goaml.cz
-19,308790,"Klínovecká 1197, 36301 Ostrov",50.304766,12.952136,https://www.spsostrov.cz
-20,115916,"Studentská 1205, 36301 Ostrov",50.302827,12.952738,https://www.gymostrov.cz
-21,152277,"Husitská 2053, 35601 Sokolov",50.176253,12.640226,https://www.gymso.cz
-22,152234,"Jednoty 1620, 35601 Sokolov",50.182788,12.644488,https://www.isste.cz
-23,152200,"Žákovská 716, 35601 Sokolov",50.186655,12.641212,https://www.zivnostenska-sokolov.cz
-24,197769,"Žižkov 345, 36452 Žlutice",50.096452,13.16005,https://www.slszlutice.cz
-25,051055,"U Farmy 30/11, 35002 Cheb",50.082816,12.417664,https://www.skolnistatekcheb.cz
-26,063622,"Lidická 590/38, 36001 Karlovy Vary",50.232553,12.887746,https://www.dmkv.cz
-27,091561,"Klíčová 167/4, 35301 Mariánské Lázně",49.972829,12.70446,https://www.dmasjml.cz/
-28,050938,"Goethova 1660/16, 35002 Cheb",50.077741,12.360301,https://www.ddchs.cz
-29,091600,"Palackého 191/101, 35301 Mariánské Lázně",49.953031,12.715285,https://www.ddmla.cz
-30,115916,"Dukelských hrdinů 610, 36301 Ostrov",50.303911,12.945082,https://www.ddkvo.cz
-31,063622,"Lidická 590/38, 36001 Karlovy Vary",50.232553,12.887746,https://www.pppkv.cz
-32,063622,"Lidická 590/38, 36001 Karlovy Vary",50.231683,12.888505,https://www.bdkv.cz
-33,000523,"Moravská 1926/10, 35201 Aš",50.223612,12.18863,https://www.skolka-moravska.cz/
-34,000523,"Neumannova 2560, 35201 Aš",50.22006,12.192414,https://www.neumannka.cz/
-35,000558,"Nohova 2201, 35201 Aš",50.213098,12.194472,https://www.msnohova.cz/
-36,000531,"Hlávkova 1472/26, 35201 Aš",50.21743,12.202515,https://www.zshlavkova.cz/
-37,000523,"Kamenná 152/2, 35201 Aš",50.22206,12.191407,https://stranky.kamenka.cz/
-38,000493,"Okružní 1580/57, 35201 Aš",50.221102,12.179338,https://www.zsmsok.eu/
-39,000515,"Studentská 1612/13, 35201 Aš",50.228133,12.183502,https://www.zspsas.eu/
-40,000515,"Kostelní   42/12, 35201 Aš",50.226109,12.186703,https://zusas.cz/
-41,000523,"Štefánikova 2515, 35201 Aš",50.224996,12.193072,https://www.meddmslunicko.cz/
-42,000523,"Dlouhá 2618/3, 35201 Aš",50.223248,12.192643,https://www.zss-as.cz/
-43,038075,"Hazlov 119, 35132 Hazlov",50.158432,12.275193,http://zshazlov.cz
-44,047643,"Soukenná 844, 35124 Hranice",50.307003,12.174315,https://www.mshranice.cz/cs
-45,047643,"Husova 414, 35124 Hranice",50.306415,12.177154,https://www.skolahranice.cz/
-46,073351,"Krásná 280, 35201 Krásná",50.232007,12.172269,http://ms.obeckrasna.cz/
-47,030392,"Dolní Žandov 37, 35493 Dolní Žandov",50.017974,12.553422,http://zsdolnizandov.cz/
-48,034649,"Česká 350/14, 35101 Františkovy Lázně",50.12443,12.345444,https://www.mspraminky.cz/
-49,034649,"Školní 182/1, 35101 Františkovy Lázně",50.123381,12.350039,https://www.msfrantiskovylazne.cz/
-50,034649,"Česká 39/1, 35101 Františkovy Lázně",50.124634,12.343193,https://zsfrlazne.edupage.org/
-51,034649,"Školní 219/3, 35101 Františkovy Lázně",50.124365,12.35049,https://www.zusfrantiskovylazne.cz/
-52,034649,"Dlouhá 181/6, 35101 Františkovy Lázně",50.121809,12.345389,https://www.frantiskovy-lazne.cz/vismo/o_utvar.asp?d=13&u=3464&id_org=3464&id_u=5433&p1=15152
-53,050989,"Bezručova 1274/1, 35002 Cheb",50.070774,12.37644,https://www.msbezrucova.cz/
-54,050946,"Do Zátiší 1483/3, 35002 Cheb",50.073108,12.353863,https://www.ms-skalka.cz/
-55,050911,"Komenského 642/27, 35002 Cheb",50.079317,12.372786,https://www.komenskehoms.cz/
-56,327875,"Malé náměstí 2196/2, 35002 Cheb",50.087042,12.376434,https://www.mszlatacek.cz/
-57,050989,"Osvobození 1218/67, 35002 Cheb",50.066552,12.371877,https://www.msosvobozeni.cz/
-58,050954,"26. dubna 168/39, 35002 Cheb",50.072605,12.370258,https://www.skolkapohadka.cz/
-59,050946,"Americká 1453/36, 35002 Cheb",50.075292,12.35444,https://1zscheb.edupage.org/
-60,050954,"Májová 252/14, 35002 Cheb",50.075177,12.369713,https://www.2zscheb.cz/
-61,327875,"Malé náměstí 2287/3, 35002 Cheb",50.087193,12.374801,https://3zscheb.cz/
-62,050920,"Hradební 52/14, 35002 Cheb",50.078147,12.365991,https://www.4zscheb.cz/
-63,050989,"Matěje Kopeckého 1160/1, 35002 Cheb",50.065649,12.372174,https://www.5zscheb.cz/
-64,050962,"Obětí nacismu 1127/16, 35002 Cheb",50.072606,12.374847,https://www.6zscheb.cz/
-65,050911,"Kostelní náměstí 185/14, 35002 Cheb",50.0806,12.371052,https://zs-cheb.cz/
-66,050920,"Židovská 406/8, 35011 Cheb",50.079415,12.368432,https://www.zuscheb.cz/
-67,050938,"Goethova 1108/26, 35002 Cheb",50.078424,12.357336,https://www.ddmcheb.cz/
-68,081612,"Libá 225, 35131 Libá",50.124421,12.23619,https://zsliba.cz/w/
-69,084433,"Lipová 128, 35002 Lipová",50.036337,12.446194,https://www.skolalipova.cz/
-70,088153,"Tovární 743, 35137 Luby",50.256389,12.398909,https://msluby.estranky.cz/
-71,088153,"Masarykova 195, 35137 Luby",50.255877,12.404343,https://zsluby.edupage.org/
-72,088153,"Masarykova 178, 35137 Luby",50.255344,12.404173,https://zusluby.cz/
-73,088153,"Tovární 742, 35137 Luby",50.256227,12.399183,https://www.ddmluby.cz/
-74,094811,"Milhostov 69, 35002 Milhostov",50.157448,12.453552,http://www.zsamsmilhostov.cz/
-75,107701,"Nový Kostel 84, 35134 Nový Kostel",50.216206,12.445659,https://www.skola-nk.cz/
-76,109533,"Okrouhlá 7, 35002 Cheb",50.061532,12.484918,https://msokrouhla.estranky.cz/
-77,121622,"Školní 254, 35135 Plesná",50.222169,12.348287,https://www.zsplesna.cz/
-78,148105,"Česká 273, 35134 Skalná",50.172493,12.363807,http://msskalna.cz/
-79,148105,"Sportovní 260, 35134 Skalná",50.172943,12.360707,https://www.zsskalna.cz/index.php?type=Blog&id=20&ids=12
-80,169561,"Třebeň 17, 35134 Skalná",50.128788,12.399953,https://www.mstreben.cz/
-81,032506,"Školní 26, 35472 Drmoul",49.937096,12.664041,https://www.zsamsdrmoul.cz/cs/
-82,079375,"K Rybníku 346, 35491 Lázně Kynžvart",50.006921,12.62662,https://www.zslk.cz/
-83,091561,"Křižíkova 555/5, 35301 Mariánské Lázně",49.961827,12.703565,https://ms-krizikova.cz/
-84,091588,"Hlavní 440/37, 35301 Mariánské Lázně",49.962603,12.701531,https://www.mshlavni.cz/
-85,091618,"Skalníkova 518/11, 35301 Mariánské Lázně",49.94981,12.71108,https://msskalnikova.websnadno.cz/
-86,091596,"Na Třešňovce 603, 35301 Mariánské Lázně",49.960039,12.69793,https://www.mstresnovka.cz/
-87,327913,"Za Tratí 687/2, 35301 Mariánské Lázně",49.95297,12.701104,https://msvora.cz/cs
-88,091588,"Komenského 459/1, 35301 Mariánské Lázně",49.962755,12.698856,https://www.skolajih.cz/
-89,091600,"Školní náměstí 472/3, 35301 Mariánské Lázně",49.952807,12.708411,https://www.zsusovice.cz/
-90,091642,"třída Vítězství 29/28, 35301 Mariánské Lázně",49.950415,12.685031,https://www.zsspec-ml.cz/
-91,091588,"Lužická 412/4, 35301 Mariánské Lázně",49.963192,12.700233,https://www.zus-ml.cz/
-92,091600,"17. listopadu 475/3, 35301 Mariánské Lázně",49.953799,12.710184,https://www.ddmml.cz/
-93,153991,"Stará Voda 125, 35301 Stará Voda",49.993039,12.594705,https://zsstaravoda.estranky.cz/
-94,165964,"Školní 544, 36461 Teplá",49.981432,12.869642,https://www.mstepla.cz/
-95,165964,"Školní 258, 36461 Teplá",49.980489,12.86668,https://www.zstepla.cz/
-96,165964,"Školní 393, 36461 Teplá",49.98033,12.868977,https://zustepla.netstranky.cz/
-97,168831,"Trstěnice 104, 35301 Trstěnice",49.918774,12.680159,https://www.obectrstenice.cz/materska-skola-trstenice-okres-cheb/os-1001
-98,170861,"Tři Sekery 79, 35473 Tři Sekery",49.942032,12.612733,https://www.zstrisekery.cz/
-99,178314,"Klimentov 118, 35471 Velká Hleďsebe",49.964899,12.67481,https://www.msklimentov.cz/
-100,178331,"Tyršova 315, 35471 Velká Hleďsebe",49.960613,12.674368,https://www.msvelkahledsebe.cz/
-101,178331,"Pohraniční stráže 95, 35471 Velká Hleďsebe",49.962315,12.665795,https://www.zsvh.cz/
-102,001261,"Školní 152, 36464 Bečov nad Teplou",50.082782,12.838369,https://www.zsamsbecov.cz/
-103,006751,"Zahradní 315, 36471 Bochov",50.14936,13.049537,https://www.msbochov.cz/
-104,006751,"Okružní 367, 36471 Bochov",50.148989,13.043311,https://www.zsbochov.cz/
-105,008931,"Božičany 76, 36226 Božičany",50.258257,12.769435,https://zsamsbozicany.cz/cs
-106,063690,"Staromlýnská 34/29, 36215 Březová",50.19475,12.867383,https://www.msbrezova-ukv.cz/
-107,024589,"U Potoka 120, 36263 Dalovice",50.249885,12.896708,https://zsmsdalovice.cz/cs
-108,055531,"Na Špičáku 292, 36453 Chyše",50.105917,13.252313,https://www.ms-zs-chyse.cz/
-109,031054,"Komenského 48/7, 36007 Karlovy Vary",50.211556,12.827452,https://www.materinkykv.cz/
-110,063568,"Krušnohorská 740/16, 36010 Karlovy Vary",50.238111,12.866565,https://www.2mskv.cz/
-111,063533,"1. máje 58/1, 36006 Karlovy Vary",50.226847,12.836303,https://skoladvory.wixsite.com/uvod/
-112,063622,"Kollárova 553/19, 36009 Karlovy Vary",50.236941,12.886425,https://www.zskomenskeho-kv.cz/
-113,308773,"Konečná 917/25, 36005 Karlovy Vary",50.239004,12.852254,https://zskonecnakv.cz/cs
-114,063568,"Krušnohorská 735/11, 36010 Karlovy Vary",50.23853,12.86568,https://zsruzovyvrch.edupage.org/
-115,063436,"Libušina 1032/31, 36001 Karlovy Vary",50.221492,12.88793,https://jazkvary.edupage.org/
-116,063461,"Moskevská 1117/25, 36001 Karlovy Vary",50.228134,12.864767,https://zsdukla.cz/cs
-117,063487,"Poštovní 1743/19, 36001 Karlovy Vary",50.225636,12.852338,https://www.zskvary.cz/
-118,063550,"Šmeralova 336/15, 36005 Karlovy Vary",50.23272,12.859583,https://www.zsazus.cz/
-119,301981,"Truhlářská 19, 36017 Karlovy Vary",50.241438,12.83529,https://www.zstruhlarska.cz/
-120,063614,"Mozartova 346/7, 36020 Karlovy Vary",50.233857,12.88334,https://www.zsdys.cz/cs/
-121,063550,"Šmeralova 489/32, 36005 Karlovy Vary",50.232556,12.862533,https://www.zusad.cz/
-122,308773,"Čankovská 35/9, 36005 Karlovy Vary",50.236092,12.848826,https://www.ddmkv.cz/
-123,068560,"Kolová 97, 36214 Kolová",50.187225,12.902108,http://www.zskolova.cz/
-124,073741,"Krásné Údolí 77, 36401 Krásné Údolí",50.071528,12.920343,https://www.krasneudoli.cz/mesto/materska-skola
-125,078697,"Radošov 75, 36272 Kyselka",50.264583,12.994401,https://zskyselka.edupage.org/
-126,102628,"Husova 547, 36221 Nejdek",50.321326,12.725603,https://www.msnejdekhusova.cz/
-127,302031,"Lipová 1192, 36222 Nejdek",50.318117,12.743419,https://www.ms-lipova-nejdek.cz/
-128,102628,"Nerudova 930, 36221 Nejdek",50.323824,12.73373,https://www.skolkakrizak.cz/
-129,302015,"Závodu míru 1247, 36221 Nejdek",50.327232,12.729458,https://msnejdek.cz/
-130,302031,"Karlovarská 1189, 36222 Nejdek",50.319335,12.745632,https://www.zskarlovarska.cz/
-131,102628,"náměstí Karla IV. 423, 36221 Nejdek",50.322196,12.730085,https://www.zsnejnam.cz/
-132,102628,"Dvořákova 367, 36221 Nejdek",50.324985,12.731671,https://zusnejdek.cz/
-133,105244,"Mezirolí 67, 36225 Nová Role",50.271879,12.816054,https://msmeziroli.estranky.cz/
-134,105252,"Rolavská 234/16, 36225 Nová Role",50.273037,12.784471,https://msnovarole.cz/
-135,105252,"Školní 232/2, 36225 Nová Role",50.270924,12.783596,https://www.zsnovarole.cz/
-136,105252,"Chodovská 236/6, 36225 Nová Role",50.270456,12.784168,https://www.ddmnovarole.cz/
-137,105252,"Chodovská 236/6, 36225 Nová Role",50.270456,12.784168,https://www.zusnovarole.cz/
-138,116599,"Děpoltovická 71, 36261 Otovice",50.25562,12.871188,https://www.skolaplnapohody.cz/
-139,157279,"Stružná 58, 36472 Stružná",50.18869,13.006633,https://www.msstruzna.cz/
-140,162311,"Šemnice 29, 36272 Kyselka",50.239627,12.972222,https://mssemnice.estranky.cz/
-141,163210,"Štědrá 49, 36451 Štědrá",50.058187,13.112701,https://zsamsstedra.cz/cs
-142,167941,"Sídliště 429, 36401 Toužim",50.061689,12.985374,https://www.slunickotouzim.cz/
-143,167959,"Plzeňská 395, 36401 Toužim",50.057611,12.990814,https://zstouzim.cz/
-144,167959,"Plzeňská 395, 36401 Toužim",50.057611,12.990814,http://www.zsamstouzim.cz
-145,167959,"Plzeňská 395, 36401 Toužim",50.057611,12.990814,https://www.zustouzim.cz/
-146,175706,"Útvina 153, 36401 Toužim",50.069442,12.958331,https://www.zsutvina.cz/
-147,176583,"Podbořanská 32, 36455 Valeč",50.173947,13.255241,https://www.mszsvalec.cz/
-148,197769,"Poděbradova 396, 36452 Žlutice",50.088693,13.160103,https://www.mszlutice.cz/
-149,197769,"Poděbradova 307, 36452 Žlutice",50.087661,13.158952,https://zszlutice.edupage.org/
-150,000019,"Blatenská 425, 36235 Abertamy",50.36846,12.81531,https://www.zsabertamy.cz/
-151,042382,"Komenského 261, 36237 Horní Blatná",50.390433,12.773878,https://zsamshb.cz/
-152,048518,"Mlýnská 231, 36233 Hroznětín",50.309567,12.875801,https://mshroznetin.cz/
-153,048518,"Sídliště 310, 36233 Hroznětín",50.312164,12.871077,https://www.zshroznetin.net/
-154,308765,"Husova 992, 36251 Jáchymov",50.363446,12.930834,https://www.zsjachymov.eu/
-155,184535,"Jakubov 93, 36301 Vojkovice",50.30908,13.030585,https://www.msjakubov.cz/
-156,093131,"Merklín 86, 36234 Merklín",50.328948,12.862028,https://www.msmerklin-kv.cz/
-157,093131,"Merklín 31, 36234 Merklín",50.327178,12.861942,https://www.skolamerklin.cz/
-158,308790,"Halasova 765, 36301 Ostrov",50.304343,12.948187,https://www.mshalasova.cz/
-159,308790,"Krušnohorská 766, 36301 Ostrov",50.303463,12.952184,https://www.mskrusnohorska.cz/
-160,115894,"Masarykova 1195, 36301 Ostrov",50.312992,12.948927,https://www.masarykovams.cz/
-161,115894,"Palackého 1045, 36301 Ostrov",50.310615,12.949456,https://www.mspalackeho.cz/
-162,115894,"Májová 997, 36301 Ostrov",50.311988,12.951065,http://www.3zsostrov.cz/
-163,308790,"Masarykova 1289, 36301 Ostrov",50.305955,12.945047,https://www.1zsostrov.cz/
-164,115908,"Myslbekova 996, 36301 Ostrov",50.308418,12.952755,https://www.zsamsostrov.net/
-165,115894,"Masarykova 717, 36301 Ostrov",50.311052,12.946662,https://zusostrov.cz/
-166,115886,"Školní 231, 36301 Ostrov",50.305269,12.937627,https://www.mddmostrov.cz/
-167,119318,"Karlovarská 118, 36236 Pernink",50.364921,12.784424,https://www.zsamspernink.cz/
-168,126519,"Potůčky 94, 36238 Potůčky",50.427836,12.737945,https://www.zspotucky.cz/
-169,177946,"Velichov 132, 36301 Ostrov",50.280303,13.007113,https://www.velichov.cz/materska-skola
-170,156442,"Stráž nad Ohří 101, 36274 Stráž nad Ohří",50.338428,13.050276,https://www.ms-straz.cz/
-171,060437,"Jindřichovice 232, 35801 Jindřichovice",50.281966,12.602613,https://skolajindrichovice.cz/
-172,327972,"Barvířská 1771, 35801 Kraslice",50.333413,12.50154,https://www.msbarvicka.cz/
-173,073270,"B. Němcové 1685/10, 35801 Kraslice",50.335024,12.504634,https://msbnemcove.estranky.cz/
-174,073288,"Lipová cesta 1091/17, 35801 Kraslice",50.332573,12.515283,https://www.mszamecek.cz/
-175,073296,"U Elektrárny 1777, 35801 Kraslice",50.319372,12.517819,https://www.msuelektrarny.cz/cs
-176,073288,"Havlíčkova 1717, 35801 Kraslice",50.33237,12.515958,https://www.skolakraslice.cz/
-177,073296,"Dukelská 1122/53, 35801 Kraslice",50.324826,12.516058,https://www.zs2kraslice.cz/
-178,327972,"Opletalova 1121/1, 35801 Kraslice",50.334228,12.502529,https://www.zspskraslice.cz/
-179,073296,"Pohraniční stráže 67, 35801 Kraslice",50.328845,12.510445,https://www.zuskraslice.cz/
-180,073288,"Havlíčkova 1286/59, 35801 Kraslice",50.332365,12.517335,https://www.ddmkraslice.cz/
-181,110981,"Smetanova 1, 35707 Oloví",50.245479,12.560256,https://www.zsamsolovi.cz/
-182,141526,"Nová Plzeň 673, 35701 Rotava",50.302436,12.559766,https://zsms.rotava.cz/
-183,014613,"Komenského 11, 35761 Březová",50.14676,12.643175,https://skolka-komenskeho.cz/
-184,014613,"Smetanova 218, 35761 Březová",50.145953,12.648239,https://ms-brezova.cz/
-185,014613,"Komenského 232, 35761 Březová",50.146118,12.645707,https://www.zs-brezova.cz/
-186,015881,"Bukovany 145, 35755 Bukovany",50.162544,12.573856,https://www.ms-bukovany.cz/
-187,015881,"Bukovany 146, 35755 Bukovany",50.162864,12.57288,https://www.zsbukovany.eu/
-188,017795,"Citice 200, 35601 Citice",50.158609,12.615559,https://www.mscitice.cz/
-189,152307,"Šafaříkova 17, 35604 Dolní Rychnov",50.16419,12.644262,https://www.msdolnirychnov.cz/
-190,036331,"Karla Čapka 769, 35709 Habartov",50.183753,12.545176,https://www.msduhova.cz/
-191,036331,"Okružní 111, 35709 Habartov",50.181376,12.551053,https://www.skolkahabartov.cz/
-192,036331,"Karla Čapka 119, 35709 Habartov",50.184746,12.549779,https://www.mestohabartov.cz/zakladni-skola-habartov-karla-capka-119-okres-sokolov/os-1013
-193,036331,"Komenského 312, 35709 Habartov",50.179141,12.550302,https://www.zushabartov.cz/
-194,309061,"Dlouhá 620/1, 35731 Horní Slavkov",50.138554,12.803228,https://www.ms-uslunicka.cz/cs
-195,309079,"Sportovní 713, 35731 Horní Slavkov",50.139244,12.795289,https://mssportovni.estranky.cz/
-196,044059,"Nádražní 683, 35731 Horní Slavkov",50.139858,12.80697,https://www.zsnadraznihornislavkov.cz/
-197,309052,"Školní 786, 35731 Horní Slavkov",50.136599,12.793452,https://www.hornislavkov.cz/mesto/mestske-organizace/skoly-a-skolska-zarizeni-/
-198,044059,"Školní náměstí 214, 35731 Horní Slavkov",50.139742,12.808725,https://www.zushslavkov.cz/
-199,309061,"Poštovní 662/4, 35731 Horní Slavkov",50.137439,12.799264,http://www.ddmhornislavkov.cz/
-200,053732,"Nerudova 915, 35735 Chodov",50.236807,12.744442,https://mschodov.cz/
-201,309117,"Smetanova 738, 35735 Chodov",50.241546,12.745705,https://www.zschodov.cz/
-202,309117,"Školní 697, 35735 Chodov",50.241344,12.742939,https://zs2chodov.cz/
-203,302406,"Husova 788, 35735 Chodov",50.244745,12.743211,https://zs3chodov.cz/
-204,052175,"Dukelských hrdinů 338, 35735 Chodov",50.239251,12.747213,https://www.zus-chodov.cz/
-205,309117,"Husova 263, 35735 Chodov",50.241939,12.744696,https://ddmchodov.cz/
-206,072265,"Krajková 22, 35708 Krajková",50.216153,12.535333,https://www.skola-krajkova.cz/
-207,072681,"Lázeňská 86, 35741 Královské Poříčí",50.192851,12.679694,https://mskralovskeporici.estranky.cz/
-208,072681,"Dlouhá 63, 35741 Královské Poříčí",50.188069,12.672134,https://www.zskralovskeporici.cz/
-209,073814,"Kladenská 210, 35747 Krásno",50.111095,12.790398,https://www.mskrasno.cz/
-210,078620,"Zahradní 385/3, 35751 Kynšperk nad Ohří",50.116323,12.534398,https://mskynsperk.estranky.cz/
-211,078620,"U Pivovaru 367/3, 35751 Kynšperk nad Ohří",50.123196,12.53313,https://www.mskynsperk.cz/
-212,078620,"Jana A. Komenského 540/7, 35751 Kynšperk nad Ohří",50.118871,12.533253,http://www.zs-kynsperk.cz/
-213,078620,"Sokolovská 511/29, 35751 Kynšperk nad Ohří",50.123627,12.53089,http://www.zuskynsperk.cz/
-214,081698,"Libavské Údolí 109, 35751 Kynšperk nad Ohří",50.126788,12.553433,https://www.zslu.cz/
-215,323691,"Sportovní 561, 35733 Loket",50.192342,12.740007,https://msloket.cz/
-216,086517,"T. G. Masaryka 128/2, 35733 Loket",50.187507,12.755681,https://www.zsloket.cz/
-217,086622,"Kraslická 36, 35704 Lomnice",50.212089,12.630349,https://www.mslomnice.cz/
-218,086622,"Školní 234, 35601 Lomnice",50.211506,12.631071,https://www.lomnicezs.cz/
-219,106674,"Sklářská 510, 35734 Nové Sedlo",50.210018,12.742569,https://www.msnovesedlo.cz/
-220,106682,"Masarykova 425, 35734 Nové Sedlo",50.20737,12.739108,https://www.zs-mestonovesedlo.cz/
-221,142140,"Rovná 36, 35601 Rovná",50.104992,12.667248,https://www.skolarovna.cz/
-222,152234,"Pionýrů 1344, 35601 Sokolov",50.181676,12.64886,https://www.nejskolka.cz/
-223,152251,"K. H. Borovského 1527, 35601 Sokolov",50.178614,12.650428,https://msborovskeho.cz/
-224,152285,"Marie Majerové 1650, 35601 Sokolov",50.175869,12.670755,https://www.mssomajerova.cz/
-225,152277,"Vítězná 725, 35601 Sokolov",50.174863,12.64481,https://www.barevnyklicek.cz/
-226,152226,"Vrchlického 80, 35601 Sokolov",50.178688,12.639916,https://msvrchlickeho.webnode.cz/
-227,302449,"Alšova 1746, 35601 Sokolov",50.174131,12.673516,https://www.msalsovasokolov.cz/
-228,302449,"Kosmonautů 1881, 35601 Sokolov",50.172321,12.666624,https://www.mskosmonautu.cz/
-229,152234,"Pionýrů 1614, 35601 Sokolov",50.182094,12.645845,https://1zs-sokolov.cz/
-230,152226,"Rokycanova 258, 35601 Sokolov",50.182034,12.642587,https://2zs.sokolov.cz/
-231,152277,"Běžecká 2055, 35601 Sokolov",50.171303,12.647605,https://www.zs-sokolov.cz/index.php?type=Post&id=8
-232,302449,"Švabinského 1702, 35601 Sokolov",50.172971,12.671041,https://www.6zs-sokolov.cz/
-233,327999,"Křižíkova 1916, 35601 Sokolov",50.174528,12.665667,https://www.zs8so.cz/
-234,152226,"Staré náměstí 37, 35601 Sokolov",50.181331,12.639671,https://www.zussokolov.cz/
-235,152277,"Spartakiádní 1937, 35601 Sokolov",50.171478,12.650551,https://www.ddmsokolov.cz/
-236,154725,"Zámecká 100, 35746 Staré Sedlo",50.183259,12.714918,https://msstaresedlo.estranky.cz/
-237,160024,"Pohraniční stráže 81, 35703 Svatava",50.190632,12.6267,https://www.skolasvatava.cz/
-238,081701,"Šabina 80, 35601 Sokolov",50.135751,12.583547,https://ms-sabina.estranky.cz/clanky/o-nas/informace-o-materske-skole.html
-239,182401,"Vintířov 170, 35744 Vintířov",50.232233,12.718559,https://www.materska-skola-vintirov.cz/
-240,182401,"Vintířov 65, 35735 Vintířov",50.233641,12.716801,https://skolavintirov.cz/
-241,050920,"Jánské náměstí 256/15, 35001 Cheb",50.081327,12.367883,http://www.schs.cz/
-242,063703,"nám. V. Řezáče 136/5, 36009 Karlovy Vary",50.235134,12.880333,https://soapodnikatel.cz/
-243,063444,"T. G. Masaryka 559/1, 36001 Karlovy Vary",50.228944,12.874078,https://www.trivis-kv.cz/
-244,308773,"Konečná 908/21, 36005 Karlovy Vary",50.240108,12.852584,https://www.soskv.cz/
-245,063428,"Mírové náměstí 316/2, 36091 Karlovy Vary",50.220017,12.878589,https://www.pupp.cz/spv
-246,091588,"Tyršova 438/19, 35301 Mariánské Lázně",49.966149,12.699433,https://www.facebook.com/p/M%C5%A0-Pram%C3%ADnek-100057190611718/
-247,091561,"Mariánské Lázně 569, 35301 Mariánské Lázně",49.972377,12.722912,http://www.jezdeckaakademie.cz/
-248,152269,"Hornická 1569, 35605 Sokolov",50.17594,12.658735,https://www.e-soas.cz/
-249,302449,"Mánesova 1672, 35601 Sokolov",50.174063,12.675284,https://www.skolamanesova.cz/
-250,063444,"Krále Jiřího 1341/4, 36001 Karlovy Vary",50.226197,12.875426,https://msbenedikt.cz/
-251,031054,"Studentská 312/65, 36007 Karlovy Vary",50.209568,12.826334,https://msmoudrasova.cz/
-252,031054,"Svatošská 269/21, 36007 Karlovy Vary",50.20632,12.82253,https://www.montessori-elipsa.cz/mselipsa/
-253,152234,"Jednoty 1628, 35101 Sokolov",50.183734,12.645531,https://www.sokorest.cz/nase-sluby/skolni-stravovani
-254,031054,"Modenská 150/15, 36007 Karlovy Vary",50.210171,12.828019,https://wlastovka.cz/
-255,091561,"Poštovní 160/17, 35301 Mariánské Lázně",49.971208,12.704136,https://www.ctyrlistekml.cz/
-256,050920,"26. dubna 2715/7, 35002 Cheb",50.076375,12.370009,https://cheb.diakonie.cz/
-257,000540,"Plzeňská 1985/10, 35201 Aš",50.21701,12.193472,https://www.euroinstitut.cz/euroinstitut-karlovarsky-kraj/
-258,197769,"Jiráskova 344, 36452 Žlutice",50.091067,13.16026,http://www.ddszlutice.cz/
-259,332691,"Slovenská 477/5, 36001 Karlovy Vary",50.21378,12.88048,https://carlsbadmontessori.cz/
-260,302449,"Mánesova 1672, 35601 Sokolov",50.174063,12.675284,https://www.facebook.com/carolina.school/
-261,050920,"Divadelní náměstí 554/8, 35002 Cheb",50.077056,12.366726,https://waldorfcheb.cz/
-262,031054,"Komenského 97/6, 36007 Karlovy Vary",50.203689,12.82514,https://svatosky-skolka.cz/
-263,050881,"Dvůr pod lipami 1766/1, 35002 Cheb",50.083097,12.351716,https://lesni-klub-pod-lipami-cheb.webnode.cz/
-264,000540,"Hlavní 2514/106, 35201 Aš",50.216642,12.194256,https://neonovaskola.cz/
-265,152226,"Rooseweltova 254, 35601 Sokolov",50.180888,12.640352,https://www.skolavila.cz/
-266,152234,"Jednoty 1620, 35601 Sokolov",50.182787,12.645863,https://www.vsmt.cz/
-267,152226,"Komenského 759, 35601 Sokolov",50.178288,12.639017,https://www.skolamv.cz/studujici/stredni-policejni-skola-sokolov.html
-268,052175,"Komenského 273, 35735 Chodov",50.239075,12.749481,https://avantechchodov.cz/
-269,063533,"Chebská 38/5, 36006 Karlovy Vary",50.230884,12.840273,https://www.veselaveda.cz/
+redizo,nazev,kod_zsj,adresa,lat,lon,web
+600022854,"Základní škola a střední škola Karlovy Vary, příspěvková organizace",153851,"Vančurova 83/2, 36017 Karlovy Vary",50.248111,12.831028,https://www.specskoly.cz
+600008975,"Gymnázium Aš, příspěvková organizace",000540,"Hlavní 2514/106, 35201 Aš",50.216618,12.194203,https://www.gymas.cz
+600009301,"Střední škola logistická Dalovice, příspěvková organizace",024589,"Hlavní 114/29, 36263 Dalovice",50.246902,12.892417,https://www.logistickaskola.cz
+600019632,"Střední zdravotnická škola a vyšší odborná škola Cheb, příspěvková organizace",050920,"Hradební 58/10, 35002 Cheb",50.078765,12.366493,https://www.szsavoscheb.cz
+600009009,"Gymnázium Cheb, příspěvková organizace",050938,"Nerudova 2283/7, 35002 Cheb",50.076275,12.362412,https://www.gymcheb.cz
+600170462,"Integrovaná střední škola Cheb, příspěvková organizace",050920,"Obrněné brigády 2258/6, 35002 Cheb",50.07735,12.366284,https://www.iss-cheb.cz
+600009190,"Obchodní akademie, vyšší odborná škola cestovního ruchu a jazyková škola s právem státní jazykové zkoušky Karlovy Vary, příspěvková organizace",063592,"Bezručova 1312/17, 36001 Karlovy Vary",50.231556,12.874274,https://www.oakv.cz
+600009122,"Střední pedagogická škola, gymnázium a vyšší odborná škola Karlovy Vary, příspěvková organizace",063622,"Lidická 455/40, 36001 Karlovy Vary",50.232575,12.88918,https://www.pedgym-kv.cz
+600009262,"První české gymnázium v Karlových Varech, příspěvková organizace",063622,"Národní 445/25, 36001 Karlovy Vary",50.233994,12.887607,https://www.gymkvary.cz
+600009203,"Střední uměleckoprůmyslová škola keramická a sklářská Karlovy Vary, příspěvková organizace",063550,"nám. 17. listopadu 710/12, 36005 Karlovy Vary",50.234883,12.85184,https://supskv.cz/
+600009106,"Střední škola stravování a služeb Karlovy Vary, příspěvková organizace",063452,"Ondřejská 1122/56, 36001 Karlovy Vary",50.227672,12.881997,https://www.ssstravovani.cz
+600019641,"Střední zdravotnická škola a vyšší odborná škola zdravotnická Karlovy Vary, příspěvková organizace",063444,"Poděbradská 1247/2, 36001 Karlovy Vary",50.226864,12.87576,https://www.zdravkakv.cz
+600009319,"Střední odborná škola stavební Karlovy Vary, příspěvková organizace",063622,"nám. K. Sabiny 159/16, 36001 Karlovy Vary",50.236186,12.885361,https://www.stavebniskolakv.cz
+600009033,"Hotelová škola Mariánské Lázně, příspěvková organizace",091588,"Komenského 449/2, 35301 Mariánské Lázně",49.962248,12.700109,https://www.hotelovaskola.cz
+600008991,"Gymnázium a obchodní akademie Mariánské Lázně, příspěvková organizace",091570,"Ruská 355/7, 35301 Mariánské Lázně",49.973218,12.701646,https://www.goaml.cz
+600009084,"Střední průmyslová škola Ostrov, příspěvková organizace",308790,"Klínovecká 1197, 36301 Ostrov",50.304766,12.952136,https://www.spsostrov.cz
+600009297,"Gymnázium Ostrov, příspěvková organizace",115916,"Studentská 1205, 36301 Ostrov",50.302827,12.952738,https://www.gymostrov.cz
+600009882,"Gymnázium Sokolov a Krajské vzdělávací centrum, příspěvková organizace",152277,"Husitská 2053, 35601 Sokolov",50.176253,12.640226,https://www.gymso.cz
+600170527,"Integrovaná střední škola technická a ekonomická Sokolov, příspěvková organizace",152234,"Jednoty 1620, 35601 Sokolov",50.182788,12.644488,https://www.isste.cz
+651012988,"Střední škola živnostenská Sokolov, příspěvková organizace",152200,"Žákovská 716, 35601 Sokolov",50.186655,12.641212,https://www.zivnostenska-sokolov.cz
+600009271,"Střední lesnická škola Žlutice, příspěvková organizace",197769,"Žižkov 345, 36452 Žlutice",50.096452,13.16005,https://www.slszlutice.cz
+600066584,"Základní škola a střední škola Aš, příspěvková organizace",000515,"Studentská 1612/13, 35201 Aš",50.228133,12.183502,https://www.zspsas.eu/
+600073017,"Střední škola, základní škola a mateřská škola Kraslice, příspěvková organizace",073288,"Havlíčkova 1717, 35801 Kraslice",50.33237,12.515958,https://www.skolakraslice.cz/
+600009076,"Svobodná chebská škola, základní škola a gymnázium s.r.o.",050920,"Jánské náměstí 256/15, 35001 Cheb",50.081327,12.367883,http://www.schs.cz/
+600009211,"Soukromá obchodní akademie Podnikatel, spol. s r.o. ",063703,"nám. V. Řezáče 136/5, 36009 Karlovy Vary",50.235134,12.880333,https://soapodnikatel.cz/
+650003969,"TRIVIS - Střední škola veřejnoprávní Karlovy Vary, s.r.o. ",063444,"T. G. Masaryka 559/1, 36001 Karlovy Vary",50.228944,12.874078,https://www.trivis-kv.cz/
+600009238,"Střední odborná škola Karlovy Vary, s.r.o.",308773,"Konečná 908/21, 36005 Karlovy Vary",50.240108,12.852584,https://www.soskv.cz/
+651011434,JEZDECKÁ AKADEMIE - střední odborná škola Mariánské Lázně s.r.o.,091561,"Mariánské Lázně 569, 35301 Mariánské Lázně",49.972377,12.722912,http://www.jezdeckaakademie.cz/
+600009904,"Soukromá obchodní akademie Sokolov, s.r.o.",152269,"Hornická 1569, 35605 Sokolov",50.17594,12.658735,https://www.e-soas.cz/
+610100718,"Škola Můj Projekt Mánesova - Gymnázium, základní škola a mateřská škola s.r.o.",302449,"Mánesova 1672, 35601 Sokolov",50.174063,12.675284,https://www.skolamanesova.cz/
+691009091,Střední škola Euroinstitut v Karlovarském kraji,000540,"Plzeňská 1985/10, 35201 Aš",50.21701,12.193472,https://www.euroinstitut.cz/euroinstitut-karlovarsky-kraj/
+690000014,Vojenská střední škola a Vyšší odborná škola Ministerstva obrany v Moravské Třebové (pracoviště Sokolov),152234,"Jednoty 1620, 35601 Sokolov",50.182787,12.645863,https://www.vsmt.cz/
+680000011,Vyšší policejní škola a Střední policejní škola Ministerstva vnitra v Praze (pracoviště Sokolov),152226,"Komenského 759, 35601 Sokolov",50.178288,12.639017,https://www.skolamv.cz/studujici/stredni-policejni-skola-sokolov.html
+691018821,"Lyceum Avantech - střední odborná škola, příspěvková organizace",052175,"Komenského 273, 35735 Chodov",50.239075,12.749481,https://avantechchodov.cz/
