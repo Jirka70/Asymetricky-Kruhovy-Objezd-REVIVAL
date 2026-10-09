@@ -1,0 +1,5246 @@
+{
+  "source": "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/1/query",
+  "requested_address_codes": [
+    "11841486",
+    "11851678",
+    "11855479",
+    "11858427",
+    "11858974",
+    "11860944",
+    "11862092",
+    "11862408",
+    "11863871",
+    "11897040",
+    "11902850",
+    "11904747",
+    "11908904",
+    "11919051",
+    "11928590",
+    "11930713",
+    "11934514",
+    "11935197",
+    "11935791",
+    "11936363",
+    "11936916",
+    "11936967",
+    "11939567",
+    "11950625",
+    "11955236",
+    "11959304",
+    "11966475",
+    "11968427",
+    "11968958",
+    "11969466",
+    "11969539",
+    "11969610",
+    "11977191",
+    "11982284",
+    "11996064",
+    "12014800",
+    "12024996",
+    "12025038",
+    "12025054",
+    "12029157",
+    "12031101",
+    "12032573",
+    "12037451",
+    "12037478",
+    "12037516",
+    "12039535",
+    "12039926",
+    "12041173",
+    "12041661",
+    "12042552",
+    "12042960",
+    "12968994",
+    "12969664",
+    "12969885",
+    "12970336",
+    "12970352",
+    "12970522",
+    "12972720",
+    "12973017",
+    "12975150",
+    "14848350",
+    "14851831",
+    "14852187",
+    "14859777",
+    "20667141",
+    "20671008",
+    "20681569",
+    "20683049",
+    "20683111",
+    "20683120",
+    "20683642",
+    "20685050",
+    "20685718",
+    "20688768",
+    "20689837",
+    "20689993",
+    "20691416",
+    "20691718",
+    "20692196",
+    "20693516",
+    "20693656",
+    "20702043",
+    "20702418",
+    "20703929",
+    "20704658",
+    "20704755",
+    "20705646",
+    "20705913",
+    "20706669",
+    "20706774",
+    "20707657",
+    "20707991",
+    "20710518",
+    "20711051",
+    "20711166",
+    "20718314",
+    "20721366",
+    "20722681",
+    "20724047",
+    "20724268",
+    "20724365",
+    "20724951",
+    "20725515",
+    "20729499",
+    "20729600",
+    "20729634",
+    "20730039",
+    "20730781",
+    "20730888",
+    "20731019",
+    "20731060",
+    "20731159",
+    "20731329",
+    "20731604",
+    "20731663",
+    "20731728",
+    "20732121",
+    "20732261",
+    "20732627",
+    "20732686",
+    "20732805",
+    "20732872",
+    "20732899",
+    "20733208",
+    "20733330",
+    "20733534",
+    "20733771",
+    "20733909",
+    "20733933",
+    "20733984",
+    "20734191",
+    "20734565",
+    "20734701",
+    "20734981",
+    "20735006",
+    "20735057",
+    "20735880",
+    "20736053",
+    "20736584",
+    "20736711",
+    "20737084",
+    "20737190",
+    "20737211",
+    "20737246",
+    "20737947",
+    "20738013",
+    "20738030",
+    "20738307",
+    "20738471",
+    "20738480",
+    "20738803",
+    "20738943",
+    "20739222",
+    "20739273",
+    "20740026",
+    "20740344",
+    "20740956",
+    "20741073",
+    "20741677",
+    "20744692",
+    "20745699",
+    "20745851",
+    "20745869",
+    "20745907",
+    "20745982",
+    "20746016",
+    "20746156",
+    "20784716",
+    "20784937",
+    "20785046",
+    "20785461",
+    "20785488",
+    "20787235",
+    "20787472",
+    "20787715",
+    "20788398",
+    "20789050",
+    "20789076",
+    "20790759",
+    "20797281",
+    "20797397",
+    "20798725",
+    "20800878",
+    "20800916",
+    "20845367",
+    "20845405",
+    "20860765",
+    "20867697",
+    "20872429",
+    "20872585",
+    "20875762",
+    "20889925",
+    "20890541",
+    "20890559",
+    "20891911",
+    "20895445",
+    "20895852",
+    "20895895",
+    "20896808",
+    "20897791",
+    "20900732",
+    "20901615",
+    "20903928",
+    "20909632",
+    "20910762",
+    "20913222",
+    "20914318",
+    "20915101",
+    "20915586",
+    "20915799",
+    "20926308",
+    "20926367",
+    "20926511",
+    "20926979",
+    "20926995",
+    "20928017",
+    "20928688",
+    "20929129",
+    "20940629",
+    "20941404",
+    "20948921",
+    "20957106",
+    "20958480",
+    "20967896",
+    "20971397",
+    "25020285",
+    "25020609",
+    "25020641",
+    "25020901",
+    "25021028",
+    "25021036",
+    "25021044",
+    "25021176",
+    "25021265",
+    "25021346",
+    "25021478",
+    "25021761",
+    "25022032",
+    "25022181",
+    "25022199",
+    "25022725",
+    "25022849",
+    "25177176",
+    "25203142",
+    "25274708",
+    "25274791",
+    "25297945",
+    "25303651",
+    "25305221",
+    "25420844",
+    "25477536",
+    "25479237",
+    "25682369",
+    "25764128",
+    "25791559",
+    "25791575",
+    "25808176",
+    "2582732",
+    "25829866",
+    "2584212",
+    "25883780",
+    "2593190",
+    "2594293",
+    "2595061",
+    "2599732",
+    "2608545",
+    "26125463",
+    "26133016",
+    "2614171",
+    "26245469",
+    "26284162",
+    "26294885",
+    "26344467",
+    "26369699",
+    "26372282",
+    "26439859",
+    "26466538",
+    "26536072",
+    "26642751",
+    "26697793",
+    "26697807",
+    "26734753",
+    "26740583",
+    "26758636",
+    "26764016",
+    "26842629",
+    "26844907",
+    "26864789",
+    "26864843",
+    "27066983",
+    "27111016",
+    "27114058",
+    "27114066",
+    "27174531",
+    "27174638",
+    "27175464",
+    "27207200",
+    "27272851",
+    "27325709",
+    "27357490",
+    "27405869",
+    "27413004",
+    "27450503",
+    "27459845",
+    "27514595",
+    "27581918",
+    "27683532",
+    "27689425",
+    "27689727",
+    "27697410",
+    "27738477",
+    "27775330",
+    "27778401",
+    "27958752",
+    "27963578",
+    "28005848",
+    "28106172",
+    "28114922",
+    "28245997",
+    "28257766",
+    "28303733",
+    "28474597",
+    "30761344",
+    "30794854",
+    "31011691",
+    "31012019",
+    "31014429",
+    "3804691",
+    "3806341",
+    "3816923",
+    "3824349",
+    "3824829",
+    "3830403",
+    "3840115",
+    "3841073",
+    "3841715",
+    "40934624",
+    "40998649",
+    "41639715",
+    "42343160",
+    "42489091",
+    "70833184",
+    "71083901",
+    "72824123",
+    "72851147",
+    "72858478",
+    "73008567",
+    "73364550",
+    "73583472",
+    "73591041",
+    "74266942",
+    "74696017",
+    "74909720",
+    "75016974",
+    "75090376",
+    "75336286",
+    "75681391",
+    "78379270",
+    "79991317",
+    "79997780",
+    "80000206",
+    "80014762",
+    "80022257",
+    "80027569",
+    "80032429",
+    "80038748",
+    "80050258",
+    "80052990",
+    "80070746",
+    "80083786",
+    "80085289",
+    "80086325",
+    "80092330",
+    "80100199",
+    "80122165",
+    "80125385",
+    "80145034"
+  ],
+  "pages": [
+    {
+      "url": "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/1/query?where=kod+IN+%2811841486%2C11851678%2C11855479%2C11858427%2C11858974%2C11860944%2C11862092%2C11862408%2C11863871%2C11897040%2C11902850%2C11904747%2C11908904%2C11919051%2C11928590%2C11930713%2C11934514%2C11935197%2C11935791%2C11936363%2C11936916%2C11936967%2C11939567%2C11950625%2C11955236%2C11959304%2C11966475%2C11968427%2C11968958%2C11969466%2C11969539%2C11969610%2C11977191%2C11982284%2C11996064%2C12014800%2C12024996%2C12025038%2C12025054%2C12029157%2C12031101%2C12032573%2C12037451%2C12037478%2C12037516%2C12039535%2C12039926%2C12041173%2C12041661%2C12042552%2C12042960%2C12968994%2C12969664%2C12969885%2C12970336%2C12970352%2C12970522%2C12972720%2C12973017%2C12975150%2C14848350%2C14851831%2C14852187%2C14859777%2C20667141%2C20671008%2C20681569%2C20683049%2C20683111%2C20683120%2C20683642%2C20685050%2C20685718%2C20688768%2C20689837%2C20689993%2C20691416%2C20691718%2C20692196%2C20693516%2C20693656%2C20702043%2C20702418%2C20703929%2C20704658%2C20704755%2C20705646%2C20705913%2C20706669%2C20706774%2C20707657%2C20707991%2C20710518%2C20711051%2C20711166%2C20718314%2C20721366%2C20722681%2C20724047%2C20724268%29&outFields=kod%2Cadresa%2Cnespravny%2Cplatiod%2Cplatido&returnGeometry=true&outSR=4326&f=json",
+      "retrieved_at": "2026-10-09T22:04:13.345696+00:00",
+      "response": {
+        "displayFieldName": "nespravny",
+        "fieldAliases": {
+          "kod": "Kód adresního místa",
+          "adresa": "Adresa",
+          "nespravny": "Příznak nesprávnosti",
+          "platiod": "Začátek platnosti",
+          "platido": "Konec platnosti"
+        },
+        "geometryType": "esriGeometryPoint",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "kod",
+            "type": "esriFieldTypeInteger",
+            "alias": "Kód adresního místa"
+          },
+          {
+            "name": "adresa",
+            "type": "esriFieldTypeString",
+            "alias": "Adresa",
+            "length": 150
+          },
+          {
+            "name": "nespravny",
+            "type": "esriFieldTypeString",
+            "alias": "Příznak nesprávnosti",
+            "length": 1
+          },
+          {
+            "name": "platiod",
+            "type": "esriFieldTypeDate",
+            "alias": "Začátek platnosti",
+            "length": 8
+          },
+          {
+            "name": "platido",
+            "type": "esriFieldTypeDate",
+            "alias": "Konec platnosti",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "kod": 20689993,
+              "adresa": "Nad Dvorem 804/1, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1580256000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.838925733139636,
+              "y": 50.23615751962081
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20718314,
+              "adresa": "Závodu míru 636, 36221 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.733892191957302,
+              "y": 50.32683053258694
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11939567,
+              "adresa": "č.p. 178, 36001 Kolová",
+              "nespravny": null,
+              "platiod": 1691625600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.904470379246701,
+              "y": 50.18470367509782
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11862092,
+              "adresa": "Okružní 1580/57, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.179317181024711,
+              "y": 50.22108712769492
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11855479,
+              "adresa": "Hlavní 329/78, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.191109840489464,
+              "y": 50.21971839964792
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11862408,
+              "adresa": "Mánesova 1620/1, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.197683925758055,
+              "y": 50.21532347876596
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11902850,
+              "adresa": "Hlavní 28/20a, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1596499200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.894122199580822,
+              "y": 50.25025511173969
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11904747,
+              "adresa": "Široká 240/2, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1755734400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.895910326719347,
+              "y": 50.24663693765076
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11858974,
+              "adresa": "Selbská 1204/9, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.177851974011727,
+              "y": 50.21846273930375
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11863871,
+              "adresa": "Saská 1800/22, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.186572045263228,
+              "y": 50.2330483448831
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11968427,
+              "adresa": "Mostecká 50, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.885664342568967,
+              "y": 50.257316951363116
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11968958,
+              "adresa": "K Panelárně 115, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1574208000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.884546053069263,
+              "y": 50.25630516128341
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11969610,
+              "adresa": "Mostecká 187, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.887448652755388,
+              "y": 50.26280453813101
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11969466,
+              "adresa": "K Panelárně 172, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1441152000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88033017571835,
+              "y": 50.25650692421249
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11858427,
+              "adresa": "Okružní 1131/34, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.182557739078327,
+              "y": 50.21952588739686
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11908904,
+              "adresa": "Nivy 4, 36225 Děpoltovice",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.845529607466252,
+              "y": 50.280292229250726
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11936916,
+              "adresa": "Hamerská 152/1, 36001 Březová",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.871154381369129,
+              "y": 50.20711814169731
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11936363,
+              "adresa": "Keramická 92/6, 36001 Březová",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87102490136688,
+              "y": 50.196618071611724
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11936967,
+              "adresa": "č.p. 157, 36001 Březová",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.854643271754668,
+              "y": 50.19863212235415
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12014800,
+              "adresa": "č.p. 25, 36273 Vojkovice",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 13.01670681396277,
+              "y": 50.30381323449442
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20706669,
+              "adresa": "Na Výhledě 324/1, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.843526046669862,
+              "y": 50.24101353176365
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20705913,
+              "adresa": "Závodu míru 241/70, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573862400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.835344882175066,
+              "y": 50.24439264001663
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20706774,
+              "adresa": "Závodu míru 339/144, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.831994912951728,
+              "y": 50.2507970765122
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20704755,
+              "adresa": "Vančurova 83/2a, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1580256000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.831028742729472,
+              "y": 50.248111686160485
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20705646,
+              "adresa": "Závodu míru 208/46, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1510531200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.838446373433548,
+              "y": 50.24192825406704
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20671008,
+              "adresa": "Cihelny 7, 36464 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1633651200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.838120147671765,
+              "y": 50.17878884479605
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20711166,
+              "adresa": "Truhlářská 801/4, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1401840000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.834130600154152,
+              "y": 50.24237531126918
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20707657,
+              "adresa": "Jabloňová 441/12, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.834076100876805,
+              "y": 50.249507534828275
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20710518,
+              "adresa": "Truhlářská 737/2, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1401840000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.833773664590057,
+              "y": 50.24261196337014
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20707991,
+              "adresa": "Vančurova 477/9, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1458000000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.832042510329162,
+              "y": 50.24866860638679
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20711051,
+              "adresa": "Závodu míru 790/92, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1401840000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.831923610302974,
+              "y": 50.24560030020619
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20703929,
+              "adresa": "Rosnice 24, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.841628062431877,
+              "y": 50.24847103881749
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20683642,
+              "adresa": "Loketská 262/10, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1491350400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.815046749871144,
+              "y": 50.22655179410096
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20683049,
+              "adresa": "Kpt. Jaroše 195/5, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.834926464297583,
+              "y": 50.22838618538801
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20681569,
+              "adresa": "1. máje 27/49, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573257600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.830628872892195,
+              "y": 50.22483236810725
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20683111,
+              "adresa": "Říční 203/2, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.831872548224542,
+              "y": 50.218844031784236
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20683120,
+              "adresa": "Chebská 204/71, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.828719718976375,
+              "y": 50.22758704619901
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11919051,
+              "adresa": "Sídliště 310, 36233 Hroznětín",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.871060769727276,
+              "y": 50.312153288504916
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20689837,
+              "adresa": "Dolní Kamenná 788, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.851872692341601,
+              "y": 50.23159569044664
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20693656,
+              "adresa": "Dubová 246/8, Bohatice, 36004 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.879149139957379,
+              "y": 50.24624622090806
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20692196,
+              "adresa": "Kamenického 98/8, Bohatice, 36004 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87409483267792,
+              "y": 50.241376212991334
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20702043,
+              "adresa": "Sedlecká 72, Sedlec, 36010 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1715904000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.863464829628487,
+              "y": 50.241472574087
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20702418,
+              "adresa": "Šeříková 117, Sedlec, 36010 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.864095699988333,
+              "y": 50.244992120119626
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11897040,
+              "adresa": "č.p. 1, 36262 Boží Dar",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.92248735917094,
+              "y": 50.41079792478747
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11955236,
+              "adresa": "Mezirolí 4, 36225 Nová Role",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.826273608947563,
+              "y": 50.26814838772872
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11959304,
+              "adresa": "Tovární 242/12, 36225 Nová Role",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.776916335898864,
+              "y": 50.27034415521163
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11969539,
+              "adresa": "Na Vlečce 179, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1433203200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.868877998164775,
+              "y": 50.24993897105553
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11841486,
+              "adresa": "č.p. 435, 35132 Hazlov",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.277189539969074,
+              "y": 50.15742235307829
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12037451,
+              "adresa": "Krušnohorská 786, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.957837589555515,
+              "y": 50.304021854314584
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12039535,
+              "adresa": "Májová 997, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.951059870453618,
+              "y": 50.31199447549653
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12039926,
+              "adresa": "Lidická 1036, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.951296882817957,
+              "y": 50.30710861872438
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12037478,
+              "adresa": "Krušnohorská 788, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.959552580492101,
+              "y": 50.30406812703103
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12037516,
+              "adresa": "Krušnohorská 792, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.958233467794248,
+              "y": 50.30367736318297
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12031101,
+              "adresa": "Staré nám. 61, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.940659783859545,
+              "y": 50.30359958596672
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12041661,
+              "adresa": "Mořičovská 1210, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.948961468639064,
+              "y": 50.29977288407847
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12042960,
+              "adresa": "Vančurova 1340, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.958983871454995,
+              "y": 50.30748215720615
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12042552,
+              "adresa": "Masarykova 1299, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.946426860162356,
+              "y": 50.30917284953506
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12029157,
+              "adresa": "třída Dukelských hrdinů 1020, 36251 Jáchymov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.931892905597207,
+              "y": 50.36156049659917
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12024996,
+              "adresa": "K Lanovce 409, 36251 Jáchymov",
+              "nespravny": null,
+              "platiod": 1463702400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.934311617525209,
+              "y": 50.3646999201054
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20691718,
+              "adresa": "Jáchymovská 42/19, Bohatice, 36004 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1776038400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.86893074348386,
+              "y": 50.24196480849768
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12032573,
+              "adresa": "Mořičovská 251, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.963675475587603,
+              "y": 50.30039922855077
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11851678,
+              "adresa": "Tachovská Huť 11, 35301 Tři Sekery",
+              "nespravny": null,
+              "platiod": 1535932800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.597771865436306,
+              "y": 49.93618531505717
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20667141,
+              "adresa": "náměstí Míru 32, 36471 Bochov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 13.045825073299282,
+              "y": 50.15087188625869
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11928590,
+              "adresa": "Ke Kablu 298, 36453 Chyše",
+              "nespravny": null,
+              "platiod": 1386028800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 13.245720702537527,
+              "y": 50.10281500489398
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11977191,
+              "adresa": "č.p. 25, 36235 Potůčky",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.732648879358463,
+              "y": 50.42749847826267
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11950625,
+              "adresa": "č.p. 93, 36234 Merklín",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.866265868748808,
+              "y": 50.32840818631389
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11996064,
+              "adresa": "č.p. 3, 36452 Štědrá",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 13.112987876708404,
+              "y": 50.05838598833921
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20724047,
+              "adresa": "Nádražní 1267, 36221 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.733299193750048,
+              "y": 50.320651235507874
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20724268,
+              "adresa": "Soudní 1289, 36221 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.73069958510862,
+              "y": 50.323376788608705
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20721366,
+              "adresa": "Perninská 975, 36222 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.74131149006164,
+              "y": 50.32901364313876
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12975150,
+              "adresa": "Krapice 37, 35002 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.304586185064773,
+              "y": 50.11016211437135
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11934514,
+              "adresa": "č.p. 37, 36001 Hory",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.786082814961032,
+              "y": 50.215253241842156
+            }
+          },
+          {
+            "attributes": {
+              "kod": 14859777,
+              "adresa": "Čs. armády 17, 35801 Kraslice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.520503419188778,
+              "y": 50.31621110282129
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11935197,
+              "adresa": "č.p. 30, 36001 Jenišov",
+              "nespravny": null,
+              "platiod": 1456185600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.799766099246067,
+              "y": 50.22673563417233
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11935791,
+              "adresa": "č.p. 148, 36001 Jenišov",
+              "nespravny": null,
+              "platiod": 1552262400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.806568223909848,
+              "y": 50.222159505707054
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20704658,
+              "adresa": "Závodu míru 62/116, Stará Role, 36017 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.830041405457875,
+              "y": 50.24757475474622
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11982284,
+              "adresa": "č.p. 4, 36452 Pšov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 13.169698603738205,
+              "y": 50.05086574069379
+            }
+          },
+          {
+            "attributes": {
+              "kod": 14848350,
+              "adresa": "Pionýrská 43/4, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.523821302198774,
+              "y": 50.12315055437469
+            }
+          },
+          {
+            "attributes": {
+              "kod": 14851831,
+              "adresa": "Školní 587/5, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.5326138138408,
+              "y": 50.11743616426366
+            }
+          },
+          {
+            "attributes": {
+              "kod": 14852187,
+              "adresa": "Sokolovská 622/13, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.531084490371732,
+              "y": 50.120197503945015
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12970352,
+              "adresa": "Boženy Němcové 153/6, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.352008260607642,
+              "y": 50.1191948205288
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12972720,
+              "adresa": "Anglická 392/5a, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.348291881160241,
+              "y": 50.12055004550292
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12969885,
+              "adresa": "5. května 106/9, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.357432046388727,
+              "y": 50.118187462104935
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12969664,
+              "adresa": "Americká 84/4, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.348426609021073,
+              "y": 50.122922939649534
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12968994,
+              "adresa": "Národní 15/15, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.351256823314895,
+              "y": 50.11833090493983
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12970336,
+              "adresa": "Dr. Pohoreckého 151/3, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.354720804423012,
+              "y": 50.11724514813772
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12970522,
+              "adresa": "Kollárova 170/4, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.354764033753687,
+              "y": 50.121071372562646
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12973017,
+              "adresa": "Štekrův Mlýn 40, Horní Lomany, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.326213204849976,
+              "y": 50.14133829602197
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11930713,
+              "adresa": "Mariánská 161, 36301 Jáchymov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.887034452873042,
+              "y": 50.35636175978961
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12025038,
+              "adresa": "T. G. Masaryka 413, 36251 Jáchymov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.934199323929857,
+              "y": 50.35844397083696
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12025054,
+              "adresa": "T. G. Masaryka 415, 36251 Jáchymov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.93387040678858,
+              "y": 50.359430182135554
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20688768,
+              "adresa": "Čankovská 676/61, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.852023486840574,
+              "y": 50.24135171417721
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20685050,
+              "adresa": "Sokolovská 116/71, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1513209600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.858471299297216,
+              "y": 50.23363845679655
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20722681,
+              "adresa": "Mládežnická 1123, 36221 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.725924428338763,
+              "y": 50.317738236048605
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20693516,
+              "adresa": "Jáchymovská 232/96, Bohatice, 36004 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1655683200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.875708724924989,
+              "y": 50.2441279724978
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20685718,
+              "adresa": "Sokolovská 241/48, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.859998911879387,
+              "y": 50.233718062782195
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20691416,
+              "adresa": "Sokolovská 996/130, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.846221930736373,
+              "y": 50.23364134574295
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11966475,
+              "adresa": "Horní Žďár 31, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.934876603829744,
+              "y": 50.34288702888025
+            }
+          },
+          {
+            "attributes": {
+              "kod": 11860944,
+              "adresa": "Krajkářská 1448/15, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.1802861771767,
+              "y": 50.21705311873257
+            }
+          },
+          {
+            "attributes": {
+              "kod": 12041173,
+              "adresa": "U Nemocnice 1161, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.963832439467852,
+              "y": 50.312272113550215
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/1/query?where=kod+IN+%2820724365%2C20724951%2C20725515%2C20729499%2C20729600%2C20729634%2C20730039%2C20730781%2C20730888%2C20731019%2C20731060%2C20731159%2C20731329%2C20731604%2C20731663%2C20731728%2C20732121%2C20732261%2C20732627%2C20732686%2C20732805%2C20732872%2C20732899%2C20733208%2C20733330%2C20733534%2C20733771%2C20733909%2C20733933%2C20733984%2C20734191%2C20734565%2C20734701%2C20734981%2C20735006%2C20735057%2C20735880%2C20736053%2C20736584%2C20736711%2C20737084%2C20737190%2C20737211%2C20737246%2C20737947%2C20738013%2C20738030%2C20738307%2C20738471%2C20738480%2C20738803%2C20738943%2C20739222%2C20739273%2C20740026%2C20740344%2C20740956%2C20741073%2C20741677%2C20744692%2C20745699%2C20745851%2C20745869%2C20745907%2C20745982%2C20746016%2C20746156%2C20784716%2C20784937%2C20785046%2C20785461%2C20785488%2C20787235%2C20787472%2C20787715%2C20788398%2C20789050%2C20789076%2C20790759%2C20797281%2C20797397%2C20798725%2C20800878%2C20800916%2C20845367%2C20845405%2C20860765%2C20867697%2C20872429%2C20872585%2C20875762%2C20889925%2C20890541%2C20890559%2C20891911%2C20895445%2C20895852%2C20895895%2C20896808%2C20897791%29&outFields=kod%2Cadresa%2Cnespravny%2Cplatiod%2Cplatido&returnGeometry=true&outSR=4326&f=json",
+      "retrieved_at": "2026-10-09T22:04:13.935419+00:00",
+      "response": {
+        "displayFieldName": "nespravny",
+        "fieldAliases": {
+          "kod": "Kód adresního místa",
+          "adresa": "Adresa",
+          "nespravny": "Příznak nesprávnosti",
+          "platiod": "Začátek platnosti",
+          "platido": "Konec platnosti"
+        },
+        "geometryType": "esriGeometryPoint",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "kod",
+            "type": "esriFieldTypeInteger",
+            "alias": "Kód adresního místa"
+          },
+          {
+            "name": "adresa",
+            "type": "esriFieldTypeString",
+            "alias": "Adresa",
+            "length": 150
+          },
+          {
+            "name": "nespravny",
+            "type": "esriFieldTypeString",
+            "alias": "Příznak nesprávnosti",
+            "length": 1
+          },
+          {
+            "name": "platiod",
+            "type": "esriFieldTypeDate",
+            "alias": "Začátek platnosti",
+            "length": 8
+          },
+          {
+            "name": "platido",
+            "type": "esriFieldTypeDate",
+            "alias": "Konec platnosti",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "kod": 20739273,
+              "adresa": "Bělehradská 1094/4, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.86726201679021,
+              "y": 50.22898777843327
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20790759,
+              "adresa": "Fibichova 852, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.638874605983375,
+              "y": 50.18812094917565
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20729600,
+              "adresa": "Stará Kysibelská 585/23, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.889104896549343,
+              "y": 50.23744274556379
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732686,
+              "adresa": "Mírové náměstí 316/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.878561864448779,
+              "y": 50.22002130005949
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20734191,
+              "adresa": "Mlýnské nábřeží 507/5, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1608163200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.880536024010397,
+              "y": 50.22659167569477
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732261,
+              "adresa": "Divadelní náměstí 253/17, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88270868926777,
+              "y": 50.22120617253087
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731060,
+              "adresa": "Zahradní 60/43, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.874581943735317,
+              "y": 50.22844678792732
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20740344,
+              "adresa": "Západní 1209/13, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.86388039014486,
+              "y": 50.22944270708265
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20740956,
+              "adresa": "Jugoslávská 1272/10, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87066537480919,
+              "y": 50.230437359557264
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20788398,
+              "adresa": "Slovenská 545, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1403049600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.650576875901978,
+              "y": 50.17801949370642
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20785461,
+              "adresa": "Komenského 113, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.637313962373721,
+              "y": 50.17961917869014
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20784716,
+              "adresa": "Staré náměstí 27, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.638659456739386,
+              "y": 50.18073086310495
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20789076,
+              "adresa": "Rolnická 656, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.637734104349756,
+              "y": 50.18538813853127
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20787472,
+              "adresa": "nábřeží Petra Bezruče 430, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.64342883430236,
+              "y": 50.18111330029367
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20787715,
+              "adresa": "Josefa Kajetána Tyla 461, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1658448000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.643249435517856,
+              "y": 50.18287026303586
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20787235,
+              "adresa": "Karla Havlíčka Borovského 377, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.647696522694936,
+              "y": 50.17945855177454
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20789050,
+              "adresa": "Jednoty 654, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.646085096334446,
+              "y": 50.181217877304825
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20785488,
+              "adresa": "Křížová 115, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.640849890652534,
+              "y": 50.180333503409884
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20784937,
+              "adresa": "Chebská 53, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.635966204309195,
+              "y": 50.16613796542711
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20797397,
+              "adresa": "Josefa Kajetána Tyla 1568, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.64303091997076,
+              "y": 50.18243648547405
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20797281,
+              "adresa": "Nádražní 1557, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.639991432042187,
+              "y": 50.18495538044112
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20800878,
+              "adresa": "Rokycanova 1929, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1392163200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.643671166151464,
+              "y": 50.17954650367771
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20798725,
+              "adresa": "Švabinského 1702, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1490572800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.671024615783095,
+              "y": 50.172959207338614
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20725515,
+              "adresa": "Vítězná 145/59, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.881282314823835,
+              "y": 50.2362115168023
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20729499,
+              "adresa": "Sportovní 574/15, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.892534099996446,
+              "y": 50.241706073729425
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20729634,
+              "adresa": "Lidická 590/38, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1399852800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88774643364169,
+              "y": 50.23255299282216
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20730039,
+              "adresa": "Sportovní 630/13, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.890789097605364,
+              "y": 50.24148757058418
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731019,
+              "adresa": "T. G. Masaryka 54/21, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.871208449605778,
+              "y": 50.229313685795475
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20734701,
+              "adresa": "Petra Velikého 583/16, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.876577615485937,
+              "y": 50.22459098382975
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20735057,
+              "adresa": "T. G. Masaryka 623/12, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1660262400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.871521636415295,
+              "y": 50.22949717316364
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731329,
+              "adresa": "Vřídelní 92/21, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.882650684857637,
+              "y": 50.22545065141156
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732899,
+              "adresa": "Stará Louka 340/36, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1691366400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.880618533837135,
+              "y": 50.22140346148137
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20735006,
+              "adresa": "Zámecký vrch 618/41, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.880586673016039,
+              "y": 50.2247677671224
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20734981,
+              "adresa": "Zahradní 616/1, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.878450465171543,
+              "y": 50.22692706293724
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731728,
+              "adresa": "Stezka Jeana De Carro 153/6, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88505956936358,
+              "y": 50.223448781714154
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731604,
+              "adresa": "Vřídelní 128/39, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573862400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.883659789808377,
+              "y": 50.22468855435657
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733909,
+              "adresa": "I. P. Pavlova 469/8, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1726617600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.880938217049996,
+              "y": 50.22694314446645
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732121,
+              "adresa": "Mariánskolázeňská 223/25, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573257600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88200409886119,
+              "y": 50.21930100393016
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733208,
+              "adresa": "Tržiště 381/31, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.882470743336857,
+              "y": 50.223022384976936
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733330,
+              "adresa": "Pod Jelením skokem 395/26, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88153827602911,
+              "y": 50.22304451693009
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733534,
+              "adresa": "Zámecký vrch 422/20, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.881547575311215,
+              "y": 50.224744984142745
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733771,
+              "adresa": "I. P. Pavlova 450/19, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.874892207148275,
+              "y": 50.229957812640976
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731663,
+              "adresa": "Vřídelní 134/51, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573257600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.8842011505972,
+              "y": 50.22412563251378
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733984,
+              "adresa": "Slovenská 477/5, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88048284677722,
+              "y": 50.213778057361374
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20730888,
+              "adresa": "Tržiště 30/11, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.883576614865616,
+              "y": 50.223367377715945
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20730781,
+              "adresa": "Lázeňská 19/1, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.882888532435945,
+              "y": 50.224716823937676
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20745851,
+              "adresa": "Horova 2017/12, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1392854400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.871479265860716,
+              "y": 50.2319871573512
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738803,
+              "adresa": "Bělehradská 1042/14, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1392854400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.867016508090096,
+              "y": 50.22974284993646
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20740026,
+              "adresa": "Svahová 1170/24, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.868811885303675,
+              "y": 50.22804975664364
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738471,
+              "adresa": "Dr. Davida Bechera 1009/18, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.868668179680299,
+              "y": 50.229648190851215
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20737190,
+              "adresa": "Bulharská 873/31a, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87136223838817,
+              "y": 50.23149174015909
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738943,
+              "adresa": "Krymská 1056/5, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1541721600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.863177096448908,
+              "y": 50.22876896338018
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20744692,
+              "adresa": "Jugoslávská 1706/3, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87030968028403,
+              "y": 50.23051891543181
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20736584,
+              "adresa": "Sadová 800/5, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.878870402715762,
+              "y": 50.22665967163973
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20745982,
+              "adresa": "Dr. Janatky 2032/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.86347165105802,
+              "y": 50.229266932403185
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20739222,
+              "adresa": "T. G. Masaryka 1088/24, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.869805700087786,
+              "y": 50.23010641599323
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20745907,
+              "adresa": "T. G. Masaryka 2023/10, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1470182400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.872260342076961,
+              "y": 50.22939673988869
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20746016,
+              "adresa": "Divadelní náměstí 2036/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88358728767333,
+              "y": 50.22285148227803
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20746156,
+              "adresa": "Stará Louka 2150/22, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1413158400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.881514941777757,
+              "y": 50.221928517557224
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20737084,
+              "adresa": "T. G. Masaryka 859/18, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.870659960625105,
+              "y": 50.22981220721254
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20745869,
+              "adresa": "Moravská 2019/12, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1401408000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.884045964079789,
+              "y": 50.222483970524586
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738307,
+              "adresa": "Krále Jiřího 991/1, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87393770043688,
+              "y": 50.22473772376618
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20737246,
+              "adresa": "Kolmá 880/56, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1742256000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.888760896233984,
+              "y": 50.223417088951955
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738480,
+              "adresa": "Moskevská 1010/18, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.867633325845846,
+              "y": 50.22891192075695
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20745699,
+              "adresa": "I. P. Pavlova 2001/11, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.876498081168105,
+              "y": 50.22880956039717
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20737947,
+              "adresa": "Sadová 956/28, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.876858963718496,
+              "y": 50.225952943375
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20895895,
+              "adresa": "Svobody 520/3, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1528934400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.37189270131534,
+              "y": 50.07750956173795
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20860765,
+              "adresa": "Kopanina 13, 35134 Nový Kostel",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.470497744637706,
+              "y": 50.19619909248625
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20875762,
+              "adresa": "č.p. 107, 35134 Nový Kostel",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.446898893350099,
+              "y": 50.21699330591596
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20737211,
+              "adresa": "Sadová 875/16, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1759881600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.877836550865386,
+              "y": 50.22639616672024
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738013,
+              "adresa": "Sadová 963/44, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.875441940558815,
+              "y": 50.22559849597273
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20738030,
+              "adresa": "Bělehradská 965/1, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.86681115933522,
+              "y": 50.22881300332133
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20800916,
+              "adresa": "Gagarinova 1934, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1781049600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.6626503879442,
+              "y": 50.17391236892346
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20891911,
+              "adresa": "Kostelní náměstí 190/4, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.369736193024005,
+              "y": 50.08049753136276
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20890541,
+              "adresa": "Svobody 73/28, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.373041084839004,
+              "y": 50.07550057559139
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20890559,
+              "adresa": "Svobody 74/30, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.37315747923899,
+              "y": 50.07540162216373
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20896808,
+              "adresa": "Májová 598/64, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.374990970694874,
+              "y": 50.07929556162004
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20724365,
+              "adresa": "Rooseveltova 1299, 36221 Nejdek",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.729528915441529,
+              "y": 50.32065361192609
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20867697,
+              "adresa": "Palackého 191/101, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.71527028287277,
+              "y": 49.95301978202158
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732872,
+              "adresa": "Stará Louka 338/42, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88015137481903,
+              "y": 50.2212849738765
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732805,
+              "adresa": "Stará Louka 331/56, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.879388620858858,
+              "y": 50.22084434120482
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20732627,
+              "adresa": "Mariánskolázeňská 306/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.881561223624187,
+              "y": 50.218903150366565
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20736711,
+              "adresa": "Sadová 815/8, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.878232166030326,
+              "y": 50.226752348217545
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20735880,
+              "adresa": "Dr. Davida Bechera 727/1, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573257600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87077638012962,
+              "y": 50.22934494586443
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20741073,
+              "adresa": "Poděbradská 1284/5, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.876515191796281,
+              "y": 50.226502557264
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20872585,
+              "adresa": "Hroznatova 773/3, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.710293486274146,
+              "y": 49.95058710908345
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20872429,
+              "adresa": "Tepelská 752/22, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.709669612644634,
+              "y": 49.9483102042831
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20785046,
+              "adresa": "Staré náměstí 68, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.639940789044648,
+              "y": 50.18085590245675
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20736053,
+              "adresa": "Bulharská 746/17, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87136519633955,
+              "y": 50.23042582507934
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20734565,
+              "adresa": "Ondříčkova 562/34, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.877491169880596,
+              "y": 50.23466766807854
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20731159,
+              "adresa": "I. P. Pavlova 71/9, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1726617600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87917149954843,
+              "y": 50.22805166714129
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20741677,
+              "adresa": "Jiráskova 1343/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.876947912202839,
+              "y": 50.23215084812701
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20724951,
+              "adresa": "Vítězná 63/42, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1573257600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.87812478234559,
+              "y": 50.23495767987751
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20845367,
+              "adresa": "Svatý Kříž 67, Háje, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.35082181502606,
+              "y": 50.04663064861457
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20845405,
+              "adresa": "Blanická 74/28, Háje, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1440547200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.377063654963749,
+              "y": 50.0632410972033
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20889925,
+              "adresa": "Obrněné brigády 20/20, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.369319489145235,
+              "y": 50.07668389854843
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20895445,
+              "adresa": "náměstí Krále Jiřího z Poděbrad 482/37, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.369485011162158,
+              "y": 50.07936143692251
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20895852,
+              "adresa": "Hradební 516/16, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.365621072615573,
+              "y": 50.07810344967428
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20897791,
+              "adresa": "Podhradská 676/7, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.385618280285689,
+              "y": 50.06629691464791
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20733933,
+              "adresa": "Mariánskolázeňská 472/17, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.881223024877356,
+              "y": 50.21964405276717
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/1/query?where=kod+IN+%2820900732%2C20901615%2C20903928%2C20909632%2C20910762%2C20913222%2C20914318%2C20915101%2C20915586%2C20915799%2C20926308%2C20926367%2C20926511%2C20926979%2C20926995%2C20928017%2C20928688%2C20929129%2C20940629%2C20941404%2C20948921%2C20957106%2C20958480%2C20967896%2C20971397%2C25020285%2C25020609%2C25020641%2C25020901%2C25021028%2C25021036%2C25021044%2C25021176%2C25021265%2C25021346%2C25021478%2C25021761%2C25022032%2C25022181%2C25022199%2C25022725%2C25022849%2C25177176%2C25203142%2C25274708%2C25274791%2C25297945%2C25303651%2C25305221%2C25420844%2C25477536%2C25479237%2C25682369%2C25764128%2C25791559%2C25791575%2C25808176%2C2582732%2C25829866%2C2584212%2C25883780%2C2593190%2C2594293%2C2595061%2C2599732%2C2608545%2C26125463%2C26133016%2C2614171%2C26245469%2C26284162%2C26294885%2C26344467%2C26369699%2C26372282%2C26439859%2C26466538%2C26536072%2C26642751%2C26697793%2C26697807%2C26734753%2C26740583%2C26758636%2C26764016%2C26842629%2C26844907%2C26864789%2C26864843%2C27066983%2C27111016%2C27114058%2C27114066%2C27174531%2C27174638%2C27175464%2C27207200%2C27272851%2C27325709%2C27357490%29&outFields=kod%2Cadresa%2Cnespravny%2Cplatiod%2Cplatido&returnGeometry=true&outSR=4326&f=json",
+      "retrieved_at": "2026-10-09T22:04:14.914066+00:00",
+      "response": {
+        "displayFieldName": "nespravny",
+        "fieldAliases": {
+          "kod": "Kód adresního místa",
+          "adresa": "Adresa",
+          "nespravny": "Příznak nesprávnosti",
+          "platiod": "Začátek platnosti",
+          "platido": "Konec platnosti"
+        },
+        "geometryType": "esriGeometryPoint",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "kod",
+            "type": "esriFieldTypeInteger",
+            "alias": "Kód adresního místa"
+          },
+          {
+            "name": "adresa",
+            "type": "esriFieldTypeString",
+            "alias": "Adresa",
+            "length": 150
+          },
+          {
+            "name": "nespravny",
+            "type": "esriFieldTypeString",
+            "alias": "Příznak nesprávnosti",
+            "length": 1
+          },
+          {
+            "name": "platiod",
+            "type": "esriFieldTypeDate",
+            "alias": "Začátek platnosti",
+            "length": 8
+          },
+          {
+            "name": "platido",
+            "type": "esriFieldTypeDate",
+            "alias": "Konec platnosti",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "kod": 25479237,
+              "adresa": "č.p. 174, 35801 Bublava",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.501105013564919,
+              "y": 50.36699485364917
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26369699,
+              "adresa": "Botanická 276, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1619395200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.889562119827687,
+              "y": 50.251983189638956
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25477536,
+              "adresa": "Mostecká 196, 36001 Otovice",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.882581620300416,
+              "y": 50.251830462600346
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25808176,
+              "adresa": "Příkrá 2790/4, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.186497012741764,
+              "y": 50.21390366778165
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27066983,
+              "adresa": "Nádražní 432, 36236 Pernink",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.77926659057234,
+              "y": 50.368768097493614
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2599732,
+              "adresa": "č.p. 34, 35601 Rovná",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.669497226875512,
+              "y": 50.10431050001623
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27207200,
+              "adresa": "Stannum 930, 35731 Horní Slavkov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.802950218994459,
+              "y": 50.12529007140041
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2594293,
+              "adresa": "Dlouhá 634/12, 35731 Horní Slavkov",
+              "nespravny": null,
+              "platiod": 1525305600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.800251989799545,
+              "y": 50.138732140050756
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2593190,
+              "adresa": "třída Osvoboditelů 434, 35731 Horní Slavkov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.805899566092616,
+              "y": 50.13760637224767
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2595061,
+              "adresa": "Sportovní 713, 35731 Horní Slavkov",
+              "nespravny": null,
+              "platiod": 1525305600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.795274022132547,
+              "y": 50.13923274573188
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2582732,
+              "adresa": "Dvory 31, 35733 Loket",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.740758593510332,
+              "y": 50.181223709710345
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25303651,
+              "adresa": "Pohraniční stráže 365, 35703 Svatava",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.61805095375114,
+              "y": 50.19248129427941
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20957106,
+              "adresa": "Pohraniční stráže 436, 35703 Svatava",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.617201294763895,
+              "y": 50.19281929753126
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27111016,
+              "adresa": "Vítězná 2201, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1490572800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.648471847767567,
+              "y": 50.169965933154344
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25177176,
+              "adresa": "č.p. 2044, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1631232000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.644822323356076,
+              "y": 50.17768004229087
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26758636,
+              "adresa": "Chebská 370/81a, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1500249600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.822592321263619,
+              "y": 50.22512116056861
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25764128,
+              "adresa": "Závodní 353/88, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.823958347544195,
+              "y": 50.218520938657726
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26439859,
+              "adresa": "Moravská 2093/2a, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.884681091162363,
+              "y": 50.222343887787325
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26133016,
+              "adresa": "Kpt. Jaroše 375/31, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1765756800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.840686302153523,
+              "y": 50.22628586858742
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27174531,
+              "adresa": "Železniční 1006/15, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.852758887678636,
+              "y": 50.2413915197195
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26697793,
+              "adresa": "Průmyslový park 32/20, Dolní Dvory, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.415644137447087,
+              "y": 50.086415970391556
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26344467,
+              "adresa": "U Farmy 30/11, Dolní Dvory, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.417645076008322,
+              "y": 50.08280353300082
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27272851,
+              "adresa": "Karlovarská 1415, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.944191144678692,
+              "y": 50.296682203066936
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26536072,
+              "adresa": "U Nemocnice 1428, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.955549566850463,
+              "y": 50.31216593248923
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26284162,
+              "adresa": "Klínovecká 1407, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.950338903271728,
+              "y": 50.30667269547268
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26740583,
+              "adresa": "Vilová 873, 35124 Hranice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.168386825469238,
+              "y": 50.30342976432072
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20971397,
+              "adresa": "Smetanova 1, 35707 Oloví",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.560238518537801,
+              "y": 50.245466979913274
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26642751,
+              "adresa": "č.p. 144, 35735 Mírová",
+              "nespravny": null,
+              "platiod": 1456963200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.783714753520046,
+              "y": 50.23959370567639
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2608545,
+              "adresa": "Tisová 2, 35601 Březová",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.609506067336467,
+              "y": 50.15184671279791
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26125463,
+              "adresa": "č.p. 167, 36225 Božičany",
+              "nespravny": null,
+              "platiod": 1618790400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.776871165705025,
+              "y": 50.25573542854586
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20967896,
+              "adresa": "Nejdecká 814, 35735 Chodov",
+              "nespravny": null,
+              "platiod": 1528329600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.759481720152023,
+              "y": 50.24792268595877
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25305221,
+              "adresa": "Sportovní 584, 35733 Loket",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.743461174565164,
+              "y": 50.19098240439558
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25883780,
+              "adresa": "č.p. 115, 35301 Ovesné Kladruby",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.782536479163667,
+              "y": 49.95229594536101
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26842629,
+              "adresa": "č.p. 151, 35301 Mnichov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.789396017932852,
+              "y": 50.033535624472094
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25829866,
+              "adresa": "Jesenice 1, 35002 Okrouhlá",
+              "nespravny": null,
+              "platiod": 1459382400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.487437328582976,
+              "y": 50.07701545819817
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2614171,
+              "adresa": "Karla Čapka 119, 35709 Habartov",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.549730456014583,
+              "y": 50.18474282266829
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25203142,
+              "adresa": "1. máje 814, 35709 Habartov",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.55704939590708,
+              "y": 50.18360923205427
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20941404,
+              "adresa": "Lázeňská 174, 35601 Královské Poříčí",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.682043991458482,
+              "y": 50.19309206009763
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20940629,
+              "adresa": "Dlouhá 63, 35601 Královské Poříčí",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.672117441031723,
+              "y": 50.18805725013709
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20958480,
+              "adresa": "č.p. 77, 35801 Šindelová",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.603374921973884,
+              "y": 50.318451049033335
+            }
+          },
+          {
+            "attributes": {
+              "kod": 2584212,
+              "adresa": "Tovární 190/14, 35733 Loket",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.76055805877929,
+              "y": 50.18901590856566
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20915101,
+              "adresa": "Obrněné brigády 2258/6, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1562716800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.366284513006933,
+              "y": 50.07735064562796
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27325709,
+              "adresa": "Dragounská 2529/6, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.367705597131577,
+              "y": 50.07154873173504
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25274791,
+              "adresa": "Tepelská 137/3, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1592352000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.713959500671951,
+              "y": 49.94974058296161
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25274708,
+              "adresa": "U Nemocnice 91/3, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.70407619342447,
+              "y": 49.96085673306843
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20928688,
+              "adresa": "Lužická 395/6, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.700756706594237,
+              "y": 49.96321333647864
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021265,
+              "adresa": "Příkrá 218/4, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.699346586957189,
+              "y": 49.968253946910565
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25022181,
+              "adresa": "č.p. 660, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.721822937629467,
+              "y": 49.97158271849692
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25020641,
+              "adresa": "Vrchlického 30/3, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.70570737099369,
+              "y": 49.97778971417253
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021044,
+              "adresa": "Purkyňova 128/1, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.70520875196254,
+              "y": 49.9782672063419
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021176,
+              "adresa": "Ibsenova 183/3, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.704803573029958,
+              "y": 49.978517077504186
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25791559,
+              "adresa": "Selbská 2721/39, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.170485190323154,
+              "y": 50.21391240951185
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25297945,
+              "adresa": "Dukelská 44, 35801 Kraslice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.516484386255586,
+              "y": 50.32398128919287
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26245469,
+              "adresa": "Dobrovského 535, 35604 Dolní Rychnov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.642745230415587,
+              "y": 50.16872957378856
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20948921,
+              "adresa": "Dobrovského 406, 35604 Dolní Rychnov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.647793551609873,
+              "y": 50.16884223099751
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26294885,
+              "adresa": "Dobrovského 1935, 35604 Dolní Rychnov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.644058559741184,
+              "y": 50.16989661536024
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25020285,
+              "adresa": "třída Vítězství 68/4, Hamrníky, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.690845813483898,
+              "y": 49.95520286470432
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20926995,
+              "adresa": "Klíčová 167/4, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.704445289998304,
+              "y": 49.972817104139594
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20926308,
+              "adresa": "Nehrova 26/3a, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.706078359168183,
+              "y": 49.978009032416004
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20926367,
+              "adresa": "Hlavní třída 50/34, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.702971771119433,
+              "y": 49.97482962197494
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20926511,
+              "adresa": "Ruská 88/8, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.701115876922167,
+              "y": 49.97606507981187
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20926979,
+              "adresa": "Hlavní třída 161/42, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.702927933552585,
+              "y": 49.97396636219633
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20929129,
+              "adresa": "Komenského 449/2, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.700094999370135,
+              "y": 49.962236464584905
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25022032,
+              "adresa": "Masarykova 626/1, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.703435942274986,
+              "y": 49.97308386602336
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021761,
+              "adresa": "č.p. 580, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.735957418669205,
+              "y": 49.97542383788295
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021028,
+              "adresa": "Ruská 123/11, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.701605623718473,
+              "y": 49.97096256340882
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021036,
+              "adresa": "Lidická 125/10, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.702080985064072,
+              "y": 49.97023669131029
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20928017,
+              "adresa": "Dykova 311/6, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.701999072642632,
+              "y": 49.96997682161558
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021346,
+              "adresa": "Hlavní třída 279/7, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.701908232966465,
+              "y": 49.966465072278766
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25021478,
+              "adresa": "Lesní 345/5, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.70940901702601,
+              "y": 49.97775924507453
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25020609,
+              "adresa": "Goethovo náměstí 16/1, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.70717780668024,
+              "y": 49.97701220384988
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25022199,
+              "adresa": "Hlavní třída 661/140, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.698677148487292,
+              "y": 49.95778490104893
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26764016,
+              "adresa": "Pochlovická 894/16, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.52873363077936,
+              "y": 50.127447136928765
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26372282,
+              "adresa": "Okružní 884/23, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.528963883023936,
+              "y": 50.122234977457886
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26864789,
+              "adresa": "Okružní 836/19, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.524900068523893,
+              "y": 50.11995074844138
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26864843,
+              "adresa": "Zlatá 52, 35751 Kynšperk nad Ohří",
+              "nespravny": null,
+              "platiod": 1772755200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.556724520532097,
+              "y": 50.11255998834289
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25682369,
+              "adresa": "Ruská 427/4, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.351352336846224,
+              "y": 50.12002288838548
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26697807,
+              "adresa": "č.p. 30, 35002 Nebanice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.474869889136588,
+              "y": 50.115581961918394
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26844907,
+              "adresa": "Bezručova 1190/19, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.875220343123706,
+              "y": 50.232175269402724
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25022725,
+              "adresa": "Plzeňská 608/17, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.707731998992072,
+              "y": 49.94615901745618
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25022849,
+              "adresa": "Ke Kasárnům 730/9, Úšovice, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1407888000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.702075367173983,
+              "y": 49.94870170806055
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25020901,
+              "adresa": "Ibsenova 92/2, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.706028709561076,
+              "y": 49.97869163387437
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25791575,
+              "adresa": "Mostecká 133, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1600819200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.884251533380146,
+              "y": 50.2541370983707
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26734753,
+              "adresa": "Selbská 2746/18, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.176555826583943,
+              "y": 50.21871579717006
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27114058,
+              "adresa": "Průmyslový park 157/7, Hradiště, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.404563596559104,
+              "y": 50.08762617149277
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27114066,
+              "adresa": "Průmyslový park 162/13, Hradiště, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.412493975227548,
+              "y": 50.08685134732942
+            }
+          },
+          {
+            "attributes": {
+              "kod": 26466538,
+              "adresa": "Karlovarská 153/38a, Hradiště, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.407470595409103,
+              "y": 50.08332164336896
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20901615,
+              "adresa": "Joštova 1004/1, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1405296000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.378510003488673,
+              "y": 50.08432518681939
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20900732,
+              "adresa": "Dragounská 931/38, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1391385600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.368014474668897,
+              "y": 50.06693531270747
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20903928,
+              "adresa": "K Nemocnici 1204/17, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.36694457820489,
+              "y": 50.06990818713497
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20914318,
+              "adresa": "Americká 2176/52, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1440374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.349849752966373,
+              "y": 50.07569827208563
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20915799,
+              "adresa": "Vrázova 2321/9, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.388752146684713,
+              "y": 50.07655869150098
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20909632,
+              "adresa": "Tovární 1700/7, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.37576004297055,
+              "y": 50.08207750300844
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20915586,
+              "adresa": "Truhlářská 2300/1, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.381941487538747,
+              "y": 50.082694686329994
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20910762,
+              "adresa": "Koželužská 1802/19, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.363173387365217,
+              "y": 50.08196771886
+            }
+          },
+          {
+            "attributes": {
+              "kod": 20913222,
+              "adresa": "Dragounská 2038/39, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.36873978392346,
+              "y": 50.06628016116382
+            }
+          },
+          {
+            "attributes": {
+              "kod": 25420844,
+              "adresa": "Spojovací 2426/2, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.378125252937291,
+              "y": 50.08338742283767
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27357490,
+              "adresa": "Karlova 2472/44, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.380420593555591,
+              "y": 50.080488953950834
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27175464,
+              "adresa": "Přílezy 48, 36401 Útvina",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.940172070673167,
+              "y": 50.09249627947834
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27174638,
+              "adresa": "Stará Kysibelská 644/77, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1401667200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.896773391429804,
+              "y": 50.23630449297707
+            }
+          }
+        ]
+      }
+    },
+    {
+      "url": "https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer/1/query?where=kod+IN+%2827405869%2C27413004%2C27450503%2C27459845%2C27514595%2C27581918%2C27683532%2C27689425%2C27689727%2C27697410%2C27738477%2C27775330%2C27778401%2C27958752%2C27963578%2C28005848%2C28106172%2C28114922%2C28245997%2C28257766%2C28303733%2C28474597%2C30761344%2C30794854%2C31011691%2C31012019%2C31014429%2C3804691%2C3806341%2C3816923%2C3824349%2C3824829%2C3830403%2C3840115%2C3841073%2C3841715%2C40934624%2C40998649%2C41639715%2C42343160%2C42489091%2C70833184%2C71083901%2C72824123%2C72851147%2C72858478%2C73008567%2C73364550%2C73583472%2C73591041%2C74266942%2C74696017%2C74909720%2C75016974%2C75090376%2C75336286%2C75681391%2C78379270%2C79991317%2C79997780%2C80000206%2C80014762%2C80022257%2C80027569%2C80032429%2C80038748%2C80050258%2C80052990%2C80070746%2C80083786%2C80085289%2C80086325%2C80092330%2C80100199%2C80122165%2C80125385%2C80145034%29&outFields=kod%2Cadresa%2Cnespravny%2Cplatiod%2Cplatido&returnGeometry=true&outSR=4326&f=json",
+      "retrieved_at": "2026-10-09T22:04:15.523247+00:00",
+      "response": {
+        "displayFieldName": "nespravny",
+        "fieldAliases": {
+          "kod": "Kód adresního místa",
+          "adresa": "Adresa",
+          "nespravny": "Příznak nesprávnosti",
+          "platiod": "Začátek platnosti",
+          "platido": "Konec platnosti"
+        },
+        "geometryType": "esriGeometryPoint",
+        "spatialReference": {
+          "wkid": 4326,
+          "latestWkid": 4326
+        },
+        "fields": [
+          {
+            "name": "kod",
+            "type": "esriFieldTypeInteger",
+            "alias": "Kód adresního místa"
+          },
+          {
+            "name": "adresa",
+            "type": "esriFieldTypeString",
+            "alias": "Adresa",
+            "length": 150
+          },
+          {
+            "name": "nespravny",
+            "type": "esriFieldTypeString",
+            "alias": "Příznak nesprávnosti",
+            "length": 1
+          },
+          {
+            "name": "platiod",
+            "type": "esriFieldTypeDate",
+            "alias": "Začátek platnosti",
+            "length": 8
+          },
+          {
+            "name": "platido",
+            "type": "esriFieldTypeDate",
+            "alias": "Konec platnosti",
+            "length": 8
+          }
+        ],
+        "features": [
+          {
+            "attributes": {
+              "kod": 30794854,
+              "adresa": "č.p. 570, 35731 Krásno",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.792320350754736,
+              "y": 50.10667986775601
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27689425,
+              "adresa": "Obchodní 33, Pod Rohem, 36001 Jenišov",
+              "nespravny": null,
+              "platiod": 1401408000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.802670626678921,
+              "y": 50.21831067487691
+            }
+          },
+          {
+            "attributes": {
+              "kod": 41639715,
+              "adresa": "č.p. 280, 35201 Krásná",
+              "nespravny": null,
+              "platiod": 1386460800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.172269519112605,
+              "y": 50.23200713094415
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27683532,
+              "adresa": "Karla Hynka Máchy 2230, 35601 Sokolov",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.656752416263041,
+              "y": 50.18451356724865
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27778401,
+              "adresa": "Vintířovská 1157, 35735 Chodov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.738904833258967,
+              "y": 50.23285445778818
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27775330,
+              "adresa": "č.p. 282, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.886684504799485,
+              "y": 50.243051588673055
+            }
+          },
+          {
+            "attributes": {
+              "kod": 70833184,
+              "adresa": "Chebská 394/44, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1388707200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.838883653095474,
+              "y": 50.2298193036563
+            }
+          },
+          {
+            "attributes": {
+              "kod": 71083901,
+              "adresa": "Chodovská 395/8, Dvory, 36006 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1390262400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.827336994460147,
+              "y": 50.2285147572533
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28114922,
+              "adresa": "Moravská 2088/1a, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.884991125369638,
+              "y": 50.222568801850464
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27405869,
+              "adresa": "Moravská 2111/3a, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1575417600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.885504378662132,
+              "y": 50.22223242144216
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28106172,
+              "adresa": "Zahradní 2125/7, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.877420703243688,
+              "y": 50.22680871701575
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28303733,
+              "adresa": "Západní 1813/71, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.846041640904787,
+              "y": 50.22670781632915
+            }
+          },
+          {
+            "attributes": {
+              "kod": 72824123,
+              "adresa": "Moskevská 2147/19, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1403654400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.866498264964278,
+              "y": 50.228180990422196
+            }
+          },
+          {
+            "attributes": {
+              "kod": 73364550,
+              "adresa": "Západní 1819/71a, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1539216000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.846263692203113,
+              "y": 50.22594508110215
+            }
+          },
+          {
+            "attributes": {
+              "kod": 42489091,
+              "adresa": "Nová louka 2146/2, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.88127215582586,
+              "y": 50.22124998739332
+            }
+          },
+          {
+            "attributes": {
+              "kod": 40998649,
+              "adresa": "Západní 379, 36233 Hroznětín",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.862335284808966,
+              "y": 50.30912164006093
+            }
+          },
+          {
+            "attributes": {
+              "kod": 40934624,
+              "adresa": "Jimlíkov 51, 36225 Nová Role",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.787550340409544,
+              "y": 50.25514692118418
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27738477,
+              "adresa": "Obchodní 1452, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.940958963138296,
+              "y": 50.31305361582796
+            }
+          },
+          {
+            "attributes": {
+              "kod": 74909720,
+              "adresa": "Průmyslová 1500, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1461196800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.943021391179906,
+              "y": 50.29250362820897
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28005848,
+              "adresa": "Jáchymovská 1460, 36301 Ostrov",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.946663909262295,
+              "y": 50.315066555771715
+            }
+          },
+          {
+            "attributes": {
+              "kod": 74266942,
+              "adresa": "Hraničná 11, 35801 Kraslice",
+              "nespravny": null,
+              "platiod": 1447804800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.47676010935296,
+              "y": 50.34935183792799
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3804691,
+              "adresa": "Soukenná 556, 35124 Hranice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.17166117855913,
+              "y": 50.307736000618085
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3824829,
+              "adresa": "Nádražní 338, 35135 Plesná",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.35019636044313,
+              "y": 50.21580204366023
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3816923,
+              "adresa": "Vonšov 1, 35134 Skalná",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.37599410784835,
+              "y": 50.15348284853117
+            }
+          },
+          {
+            "attributes": {
+              "kod": 74696017,
+              "adresa": "Plešivecká 500, 36235 Abertamy",
+              "nespravny": null,
+              "platiod": 1457568000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.840931167503749,
+              "y": 50.35637314354252
+            }
+          },
+          {
+            "attributes": {
+              "kod": 73583472,
+              "adresa": "Chranišov 162, 35735 Nové Sedlo",
+              "nespravny": null,
+              "platiod": 1428883200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.739495508872059,
+              "y": 50.214463379234665
+            }
+          },
+          {
+            "attributes": {
+              "kod": 73591041,
+              "adresa": "Sklářská 546, 35734 Nové Sedlo",
+              "nespravny": null,
+              "platiod": 1428969600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.741398693759374,
+              "y": 50.21274509063646
+            }
+          },
+          {
+            "attributes": {
+              "kod": 75336286,
+              "adresa": "Úžlabí 868, 35709 Habartov",
+              "nespravny": null,
+              "platiod": 1473638400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.543895888874872,
+              "y": 50.18206034816381
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3830403,
+              "adresa": "č.p. 69, 35002 Milhostov",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.453534255937333,
+              "y": 50.15743489535296
+            }
+          },
+          {
+            "attributes": {
+              "kod": 75016974,
+              "adresa": "č.p. 85, 35134 Třebeň",
+              "nespravny": null,
+              "platiod": 1463529600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.40278747574008,
+              "y": 50.13206969293926
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3824349,
+              "adresa": "Průmyslová 278, 35135 Plesná",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.35363249488874,
+              "y": 50.21577610521808
+            }
+          },
+          {
+            "attributes": {
+              "kod": 72851147,
+              "adresa": "Podhradská 2700/8b, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1403827200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.385006300909343,
+              "y": 50.06464080304608
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27450503,
+              "adresa": "Pražská 2494/15, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.3790243675395,
+              "y": 50.08203158557131
+            }
+          },
+          {
+            "attributes": {
+              "kod": 42343160,
+              "adresa": "Chebská 731/15, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.697495586649652,
+              "y": 49.96338057565471
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3806341,
+              "adresa": "Krásňany 766, 35124 Hranice",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.195210314918816,
+              "y": 50.29435820879515
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27689727,
+              "adresa": "Bergmannova 536, 35604 Dolní Rychnov",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.634627835236254,
+              "y": 50.160145906160125
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3840115,
+              "adresa": "Klimentov 135, 35301 Velká Hleďsebe",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.676006286751909,
+              "y": 49.96406670125568
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3841073,
+              "adresa": "Pohraniční stráže 95, 35301 Velká Hleďsebe",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.6657803909168,
+              "y": 49.9623028389957
+            }
+          },
+          {
+            "attributes": {
+              "kod": 3841715,
+              "adresa": "Pohraniční stráže 166, 35301 Velká Hleďsebe",
+              "nespravny": null,
+              "platiod": 1386288000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.679852837155988,
+              "y": 49.96214837106133
+            }
+          },
+          {
+            "attributes": {
+              "kod": 73008567,
+              "adresa": "třída Vítězství 246/6b, Hamrníky, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1428883200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.688898241562763,
+              "y": 49.95448713072296
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27958752,
+              "adresa": "Stanoviště 37, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1576022400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.704174981946077,
+              "y": 49.942107332554166
+            }
+          },
+          {
+            "attributes": {
+              "kod": 75090376,
+              "adresa": "Hlavní třída 737/13a, 35301 Mariánské Lázně",
+              "nespravny": null,
+              "platiod": 1546819200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.702052454750659,
+              "y": 49.96565842511935
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27963578,
+              "adresa": "Anglická 515/4a, 35101 Františkovy Lázně",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.347572412613447,
+              "y": 50.12169896317737
+            }
+          },
+          {
+            "attributes": {
+              "kod": 78379270,
+              "adresa": "Cínová 195/10, 36001 Březová",
+              "nespravny": null,
+              "platiod": 1527552000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.873777353923389,
+              "y": 50.196462542941106
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28245997,
+              "adresa": "Sokolovská 1036/124e, Rybáře, 36005 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1641859200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.84790624548773,
+              "y": 50.235029709804465
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27514595,
+              "adresa": "Stará Kysibelská 683/57a, Drahovice, 36001 Karlovy Vary",
+              "nespravny": null,
+              "platiod": 1386201600000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.894603294128213,
+              "y": 50.2369648751147
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27459845,
+              "adresa": "Botanická 270, 36263 Dalovice",
+              "nespravny": null,
+              "platiod": 1386115200000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.891126771226565,
+              "y": 50.25214082441794
+            }
+          },
+          {
+            "attributes": {
+              "kod": 31014429,
+              "adresa": "Studentská 2886, 35201 Aš",
+              "nespravny": null,
+              "platiod": 1421020800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.176687599307485,
+              "y": 50.22834941135768
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27697410,
+              "adresa": "Svatý Kříž 340, Háje, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.352912338846368,
+              "y": 50.04630082215979
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28257766,
+              "adresa": "Svatý Kříž 280, Háje, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.3535988962716,
+              "y": 50.04986053752917
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27581918,
+              "adresa": "Karlovarská 147/22, Hradiště, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.400585512081749,
+              "y": 50.084721703062414
+            }
+          },
+          {
+            "attributes": {
+              "kod": 75681391,
+              "adresa": "Logistická 170/2, Hradiště, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1483056000000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.405098577549488,
+              "y": 50.089383881328295
+            }
+          },
+          {
+            "attributes": {
+              "kod": 27413004,
+              "adresa": "Dragounská 2545/9a, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.36989046386391,
+              "y": 50.07109359135678
+            }
+          },
+          {
+            "attributes": {
+              "kod": 31011691,
+              "adresa": "Podhradská 2113/5a, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1680220800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.387660952894963,
+              "y": 50.067376208902566
+            }
+          },
+          {
+            "attributes": {
+              "kod": 31012019,
+              "adresa": "Dragounská 2563/4, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.367953068301263,
+              "y": 50.072736846190736
+            }
+          },
+          {
+            "attributes": {
+              "kod": 28474597,
+              "adresa": "Klest 22, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.322283156406803,
+              "y": 50.10106460297883
+            }
+          },
+          {
+            "attributes": {
+              "kod": 30761344,
+              "adresa": "Střížov 42, 35002 Cheb",
+              "nespravny": null,
+              "platiod": 1386374400000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.360784377462863,
+              "y": 50.103388161834424
+            }
+          },
+          {
+            "attributes": {
+              "kod": 72858478,
+              "adresa": "Dobrovského 543, 35604 Dolní Rychnov",
+              "nespravny": null,
+              "platiod": 1404172800000,
+              "platido": null
+            },
+            "geometry": {
+              "x": 12.644750233857595,
+              "y": 50.16870245804949
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

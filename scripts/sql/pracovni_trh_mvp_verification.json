@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-09T22:10:31.964512+00:00",
+  "target": "new disposable container, network=none, PostgreSQL storage=tmpfs",
+  "project_database_accessed": false,
+  "checks": [
+    "SQL regeneration is byte-for-byte deterministic",
+    "Duplicate source jobs and ambiguous multiple workplaces are rejected",
+    "Workplace IDs and aggregation are independent of source row order",
+    "Isolated PostgreSQL: no network, published ports or persistent/host volumes",
+    "All four standalone SQL files execute on PostgreSQL with existing school schema",
+    "Every demand row and every mapping pair match independent SQL recomputation from raw JSON",
+    "All 744 jobs / 1889 positions preserved; 390 distinct employers; consistent import timestamp",
+    "Exactly the agreed four-table column layout",
+    "Coordinates match RUIAN, are inside Karlovarsky region, and missing locations remain NULL",
+    "EXISTS search across multiple matching programs/schools counts each position only once",
+    "Search examples: group 512 = 170 jobs / 67 firms / 3 schools; WITTE = 2 workplaces / 1 firm; leading-zero ICO retained",
+    "Repeated imports do not duplicate or alter business data",
+    "Full snapshot refresh removes stale demand, workplaces and mapping pairs",
+    "Foreign-key failure rolls back entire demand/mapping replacement without data loss",
+    "PK/check constraints reject invalid data; existing OBORY remains unchanged"
+  ],
+  "sql_sha256": {
+    "insert_zamestnavatele.sql": "252c56a480566a6a913293e7902a8693d2303c453b92d228038c5b78e5fd5b00",
+    "insert_profesni_skupiny.sql": "d860b9c5c243f306cb08288593f861ec9c2caeb963d34f6452f7941c3cc1ec79",
+    "insert_poptavka_profesi.sql": "d0636739364a811f2001a6c5748b504128502ea6b5cb2ef6d27daecc1ac0a6e0",
+    "insert_obor_profese.sql": "7e89d18d0cb3bff6b4e69b4510a3c260965f49a9831feedd5130bfe7994dcfa5"
+  },
+  "postgres_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+  "database_counts": {
+    "workplaces": 422,
+    "employers": 390,
+    "groups": 88,
+    "demand_rows": 641,
+    "positions": 1889,
+    "mapping_pairs": 291,
+    "mapped_groups": 69,
+    "mapped_programs": 72,
+    "import_timestamps": 1
+  },
+  "geocoded_workplaces": 394,
+  "workplaces_without_coordinates": 28,
+  "positions_without_coordinates": 447,
+  "business_data_fingerprints": {
+    "\"ZAMESTNAVATELE\"": "d36f251f74d31251044c425483139c370e796df6a4098c12099d477944a21b77",
+    "\"PROFESNI_SKUPINY\"": "fc49cb3b5565f4f54034d707f2d035b4d435e1543658ebce1e7459361b1b1ca2",
+    "\"POPTAVKA_PROFESI\"": "e3203db9b7c17287318a5fcb961537a31a684f36c96e9c0539ca1671bbe258e3",
+    "\"OBOR_PROFESE\"": "982c7290708f7b70e8223bff77f53c20ba9599eedaf950b6f6ad50a06650fa71"
+  },
+  "temporary_container_removed": true,
+  "finished_at": "2026-10-09T22:10:57.561535+00:00"
+}

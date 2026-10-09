@@ -1,0 +1,255 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-09T22:14:12.175021+00:00",
+  "container": "asymetricky-kruhovy-objezd-revival-db-1",
+  "database": "obor_na_dosah",
+  "backup": {
+    "path": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/obor_na_dosah_before_pracovni_trh_mvp_20261009T221407Z.dump",
+    "bytes": 4709835,
+    "sha256": "f38acb8b713ecb88f4ae30d38f246fac5ff457360dac9c8874233b058d2f9f41",
+    "archive_fully_readable": true
+  },
+  "original_tables": {
+    "DATA_DEMOGRAFIE_ZSJ": {
+      "rows": 17619,
+      "md5_of_sorted_row_hashes": "7408fcd4ebb0eea924223b4d583fd013"
+    },
+    "DEMO_SKUPINA": {
+      "rows": 21,
+      "md5_of_sorted_row_hashes": "fe7fce29fb70e15a301b2b9744c4287e"
+    },
+    "NABIDKA_OBORU": {
+      "rows": 140,
+      "md5_of_sorted_row_hashes": "33aac179ac93af9eb9fe2f55e7d60cd0"
+    },
+    "OBORY": {
+      "rows": 81,
+      "md5_of_sorted_row_hashes": "433290d4642f4d7d60fe4619776cc49b"
+    },
+    "ZSJ": {
+      "rows": 839,
+      "md5_of_sorted_row_hashes": "f6e18d278fa65b9563000c637bced879"
+    },
+    "spatial_ref_sys": {
+      "rows": 8500,
+      "md5_of_sorted_row_hashes": "7c38fdce04bf2f037682a661ee5fa2fb"
+    },
+    "stredni_skoly": {
+      "rows": 34,
+      "md5_of_sorted_row_hashes": "1bfc3048aad910faa31604cab95c1a3b"
+    }
+  },
+  "sql_sha256": {
+    "insert_zamestnavatele.sql": "252c56a480566a6a913293e7902a8693d2303c453b92d228038c5b78e5fd5b00",
+    "insert_profesni_skupiny.sql": "d860b9c5c243f306cb08288593f861ec9c2caeb963d34f6452f7941c3cc1ec79",
+    "insert_poptavka_profesi.sql": "d0636739364a811f2001a6c5748b504128502ea6b5cb2ef6d27daecc1ac0a6e0",
+    "insert_obor_profese.sql": "7e89d18d0cb3bff6b4e69b4510a3c260965f49a9831feedd5130bfe7994dcfa5"
+  },
+  "sources_sha256": {
+    "datasety/volna-mista_karlovarsky_kraj.json": "78a97818bc6b2f2106b6c7a01f59ed05dc442ace72e2e6e83bcccf6b742dae1c",
+    "datasety/PZ2026_kolo1_skolobory_prihlasky_karlovarsky_kraj.csv": "461c951c5e52479b6eb44780995aaddeb04f3ff4d8b621c7909885c4fd6a241b",
+    "datasety/nsp_mapovani_mvp.json": "79349687b74ea52a8a57a7c0ea61be87ef1f422ee42ccfcf0e6f9fe4c640675b",
+    "datasety/ruian_pracoviste_mvp.json": "b886d4f98a62d3c64429608f7a8815b0b3aeb97a14a32ffe3b2ad4e126b4b388"
+  },
+  "atomic_import": true,
+  "batch_sha256": "17c66f3b1543e1c2de69c98dd3a73dbb873eba0be8ecf628977ed7045a2a16e4",
+  "committed_at": "2026-10-09T22:15:03.846139+00:00",
+  "pre_commit_checks": [
+    "Every demand row independently recomputed from raw vacancies JSON",
+    "Every mapping pair independently recomputed from raw NSP responses and existing OBORY",
+    "All workplace identity/location values match source JSON",
+    "All four complete business fingerprints match the isolated verification",
+    "All seven existing public tables retained identical contents"
+  ],
+  "checks": [
+    "Committed counts match the source snapshot and isolated verification",
+    "Every committed business row matches the independently verified data",
+    "Exact four-table schema; all four foreign keys are present and validated",
+    "No orphan records across employers, professions, programs, school offerings, schools or municipality codes",
+    "Complete employer-to-school chain preserves all 1675 mapped positions exactly once; 214 unmapped positions remain stored",
+    "All 394 coordinates match RUIAN and lie inside Karlovarsky region; 28 missing coordinates remain NULL",
+    "Cooks: 170 places, 67 firms, 3 programs and 3 schools without multiplying demand; multi-workplace firms and leading-zero ICO work",
+    "All four saved read-only search queries execute successfully against the actual database",
+    "All seven pre-existing public tables are unchanged, including schools, programs, ZSJ and demography"
+  ],
+  "postgres_version": "18.6 (Debian 18.6-1.pgdg13+2)",
+  "database_counts": {
+    "workplaces": 422,
+    "employers": 390,
+    "municipalities": 66,
+    "groups": 88,
+    "demand_rows": 641,
+    "positions": 1889,
+    "mapping_pairs": 291,
+    "mapped_groups": 69,
+    "mapped_programs": 72,
+    "import_timestamps": 1
+  },
+  "business_data_fingerprints": {
+    "\"ZAMESTNAVATELE\"": "d36f251f74d31251044c425483139c370e796df6a4098c12099d477944a21b77",
+    "\"PROFESNI_SKUPINY\"": "fc49cb3b5565f4f54034d707f2d035b4d435e1543658ebce1e7459361b1b1ca2",
+    "\"POPTAVKA_PROFESI\"": "e3203db9b7c17287318a5fcb961537a31a684f36c96e9c0539ca1671bbe258e3",
+    "\"OBOR_PROFESE\"": "982c7290708f7b70e8223bff77f53c20ba9599eedaf950b6f6ad50a06650fa71"
+  },
+  "foreign_keys": [
+    {
+      "table": "\"OBOR_PROFESE\"",
+      "definition": "FOREIGN KEY (cz_isco3) REFERENCES \"PROFESNI_SKUPINY\"(cz_isco3)",
+      "validated": true
+    },
+    {
+      "table": "\"OBOR_PROFESE\"",
+      "definition": "FOREIGN KEY (kod_oboru) REFERENCES \"OBORY\"(kod)",
+      "validated": true
+    },
+    {
+      "table": "\"POPTAVKA_PROFESI\"",
+      "definition": "FOREIGN KEY (cz_isco3) REFERENCES \"PROFESNI_SKUPINY\"(cz_isco3)",
+      "validated": true
+    },
+    {
+      "table": "\"POPTAVKA_PROFESI\"",
+      "definition": "FOREIGN KEY (zamestnavatel_id) REFERENCES \"ZAMESTNAVATELE\"(id)",
+      "validated": true
+    }
+  ],
+  "orphan_counts": {
+    "demand_employer": 0,
+    "demand_group": 0,
+    "mapping_group": 0,
+    "mapping_program": 0,
+    "offering_program": 0,
+    "offering_school": 0,
+    "mapped_program_without_offering": 0,
+    "workplace_without_municipality_in_zsj": 0
+  },
+  "coverage": {
+    "geocoded_workplaces": 394,
+    "workplaces_without_coordinates": 28,
+    "positions_without_coordinates": 447,
+    "unmapped_groups": 19,
+    "unmapped_positions": 214,
+    "positions_linked_to_schools": 1675
+  },
+  "cooks_example": {
+    "positions": 170,
+    "employers": 67,
+    "cz_isco3": "512",
+    "programs": [
+      {
+        "kod": "65-51-E/01",
+        "nazev": "Stravovací a ubytovací služby",
+        "vhodnost": 1
+      },
+      {
+        "kod": "65-51-E/02",
+        "nazev": "Práce ve stravování",
+        "vhodnost": 1
+      },
+      {
+        "kod": "65-51-H/01",
+        "nazev": "Kuchař - číšník",
+        "vhodnost": 1
+      }
+    ],
+    "schools": [
+      {
+        "redizo": "600009033",
+        "nazev": "Hotelová škola Mariánské Lázně, příspěvková organizace"
+      },
+      {
+        "redizo": "600009106",
+        "nazev": "Střední škola stravování a služeb Karlovy Vary, příspěvková organizace"
+      },
+      {
+        "redizo": "651012988",
+        "nazev": "Střední škola živnostenská Sokolov, příspěvková organizace"
+      }
+    ]
+  },
+  "top_demand": [
+    {
+      "cz_isco3": "821",
+      "nazev": "Montážní dělníci výrobků a zařízení",
+      "positions": 412,
+      "employers": 16
+    },
+    {
+      "cz_isco3": "834",
+      "nazev": "Obsluha pojízdných zařízení",
+      "positions": 242,
+      "employers": 23
+    },
+    {
+      "cz_isco3": "512",
+      "nazev": "Kuchaři (kromě šéfkuchařů), pomocní kuchaři",
+      "positions": 170,
+      "employers": 67
+    },
+    {
+      "cz_isco3": "833",
+      "nazev": "Řidiči nákladních automobilů, autobusů a tramvají",
+      "positions": 83,
+      "employers": 19
+    },
+    {
+      "cz_isco3": "514",
+      "nazev": "Kadeřníci, kosmetici a pracovníci v příbuzných oborech",
+      "positions": 76,
+      "employers": 27
+    },
+    {
+      "cz_isco3": "513",
+      "nazev": "Číšníci, servírky, barmani a příbuzní pracovníci",
+      "positions": 73,
+      "employers": 39
+    },
+    {
+      "cz_isco3": "932",
+      "nazev": "Pomocní pracovníci ve výrobě",
+      "positions": 67,
+      "employers": 13
+    },
+    {
+      "cz_isco3": "911",
+      "nazev": "Uklízeči a pomocníci v domácnostech, hotelích, administrativních, průmyslových a jiných objektech",
+      "positions": 54,
+      "employers": 27
+    },
+    {
+      "cz_isco3": "515",
+      "nazev": "Provozní pracovníci",
+      "positions": 50,
+      "employers": 10
+    },
+    {
+      "cz_isco3": "721",
+      "nazev": "Slévači, svářeči a příbuzní pracovníci",
+      "positions": 48,
+      "employers": 9
+    }
+  ],
+  "example_queries": {
+    "path": "scripts/sql/select_pracovni_trh_mvp.sql",
+    "sha256": "cb8783ae44efe0b23ecd606ad6f4e6fee09523bcd92d3404f4fedbcd47941cb0",
+    "executed_successfully": true
+  },
+  "original_tables_unchanged": true,
+  "finished_at": "2026-10-09T22:16:55.769299+00:00",
+  "loader": {
+    "path": "scripts/load_db.py",
+    "imports": [
+      "scripts/sql/insert_zsj.sql",
+      "scripts/sql/insert_skoly.sql",
+      "scripts/insert_obory_nabidka_oboru.sql",
+      "scripts/insert_demografie_zsj.sql",
+      "scripts/sql/insert_zamestnavatele.sql",
+      "scripts/sql/insert_profesni_skupiny.sql",
+      "scripts/sql/insert_poptavka_profesi.sql",
+      "scripts/sql/insert_obor_profese.sql"
+    ],
+    "all_paths_exist": true,
+    "dependency_order_valid": true,
+    "full_loader_executed_on_project_db": false
+  }
+}

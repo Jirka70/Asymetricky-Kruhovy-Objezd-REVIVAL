@@ -1,0 +1,322 @@
+{
+  "status": "passed",
+  "started_at": "2026-10-09T22:20:40.715595+00:00",
+  "container": "asymetricky-kruhovy-objezd-revival-db-1",
+  "database": "obor_na_dosah",
+  "backup_directory": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z",
+  "commands": [
+    {
+      "script": "scripts/drop_db.py",
+      "exit_code": 0,
+      "log": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z/drop_db.py.log"
+    },
+    {
+      "script": "scripts/load_db.py",
+      "exit_code": 0,
+      "log": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z/load_db.py.log"
+    }
+  ],
+  "checks": [
+    "Full database backup is readable; fingerprints of every table and the complete schema recorded before DROP",
+    "drop_db.py exited with 0 and the database ceased to exist",
+    "load_db.py exited with 0 and completed all eight SQL imports from an empty database",
+    "Complete schema, owners, indexes, constraints, database settings and extension versions are identical",
+    "All 11 tables retain identical row counts and business values; only the demand import timestamp changed",
+    "All foreign keys are validated and all employer, profession, school, municipality and demographic joins have no orphan records",
+    "Vacancy, school capacity/application and demographic totals match known source totals; mapping and coordinate coverage are preserved",
+    "All saved search queries execute; cooks still return 170 places, 67 firms and 3 schools without multiplying counts"
+  ],
+  "expected_difference": "POPTAVKA_PROFESI.importovano_at is refreshed by a new import; all other row values must match.",
+  "input_sha256": {
+    "scripts/sql/insert_zsj.sql": "9670c6a88a100f87b2f7f255f227a72a652c16550519146eb81c9c7658101412",
+    "scripts/sql/insert_skoly.sql": "9c18733da5992d253b5c8905060f72cc2a4d9c3c55862a4afb848774dfb9ec60",
+    "scripts/insert_obory_nabidka_oboru.sql": "530bc0e29051f22aee766ec6b35e52a5d63572ec781317f6998d6740cc14a865",
+    "scripts/insert_demografie_zsj.sql": "872a1cb061dc650b33fe751b3c855ed54186641e909399f8039253cd04ae0851",
+    "scripts/sql/insert_zamestnavatele.sql": "252c56a480566a6a913293e7902a8693d2303c453b92d228038c5b78e5fd5b00",
+    "scripts/sql/insert_profesni_skupiny.sql": "d860b9c5c243f306cb08288593f861ec9c2caeb963d34f6452f7941c3cc1ec79",
+    "scripts/sql/insert_poptavka_profesi.sql": "d0636739364a811f2001a6c5748b504128502ea6b5cb2ef6d27daecc1ac0a6e0",
+    "scripts/sql/insert_obor_profese.sql": "7e89d18d0cb3bff6b4e69b4510a3c260965f49a9831feedd5130bfe7994dcfa5"
+  },
+  "backup": {
+    "path": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z/obor_na_dosah.dump",
+    "bytes": 4746671,
+    "sha256": "07dfe52e90f7506cea5ed40dc630a974e0f212dc56d96d0f62dddd133e1f439e",
+    "fully_readable": true
+  },
+  "before": {
+    "tables": {
+      "public.DATA_DEMOGRAFIE_ZSJ": {
+        "rows": 17619,
+        "all_columns_sha256": "5a760fab03c026d54df15c130d665e106909c3f59c5cd9071cd3ae6acd979ec1",
+        "business_columns_sha256": "5a760fab03c026d54df15c130d665e106909c3f59c5cd9071cd3ae6acd979ec1"
+      },
+      "public.DEMO_SKUPINA": {
+        "rows": 21,
+        "all_columns_sha256": "351062a1f66728165971f2126571dfd5dea65ac4e1527d5970533195330df189",
+        "business_columns_sha256": "351062a1f66728165971f2126571dfd5dea65ac4e1527d5970533195330df189"
+      },
+      "public.NABIDKA_OBORU": {
+        "rows": 140,
+        "all_columns_sha256": "8e71f6c964b21a2c4184552f3d944ba145a45309ce5d138aa7cdd35b4cdc053a",
+        "business_columns_sha256": "8e71f6c964b21a2c4184552f3d944ba145a45309ce5d138aa7cdd35b4cdc053a"
+      },
+      "public.OBORY": {
+        "rows": 81,
+        "all_columns_sha256": "c5799323d87ca461871e0c23b7a711bbebcbcb28a4d3e45fa8d9e74b8bb1948e",
+        "business_columns_sha256": "c5799323d87ca461871e0c23b7a711bbebcbcb28a4d3e45fa8d9e74b8bb1948e"
+      },
+      "public.OBOR_PROFESE": {
+        "rows": 291,
+        "all_columns_sha256": "9149ceecfbc173d36ce94ef5250b11fdb81f1eabcbf95f335756711afe96f517",
+        "business_columns_sha256": "9149ceecfbc173d36ce94ef5250b11fdb81f1eabcbf95f335756711afe96f517"
+      },
+      "public.POPTAVKA_PROFESI": {
+        "rows": 641,
+        "all_columns_sha256": "8c8db83adb6f6f5cd0deed93bc675d87f4a0a937ad2a3e397912c987d7114cb5",
+        "business_columns_sha256": "2256aae80717518bb2d8aa8705b38597e19bc3394b968ff540c69bb3ca974b7c"
+      },
+      "public.PROFESNI_SKUPINY": {
+        "rows": 88,
+        "all_columns_sha256": "a8359b71f3c6afb347737b5aeb228bf35c2f3ab0bdaa27777895c71ad852e128",
+        "business_columns_sha256": "a8359b71f3c6afb347737b5aeb228bf35c2f3ab0bdaa27777895c71ad852e128"
+      },
+      "public.ZAMESTNAVATELE": {
+        "rows": 422,
+        "all_columns_sha256": "d7a4952f7278ab1eb430e4bca0e45984fc39863212d2e19f7defa6b5f409fa78",
+        "business_columns_sha256": "d7a4952f7278ab1eb430e4bca0e45984fc39863212d2e19f7defa6b5f409fa78"
+      },
+      "public.ZSJ": {
+        "rows": 839,
+        "all_columns_sha256": "ddce0fffa22837d7c6af8178964d0554b97d2cf65600528748e2171ea353e304",
+        "business_columns_sha256": "ddce0fffa22837d7c6af8178964d0554b97d2cf65600528748e2171ea353e304"
+      },
+      "public.spatial_ref_sys": {
+        "rows": 8500,
+        "all_columns_sha256": "40b4a096dfde000c7381c93d6e3ebd69717c238c3efdd28c743f6b8a9fbcf058",
+        "business_columns_sha256": "40b4a096dfde000c7381c93d6e3ebd69717c238c3efdd28c743f6b8a9fbcf058"
+      },
+      "public.stredni_skoly": {
+        "rows": 34,
+        "all_columns_sha256": "67506c3cdad24a888e355d2f7ef19ac9476cbd24d0040142a3d19fa67780ae46",
+        "business_columns_sha256": "67506c3cdad24a888e355d2f7ef19ac9476cbd24d0040142a3d19fa67780ae46"
+      }
+    },
+    "database_settings": {
+      "datname": "obor_na_dosah",
+      "owner": "obor",
+      "encoding": "UTF8",
+      "datlocprovider": "c",
+      "datcollate": "en_US.utf8",
+      "datctype": "en_US.utf8",
+      "datlocale": null,
+      "datcollversion": "2.41",
+      "datconnlimit": -1,
+      "datacl": null
+    },
+    "extensions": [
+      {
+        "extname": "plpgsql",
+        "extversion": "1.0"
+      },
+      {
+        "extname": "postgis",
+        "extversion": "3.6.4"
+      }
+    ],
+    "import_timestamps": [
+      "2026-10-09T22:15:02.860259+00:00"
+    ]
+  },
+  "before_schema": {
+    "path": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z/before_schema.sql",
+    "sha256": "98510ebc7aede12cb16cff245dce66169105335e9a4223628f278faf784da95a"
+  },
+  "after": {
+    "tables": {
+      "public.DATA_DEMOGRAFIE_ZSJ": {
+        "rows": 17619,
+        "all_columns_sha256": "5a760fab03c026d54df15c130d665e106909c3f59c5cd9071cd3ae6acd979ec1",
+        "business_columns_sha256": "5a760fab03c026d54df15c130d665e106909c3f59c5cd9071cd3ae6acd979ec1"
+      },
+      "public.DEMO_SKUPINA": {
+        "rows": 21,
+        "all_columns_sha256": "351062a1f66728165971f2126571dfd5dea65ac4e1527d5970533195330df189",
+        "business_columns_sha256": "351062a1f66728165971f2126571dfd5dea65ac4e1527d5970533195330df189"
+      },
+      "public.NABIDKA_OBORU": {
+        "rows": 140,
+        "all_columns_sha256": "8e71f6c964b21a2c4184552f3d944ba145a45309ce5d138aa7cdd35b4cdc053a",
+        "business_columns_sha256": "8e71f6c964b21a2c4184552f3d944ba145a45309ce5d138aa7cdd35b4cdc053a"
+      },
+      "public.OBORY": {
+        "rows": 81,
+        "all_columns_sha256": "c5799323d87ca461871e0c23b7a711bbebcbcb28a4d3e45fa8d9e74b8bb1948e",
+        "business_columns_sha256": "c5799323d87ca461871e0c23b7a711bbebcbcb28a4d3e45fa8d9e74b8bb1948e"
+      },
+      "public.OBOR_PROFESE": {
+        "rows": 291,
+        "all_columns_sha256": "9149ceecfbc173d36ce94ef5250b11fdb81f1eabcbf95f335756711afe96f517",
+        "business_columns_sha256": "9149ceecfbc173d36ce94ef5250b11fdb81f1eabcbf95f335756711afe96f517"
+      },
+      "public.POPTAVKA_PROFESI": {
+        "rows": 641,
+        "all_columns_sha256": "42e68e16881910882ba97e444318aa94313cb3db2de32bea4ff5ca31c9ee8390",
+        "business_columns_sha256": "2256aae80717518bb2d8aa8705b38597e19bc3394b968ff540c69bb3ca974b7c"
+      },
+      "public.PROFESNI_SKUPINY": {
+        "rows": 88,
+        "all_columns_sha256": "a8359b71f3c6afb347737b5aeb228bf35c2f3ab0bdaa27777895c71ad852e128",
+        "business_columns_sha256": "a8359b71f3c6afb347737b5aeb228bf35c2f3ab0bdaa27777895c71ad852e128"
+      },
+      "public.ZAMESTNAVATELE": {
+        "rows": 422,
+        "all_columns_sha256": "d7a4952f7278ab1eb430e4bca0e45984fc39863212d2e19f7defa6b5f409fa78",
+        "business_columns_sha256": "d7a4952f7278ab1eb430e4bca0e45984fc39863212d2e19f7defa6b5f409fa78"
+      },
+      "public.ZSJ": {
+        "rows": 839,
+        "all_columns_sha256": "ddce0fffa22837d7c6af8178964d0554b97d2cf65600528748e2171ea353e304",
+        "business_columns_sha256": "ddce0fffa22837d7c6af8178964d0554b97d2cf65600528748e2171ea353e304"
+      },
+      "public.spatial_ref_sys": {
+        "rows": 8500,
+        "all_columns_sha256": "40b4a096dfde000c7381c93d6e3ebd69717c238c3efdd28c743f6b8a9fbcf058",
+        "business_columns_sha256": "40b4a096dfde000c7381c93d6e3ebd69717c238c3efdd28c743f6b8a9fbcf058"
+      },
+      "public.stredni_skoly": {
+        "rows": 34,
+        "all_columns_sha256": "67506c3cdad24a888e355d2f7ef19ac9476cbd24d0040142a3d19fa67780ae46",
+        "business_columns_sha256": "67506c3cdad24a888e355d2f7ef19ac9476cbd24d0040142a3d19fa67780ae46"
+      }
+    },
+    "database_settings": {
+      "datname": "obor_na_dosah",
+      "owner": "obor",
+      "encoding": "UTF8",
+      "datlocprovider": "c",
+      "datcollate": "en_US.utf8",
+      "datctype": "en_US.utf8",
+      "datlocale": null,
+      "datcollversion": "2.41",
+      "datconnlimit": -1,
+      "datacl": null
+    },
+    "extensions": [
+      {
+        "extname": "plpgsql",
+        "extversion": "1.0"
+      },
+      {
+        "extname": "postgis",
+        "extversion": "3.6.4"
+      }
+    ],
+    "import_timestamps": [
+      "2026-10-09T22:20:57.889793+00:00"
+    ]
+  },
+  "after_schema": {
+    "path": "/Users/jirka/WEB/Asymetricky-Kruhovy-Objezd-REVIVAL/backups/drop_load_20261009T222040Z/after_schema.sql",
+    "sha256": "98510ebc7aede12cb16cff245dce66169105335e9a4223628f278faf784da95a"
+  },
+  "table_comparison": {
+    "public.DATA_DEMOGRAFIE_ZSJ": {
+      "rows_before": 17619,
+      "rows_after": 17619,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.DEMO_SKUPINA": {
+      "rows_before": 21,
+      "rows_after": 21,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.NABIDKA_OBORU": {
+      "rows_before": 140,
+      "rows_after": 140,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.OBORY": {
+      "rows_before": 81,
+      "rows_after": 81,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.OBOR_PROFESE": {
+      "rows_before": 291,
+      "rows_after": 291,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.POPTAVKA_PROFESI": {
+      "rows_before": 641,
+      "rows_after": 641,
+      "business_data_identical": true,
+      "all_columns_identical": false
+    },
+    "public.PROFESNI_SKUPINY": {
+      "rows_before": 88,
+      "rows_after": 88,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.ZAMESTNAVATELE": {
+      "rows_before": 422,
+      "rows_after": 422,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.ZSJ": {
+      "rows_before": 839,
+      "rows_after": 839,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.spatial_ref_sys": {
+      "rows_before": 8500,
+      "rows_after": 8500,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    },
+    "public.stredni_skoly": {
+      "rows_before": 34,
+      "rows_after": 34,
+      "business_data_identical": true,
+      "all_columns_identical": true
+    }
+  },
+  "relations": {
+    "invalid_foreign_keys": 0,
+    "foreign_keys": 7,
+    "demand_without_employer": 0,
+    "demand_without_group": 0,
+    "mapping_without_group": 0,
+    "mapping_without_program": 0,
+    "offering_without_program": 0,
+    "offering_without_school": 0,
+    "school_without_zsj": 0,
+    "demography_without_zsj": 0,
+    "demography_without_group": 0,
+    "workplace_without_municipality": 0
+  },
+  "totals": {
+    "positions": 1889,
+    "employers": 390,
+    "school_capacity": 3572,
+    "school_applications": 9489,
+    "population_2021": 279103,
+    "mapped_positions": 1675,
+    "unmapped_positions": 214,
+    "geocoded_workplaces": 394,
+    "positions_without_coordinates": 447
+  },
+  "cooks_example": {
+    "positions": 170,
+    "employers": 67,
+    "schools": 3,
+    "positions_using_school_filter": 170
+  },
+  "finished_at": "2026-10-09T22:21:08.123213+00:00"
+}
