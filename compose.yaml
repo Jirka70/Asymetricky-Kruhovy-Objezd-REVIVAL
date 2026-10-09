@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-obor_na_dosah}
+      POSTGRES_USER: ${POSTGRES_USER:-obor}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      start_period: 30s
+      retries: 12
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+volumes:
+  postgres_data:
