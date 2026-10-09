@@ -1,86 +1,206 @@
 openapi: 3.1.0
 info:
   title: Obor na dosah API
-  version: 1.0.0
-  summary: Data o demografii, ZSJ, středních školách, oborech a dojezdech v Karlovarském kraji.
+  version: 2.0.0
+  summary: Výběr střední školy podle dojezdu a analýza kapacit a oborů v Karlovarském kraji.
   description: |
-    API je jen pro čtení. Vrací JSON a pro mapové vrstvy GeoJSON (WGS 84, EPSG:4326,
-    souřadnice zaokrouhlené na 5 desetinných míst).
+    API slouží dvěma skupinám uživatelů:
 
-    **Zdroje dat**
-    - ZSJ: `public."ZSJ"` (839 základních sídelních jednotek, polygony `boundary`).
-    - Demografie: `DATA_DEMOGRAFIE_ZSJ` – modelový odhad věkové struktury k 26. 3. 2021
-      (SLDB 2021), bez rozlišení pohlaví.
-    - Školy: `stredni_skoly` (34 škol, 30 z nich s nabídkou v 1. kole 2026).
-    - Obory a nabídky: `OBORY`, `NABIDKA_OBORU` (81 oborů, 140 nabídek, přijímací řízení 2026, 1. kolo).
-    - Dojezdy: předpočítaná matice ZSJ × škola z OpenTripPlanneru (scénář příjezd 7:30–8:00
-      v běžný školní den). Živě se OTP volá jen v `/dojezdy/trasa`.
+    - **Student** zadá, odkud cestuje, a uvidí, které školy s jeho oborem stihne ráno dojet a jakým spojem.
+    - **Úředník** vidí, kde děti nemají obor v dosahu, kde jsou přeplněné nebo poloprázdné kapacity
+      a na které škole by přidání oboru pomohlo nejvíc dětem.
+
+    API je jen pro čtení. Mapové vrstvy jsou GeoJSON (WGS 84, EPSG:4326).
+    Jediný endpoint, který volá OpenTripPlanner živě, je `/student/trasa`; ostatní čtou
+    předpočítanou matici dojezdů ZSJ × škola.
+
+    **Klíčové definice**
+
+    | Pojem | Definice |
+    | --- | --- |
+    | `deti` | Odhad jednoho ročníku nastupujícího na SŠ v roce 2026: věková skupina 10–14 let ze SLDB 2021 v ZSJ, děleno 5. Modelový odhad bez stěhování. |
+    | Škola v dosahu | Doba dojezdu ze ZSJ ve scénáři `scenar` je nejvýš `max_min` minut. |
+    | Obor v dosahu | Obor se v denní formě učí aspoň na jedné škole v dosahu. |
+    | Děti bez oboru | Součet `deti` v ZSJ, kde obor v dosahu není. |
+    | `prihlasky_na_misto` | Přihlášky / kapacita (přijímací řízení 2026, 1. kolo). |
+    | `index_pretlaku` | `prihlasky_na_misto` / průměr kraje (2,66). 1,0 = průměr. |
+    | `mist_na_100_deti` | 100 × kapacita oboru / děti, které mají obor v dosahu. |
 
     **Konvence**
-    - Kódy (ZSJ, obec, REDIZO, obor) jsou vždy řetězce, aby se neztratily úvodní nuly.
-    - Více hodnot v jednom parametru se odděluje čárkou.
-    - Kód oboru obsahuje lomítko (`79-41-K/41`); v cestě se kóduje jako `79-41-K%2F41`.
-    - Věkové rozsahy musí sledovat 5leté skupiny ČSÚ (`vek_od` násobek 5, `vek_do` = násobek 5 minus 1).
-  contact:
-    name: Carlsbad open data hackathon
+    - Kódy (ZSJ, obec, REDIZO, obor) jsou vždy řetězce kvůli úvodním nulám.
+    - Kód oboru obsahuje lomítko; v cestě se kóduje (`23-68-H%2F01`).
+    - Nový scénář dojezdu (např. odpoledne zpět) = nový řádek v tabulce `SCENAR` a nový předpočet; API se nemění.
 servers:
   - url: http://localhost:8000/api/v1
     description: Lokální vývoj (uvicorn)
 tags:
-  - name: Číselníky
-    description: Data, která frontend načte jednou při startu.
-  - name: ZSJ a demografie
-    description: Polygony ZSJ, věková struktura a choropleth.
-  - name: Školy a obory
-    description: Školy, jejich nabídka oborů, kapacity a přihlášky.
-  - name: Dojezdy
-    description: Doby dojezdu veřejnou dopravou a dostupnost oborů.
+  - name: Společné
+    description: Číselníky a školy, používají oba pohledy.
+  - name: Student
+    description: Školy v dosahu z bodu a spojení do školy.
+  - name: Úředník
+    description: Dostupnost oborů, bilance kapacit a návrhy, kde obor přidat.
 
 paths:
-  /ciselniky/vekove-skupiny:
+  /ciselniky:
     get:
-      tags: [Číselníky]
-      operationId: listVekoveSkupiny
-      summary: Věkové skupiny (21 pětiletých skupin)
-      description: Z tabulky `DEMO_SKUPINA`, doplněno o číselné meze věku.
+      tags: [Společné]
+      operationId: getCiselniky
+      summary: Všechny číselníky jedním voláním
+      description: Obory, obce s počtem dětí, scénáře dojezdu a stupně vzdělání. Načíst jednou při startu aplikace.
       responses:
         '200':
-          description: Seznam věkových skupin seřazený podle věku.
+          description: Číselníky.
           headers:
             ETag: { $ref: '#/components/headers/ETag' }
-            Cache-Control: { $ref: '#/components/headers/CacheControl' }
           content:
             application/json:
-              schema:
-                type: object
-                required: [data]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/VekovaSkupina' }
+              schema: { $ref: '#/components/schemas/Ciselniky' }
 
-  /obory:
+  /skoly:
     get:
-      tags: [Číselníky, Školy a obory]
-      operationId: listObory
-      summary: Obory se souhrnnou kapacitou a přihláškami
+      tags: [Společné]
+      operationId: listSkoly
+      summary: Školy jako body na mapě
+      description: Bez filtru vrátí všech 34 škol; 4 školy bez nabídky mají `pocet_nabidek` 0.
       parameters:
-        - name: q
-          in: query
-          description: Hledání v názvu oboru (bez ohledu na velikost písmen a diakritiku).
-          schema: { type: string, minLength: 2 }
-          example: mechanik
-        - $ref: '#/components/parameters/Forma'
+        - $ref: '#/components/parameters/OborFiltr'
         - $ref: '#/components/parameters/Stupen'
-        - name: skupina
-          in: query
-          description: Skupina oborů KKOV (první dvojčíslí kódu), např. `23` = strojírenství.
-          schema: { type: string, pattern: '^\d{2}$' }
-          example: '23'
-        - $ref: '#/components/parameters/Razeni'
+        - $ref: '#/components/parameters/Forma'
       responses:
         '200':
-          description: Seznam oborů.
+          description: GeoJSON bodů škol.
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/SkolyFeatureCollection' }
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
+
+  /skoly/{redizo}:
+    get:
+      tags: [Společné]
+      operationId: getSkola
+      summary: Detail školy, její nabídka a spádová oblast
+      parameters:
+        - name: redizo
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/Redizo' }
+          example: '600009084'
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+      responses:
+        '200':
+          description: Detail školy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SkolaDetail' }
+        '404': { $ref: '#/components/responses/Nenalezeno' }
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
+
+  /student/skoly:
+    get:
+      tags: [Student]
+      operationId: listStudentSkoly
+      summary: Školy seřazené podle doby dojezdu z bodu
+      description: |
+        API najde ZSJ, do které bod padne, a vrátí doby dojezdu z předpočtu pro tuto ZSJ
+        (časy jsou orientační z reprezentačního bodu ZSJ). Přesné spojení z bodu vrací `/student/trasa`.
+
+        Bez `obor` vrací jen školy v dosahu. S `obor` vrací všechny školy s tímto oborem,
+        i mimo dosah (`v_dosahu: false`).
+      parameters:
+        - $ref: '#/components/parameters/Lat'
+        - $ref: '#/components/parameters/Lon'
+        - $ref: '#/components/parameters/OborFiltr'
+        - $ref: '#/components/parameters/Forma'
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+      responses:
+        '200':
+          description: Školy se spojem.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudentSkoly' }
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
+
+  /student/trasa:
+    get:
+      tags: [Student]
+      operationId: getStudentTrasa
+      summary: Spojení z bodu do školy na mapě (živě z OpenTripPlanneru)
+      description: |
+        Vrací až 3 spoje s příjezdem v okně scénáře, seřazené od nejkratšího.
+        Každý úsek je GeoJSON `Feature` s geometrií `LineString`; úseky stejného spoje
+        spojuje `properties.spoj`. Odpověď se cachuje 24 hodin podle bodu zaokrouhleného na ~100 m.
+      parameters:
+        - $ref: '#/components/parameters/Lat'
+        - $ref: '#/components/parameters/Lon'
+        - name: redizo
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/Redizo' }
+          example: '600009084'
+        - $ref: '#/components/parameters/Scenar'
+      responses:
+        '200':
+          description: Spoje a jejich úseky.
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/Trasa' }
+        '404': { $ref: '#/components/responses/Nenalezeno' }
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
+        '502':
+          description: OpenTripPlanner neodpověděl. Frontend může ukázat souhrn z `/student/skoly`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Chyba' }
+
+  /analyza/obce:
+    get:
+      tags: [Úředník]
+      operationId: getAnalyzaObce
+      summary: Mapa obcí – kde děti nemají obor nebo školu v dosahu
+      description: |
+        S `obor`: kolik dětí v obci obor v dosahu nemá a jak daleko je nejbližší škola s oborem.
+        Bez `obor`: kolik oborů a škol má obec v dosahu a kolik dětí nemá v dosahu žádnou školu.
+        `stupen` omezí obory na daný stupeň (např. `H` = má dítě v dosahu nějaký učební obor?).
+      parameters:
+        - $ref: '#/components/parameters/OborFiltr'
+        - $ref: '#/components/parameters/Stupen'
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+      responses:
+        '200':
+          description: GeoJSON polygonů obcí s ukazateli.
+          content:
+            application/geo+json:
+              schema: { $ref: '#/components/schemas/AnalyzaObce' }
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
+
+  /analyza/obory:
+    get:
+      tags: [Úředník]
+      operationId: listAnalyzaObory
+      summary: Bilance oborů – přetlak, dostupnost, kapacita na děti, trh práce
+      parameters:
+        - $ref: '#/components/parameters/Stupen'
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+        - name: signal
+          in: query
+          description: Jen obory s daným signálem; více hodnot oddělit čárkou.
+          schema: { type: string, example: 'pretlak,spatna_dostupnost' }
+        - name: razeni
+          in: query
+          description: Pole pro řazení; mínus = sestupně.
+          schema:
+            type: string
+            enum: [index_pretlaku, -index_pretlaku, deti_bez_oboru, -deti_bez_oboru,
+                   mist_na_100_deti, -mist_na_100_deti, volna_mista_na_misto, -volna_mista_na_misto, nazev]
+            default: -index_pretlaku
+      responses:
+        '200':
+          description: Řádek za každý obor.
           content:
             application/json:
               schema:
@@ -89,18 +209,15 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/Obor' }
-                  meta: { $ref: '#/components/schemas/MetaPrijimaciRizeni' }
+                    items: { $ref: '#/components/schemas/BilanceOboru' }
+                  meta: { $ref: '#/components/schemas/MetaAnalyza' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
-  /obory/{kod}/statistiky:
+  /analyza/obory/{kod}:
     get:
-      tags: [Školy a obory]
-      operationId: getOborStatistiky
-      summary: Vše o jednom oboru
-      description: |
-        Na kterých školách se obor učí, souhrnná kapacita a přihlášky. Pole `dostupnost`
-        je vyplněné až po naplnění matice dojezdů, do té doby je `null`.
+      tags: [Úředník]
+      operationId: getAnalyzaObor
+      summary: Detail oboru – kde je přeplněný, kde chybí, kam ho přidat
       parameters:
         - name: kod
           in: path
@@ -108,370 +225,77 @@ paths:
           description: Kód oboru KKOV, lomítko kódované jako `%2F`.
           schema: { $ref: '#/components/schemas/KodOboru' }
           example: 23-68-H%2F01
-      responses:
-        '200':
-          description: Statistiky oboru.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/OborStatistiky' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-
-  /obce:
-    get:
-      tags: [Číselníky]
-      operationId: listObce
-      summary: Obce kraje s populací
-      description: Vyžaduje tabulku `OBCE` (názvy obcí a ORP); do jejího doplnění je `nazev` a `orp` `null`.
-      parameters:
-        - $ref: '#/components/parameters/Rok'
-      responses:
-        '200':
-          description: Seznam obcí.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [data]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/Obec' }
-
-  /zsj:
-    get:
-      tags: [ZSJ a demografie]
-      operationId: listZsj
-      summary: Polygony ZSJ pro podkladovou mapu
-      parameters:
-        - $ref: '#/components/parameters/Obec'
-        - $ref: '#/components/parameters/Bbox'
-        - name: jen_obydlene
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+        - name: kandidatu
           in: query
-          description: Vynechat ZSJ s nulovou populací.
-          schema: { type: boolean, default: false }
-        - $ref: '#/components/parameters/Zjednoduseni'
-        - $ref: '#/components/parameters/Format'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+          description: Kolik kandidátních škol vrátit.
+          schema: { type: integer, minimum: 1, maximum: 34, default: 5 }
       responses:
         '200':
-          description: ZSJ jako GeoJSON (`format=geojson`) nebo seznam bez geometrie (`format=json`).
+          description: Detail oboru.
           content:
-            application/geo+json:
-              schema: { $ref: '#/components/schemas/ZsjFeatureCollection' }
             application/json:
-              schema:
-                type: object
-                required: [data, meta]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/ZsjVlastnosti' }
-                  meta: { $ref: '#/components/schemas/MetaStrankovani' }
+              schema: { $ref: '#/components/schemas/DetailOboru' }
+        '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
-  /zsj/{kod_zsj}:
+  /analyza/simulace:
     get:
-      tags: [ZSJ a demografie]
-      operationId: getZsj
-      summary: Detail ZSJ s věkovou strukturou
-      parameters:
-        - name: kod_zsj
-          in: path
-          required: true
-          schema: { $ref: '#/components/schemas/KodZsj' }
-          example: '050946'
-        - $ref: '#/components/parameters/Rok'
-        - name: geometrie
-          in: query
-          description: Přiložit polygon ZSJ.
-          schema: { type: boolean, default: false }
-      responses:
-        '200':
-          description: Detail ZSJ.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/ZsjDetail' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
+      tags: [Úředník]
+      operationId: getAnalyzaSimulace
+      summary: Simulace – co kdyby škola učila obor s danou kapacitou
+      description: |
+        Vrátí slovník podle `kod_zsj` s dobou dojezdu ke škole a počtem potenciálních uchazečů.
+        Obsahuje jen ZSJ, které školu stihnou do `max_min`. Nic se neukládá.
 
-  /demografie:
-    get:
-      tags: [ZSJ a demografie]
-      operationId: getDemografie
-      summary: Věková struktura za ZSJ, obec nebo kraj
+        - Potenciální uchazeči v ZSJ = `deti` × `podil_zajmu`, kde `podil_zajmu` je podíl oboru
+          na všech přihláškách v kraji (např. 455 / 9 489 = 0,048). Hodnota je očekávaný počet, proto desetinná.
+        - `novy_dosah` = ZSJ dnes obor v dosahu nemá.
+        - `nejblizsi_stavajici_min` = čas ke stávající nejbližší škole s oborem (null = žádná v dosahu).
+        - Když škola obor už učí, jde o navýšení kapacity (`meta.skola_obor_uz_uci: true`).
+
+        S `format=geojson` vrací totéž jako GeoJSON polygonů ZSJ.
       parameters:
-        - name: uroven
+        - name: redizo
           in: query
           required: true
-          schema: { type: string, enum: [zsj, obec, kraj] }
-        - name: kod
+          schema: { $ref: '#/components/schemas/Redizo' }
+          example: '600009271'
+        - name: obor
           in: query
-          description: Kód ZSJ nebo obce. U `uroven=kraj` se vynechá.
-          schema: { type: string, pattern: '^\d{6}$' }
-          example: '554961'
-        - $ref: '#/components/parameters/Rok'
-        - $ref: '#/components/parameters/VekOd'
-        - $ref: '#/components/parameters/VekDo'
+          required: true
+          description: Kód oboru KKOV.
+          schema: { $ref: '#/components/schemas/KodOboru' }
+          example: 23-68-H/01
+        - name: kapacita
+          in: query
+          required: true
+          description: Počet míst v prvním ročníku.
+          schema: { type: integer, minimum: 1, maximum: 300 }
+          example: 24
+        - $ref: '#/components/parameters/MaxMin'
+        - $ref: '#/components/parameters/Scenar'
+        - name: format
+          in: query
+          schema: { type: string, enum: [slovnik, geojson], default: slovnik }
       responses:
         '200':
-          description: Populace po věkových skupinách.
+          description: Výsledek simulace.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Demografie' }
+              schema: { $ref: '#/components/schemas/Simulace' }
               example:
-                uroven: obec
-                kod: '554961'
-                rok: 2021
-                populace: 44323
-                data:
-                  - { skupina: '1300150019', popis: '15-19', vek_od: 15, vek_do: 19, populace: 1814 }
-                meta: { odhad: true, zdroj: 'SLDB 2021, modelový odhad', rozhodne_datum: '2021-03-26' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /demografie/mapa:
-    get:
-      tags: [ZSJ a demografie]
-      operationId: getDemografieMapa
-      summary: Choropleth ZSJ podle zvoleného věkového pásma
-      description: |
-        Vrací ZSJ jako GeoJSON s vlastností `hodnota` podle `ukazatel`.
-        U `podil` mají ZSJ s méně než 20 obyvateli `hodnota: null`.
-        `meta.hranice` obsahuje hranice tříd (kvantily) pro legendu.
-      parameters:
-        - $ref: '#/components/parameters/VekOd'
-        - $ref: '#/components/parameters/VekDo'
-        - name: ukazatel
-          in: query
-          schema: { type: string, enum: [pocet, podil, hustota], default: pocet }
-          description: |
-            `pocet` – lidé ve zvoleném věku; `podil` – jejich podíl na populaci ZSJ v %;
-            `hustota` – lidé ve zvoleném věku na km².
-        - name: tridy
-          in: query
-          description: Počet tříd legendy.
-          schema: { type: integer, minimum: 3, maximum: 9, default: 5 }
-        - $ref: '#/components/parameters/Obec'
-        - $ref: '#/components/parameters/Bbox'
-        - $ref: '#/components/parameters/Zjednoduseni'
-        - $ref: '#/components/parameters/Rok'
-      responses:
-        '200':
-          description: GeoJSON s hodnotami pro choropleth.
-          content:
+                zsj:
+                  '197769': { cas_min: 6, deti: 9, potencialni_uchazeci: 0.4, novy_dosah: true, nejblizsi_stavajici_min: null }
+                  '006751': { cas_min: 28, deti: 12, potencialni_uchazeci: 0.6, novy_dosah: false, nejblizsi_stavajici_min: 47 }
+                souhrn: { zsj_v_dosahu: 96, deti_v_dosahu: 640, potencialni_uchazeci: 30.7, z_toho_novy_dosah: 6.7,
+                          blize_ke_skole: 18.4, kapacita: 24, uchazecu_na_misto: 1.28 }
+                meta: { redizo: '600009271', obor: 23-68-H/01, scenar: rano, max_min: 60,
+                        podil_zajmu: 0.048, skola_obor_uz_uci: false }
             application/geo+json:
-              schema: { $ref: '#/components/schemas/DemografieMapa' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /skoly:
-    get:
-      tags: [Školy a obory]
-      operationId: listSkoly
-      summary: Školy jako body na mapě
-      parameters:
-        - $ref: '#/components/parameters/OborFiltr'
-        - $ref: '#/components/parameters/Forma'
-        - $ref: '#/components/parameters/Stupen'
-        - $ref: '#/components/parameters/Obec'
-        - $ref: '#/components/parameters/Bbox'
-        - name: jen_s_nabidkou
-          in: query
-          description: Skrýt 4 školy bez nabídky v přijímacím řízení.
-          schema: { type: boolean, default: false }
-        - $ref: '#/components/parameters/Format'
-      responses:
-        '200':
-          description: Školy jako GeoJSON body nebo seznam.
-          content:
-            application/geo+json:
-              schema: { $ref: '#/components/schemas/SkolyFeatureCollection' }
-            application/json:
-              schema:
-                type: object
-                required: [data]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/SkolaSouhrn' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /skoly/{redizo}:
-    get:
-      tags: [Školy a obory]
-      operationId: getSkola
-      summary: Detail školy a její nabídka oborů
-      parameters:
-        - $ref: '#/components/parameters/RedizoPath'
-      responses:
-        '200':
-          description: Detail školy.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/SkolaDetail' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-
-  /nabidky:
-    get:
-      tags: [Školy a obory]
-      operationId: listNabidky
-      summary: Nabídky oborů s kapacitou a přihláškami
-      description: |
-        Plochý seznam pro tabulku a graf „kapacita vs. přihlášky“.
-        Přihlášky nejde sčítat na počet uchazečů: jeden žák podává až tři přihlášky.
-      parameters:
-        - $ref: '#/components/parameters/OborFiltr'
-        - name: redizo
-          in: query
-          description: Jedno nebo více REDIZO oddělených čárkou.
-          schema: { type: string, pattern: '^\d{9}(,\d{9})*$' }
-        - $ref: '#/components/parameters/Forma'
-        - $ref: '#/components/parameters/Stupen'
-        - $ref: '#/components/parameters/Obec'
-        - $ref: '#/components/parameters/Razeni'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: Seznam nabídek.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [data, meta]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/Nabidka' }
-                  meta:
-                    allOf:
-                      - $ref: '#/components/schemas/MetaStrankovani'
-                      - $ref: '#/components/schemas/MetaPrijimaciRizeni'
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /dojezdy/skoly:
-    get:
-      tags: [Dojezdy]
-      operationId: listDojezdySkoly
-      summary: Školy seřazené podle doby dojezdu z místa
-      description: |
-        Zadejte buď `z_zsj`, nebo `z`. U bodu API najde ZSJ, do které bod padne, a vrátí ji
-        v `meta.zsj`. Školy bez spojení v časovém okně jsou v datech se `stav: bez_spojeni`
-        a spočítané v `meta.nedosazitelne`.
-      parameters:
-        - $ref: '#/components/parameters/ZZsj'
-        - $ref: '#/components/parameters/ZBod'
-        - $ref: '#/components/parameters/OborFiltr'
-        - $ref: '#/components/parameters/Forma'
-        - $ref: '#/components/parameters/MaxMin'
-        - $ref: '#/components/parameters/Scenar'
-      responses:
-        '200':
-          description: Dosažitelné školy.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/DojezdySkoly' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /dojezdy/mapa:
-    get:
-      tags: [Dojezdy]
-      operationId: getDojezdyMapa
-      summary: Izochronní mapa ZSJ ke škole nebo oboru
-      description: |
-        Každá ZSJ má dobu dojezdu k dané škole (`redizo`) nebo k nejbližší škole s oborem (`obor`).
-        Zadejte právě jeden z parametrů `redizo` a `obor`.
-      parameters:
-        - $ref: '#/components/parameters/OborFiltr'
-        - name: redizo
-          in: query
-          schema: { $ref: '#/components/schemas/Redizo' }
-        - $ref: '#/components/parameters/Forma'
-        - $ref: '#/components/parameters/Scenar'
-        - $ref: '#/components/parameters/Obec'
-        - $ref: '#/components/parameters/Zjednoduseni'
-      responses:
-        '200':
-          description: GeoJSON ZSJ s dobou dojezdu a pásmem.
-          content:
-            application/geo+json:
-              schema: { $ref: '#/components/schemas/DojezdyMapa' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-
-  /dojezdy/trasa:
-    get:
-      tags: [Dojezdy]
-      operationId: getDojezdTrasa
-      summary: Jedno konkrétní spojení (živě z OpenTripPlanneru)
-      description: |
-        Jediný endpoint, který volá OTP živě. Odpověď se cachuje 24 hodin podle souřadnic
-        zaokrouhlených na 3 desetinná místa (≈ 100 m).
-      parameters:
-        - name: z
-          in: query
-          required: true
-          description: Výchozí bod `lat,lon`.
-          schema: { $ref: '#/components/schemas/LatLon' }
-          example: '50.23,12.87'
-        - name: redizo
-          in: query
-          required: true
-          schema: { $ref: '#/components/schemas/Redizo' }
-        - name: prijezd
-          in: query
-          description: Nejpozdější příjezd (ISO 8601, Europe/Prague). Výchozí je 8:00 nejbližšího školního dne.
-          schema: { type: string, format: date-time }
-          example: '2026-10-12T08:00:00+02:00'
-      responses:
-        '200':
-          description: Nalezené spojení.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Trasa' }
-        '404': { $ref: '#/components/responses/NenalezenoResponse' }
-        '422': { $ref: '#/components/responses/NeplatnyParametr' }
-        '502':
-          description: OpenTripPlanner neodpověděl.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Chyba' }
-
-  /dostupnost/obory:
-    get:
-      tags: [Dojezdy]
-      operationId: listDostupnostOboru
-      summary: Žebříček oborů podle dostupnosti pro populaci
-      description: Kolik lidí ve zvoleném věku má obor do `max_min` minut veřejnou dopravou.
-      parameters:
-        - $ref: '#/components/parameters/MaxMin'
-        - $ref: '#/components/parameters/VekOd'
-        - $ref: '#/components/parameters/VekDo'
-        - $ref: '#/components/parameters/Forma'
-        - $ref: '#/components/parameters/Stupen'
-        - $ref: '#/components/parameters/Scenar'
-        - $ref: '#/components/parameters/Razeni'
-      responses:
-        '200':
-          description: Dostupnost oborů.
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [data, meta]
-                properties:
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/DostupnostOboru' }
-                  meta:
-                    type: object
-                    properties:
-                      max_min: { type: integer }
-                      vek_od: { type: integer }
-                      vek_do: { type: [integer, 'null'] }
-                      populace_celkem: { type: integer, description: Lidé ve zvoleném věku v celém kraji. }
-                      scenar: { type: string }
-                      odhad: { type: boolean, const: true }
+              schema: { $ref: '#/components/schemas/SimulaceGeojson' }
+        '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
 components:
@@ -479,148 +303,82 @@ components:
     ETag:
       description: Verze importu dat; při shodě s `If-None-Match` vrací API 304.
       schema: { type: string }
-    CacheControl:
-      description: Data se mění jen s importem.
-      schema: { type: string, example: 'public, max-age=3600' }
 
   parameters:
-    Rok:
-      name: rok
+    Lat:
+      name: lat
       in: query
-      description: Rok demografických dat.
-      schema: { type: integer, enum: [2021], default: 2021 }
-    VekOd:
-      name: vek_od
-      in: query
-      description: Spodní mez věku, násobek 5.
-      schema: { type: integer, minimum: 0, maximum: 100, multipleOf: 5, default: 15 }
-    VekDo:
-      name: vek_do
-      in: query
-      description: Horní mez věku (násobek 5 minus 1). Vynechat = bez horní meze (100+).
-      schema: { type: integer, minimum: 4, maximum: 99, default: 19 }
-    Obec:
-      name: obec
-      in: query
-      description: Kód obce ČSÚ (6 číslic).
-      schema: { $ref: '#/components/schemas/KodObce' }
-      example: '554961'
-    Bbox:
-      name: bbox
-      in: query
-      description: Výřez mapy `lon1,lat1,lon2,lat2` (WGS 84).
-      schema: { type: string, pattern: '^-?\d+(\.\d+)?(,-?\d+(\.\d+)?){3}$' }
-      example: '12.80,50.20,12.95,50.27'
-    Zjednoduseni:
-      name: zjednoduseni
-      in: query
-      description: Tolerance zjednodušení polygonů v metrech (0 = bez zjednodušení).
-      schema: { type: integer, minimum: 0, maximum: 500, default: 20 }
-    Format:
-      name: format
-      in: query
-      schema: { type: string, enum: [geojson, json], default: geojson }
-    Limit:
-      name: limit
-      in: query
-      schema: { type: integer, minimum: 1, maximum: 1000, default: 100 }
-    Offset:
-      name: offset
-      in: query
-      schema: { type: integer, minimum: 0, default: 0 }
-    Razeni:
-      name: razeni
-      in: query
-      description: Název pole pro řazení; mínus = sestupně.
-      schema: { type: string, pattern: '^-?[a-z_]+$' }
-      example: -prihlasky_na_misto
-    Forma:
-      name: forma
-      in: query
-      description: Forma vzdělávání – `den` denní, `dal` dálková.
-      schema: { type: string, enum: [den, dal] }
-    Stupen:
-      name: stupen
-      in: query
-      description: Písmeno stupně vzdělání v kódu KKOV; více hodnot oddělit čárkou.
-      schema: { type: string, pattern: '^[CEHKLM](,[CEHKLM])*$' }
-      example: H,M
-    OborFiltr:
-      name: obor
-      in: query
-      description: Kód oboru KKOV (lomítko zde není třeba kódovat); více hodnot oddělit čárkou.
-      schema: { type: string }
-      example: 23-68-H/01
-    RedizoPath:
-      name: redizo
-      in: path
       required: true
-      schema: { $ref: '#/components/schemas/Redizo' }
-      example: '600009084'
-    ZZsj:
-      name: z_zsj
+      description: Zeměpisná šířka výchozího bodu (WGS 84). Bod musí ležet v Karlovarském kraji.
+      schema: { type: number, minimum: 49.9, maximum: 50.5 }
+      example: 50.2312
+    Lon:
+      name: lon
       in: query
-      description: Výchozí ZSJ.
-      schema: { $ref: '#/components/schemas/KodZsj' }
-      example: '050946'
-    ZBod:
-      name: z
-      in: query
-      description: Výchozí bod `lat,lon`; použije se ZSJ, do které bod padne.
-      schema: { $ref: '#/components/schemas/LatLon' }
-      example: '50.23,12.87'
+      required: true
+      description: Zeměpisná délka výchozího bodu (WGS 84).
+      schema: { type: number, minimum: 12.0, maximum: 13.4 }
+      example: 12.8711
     MaxMin:
       name: max_min
       in: query
-      description: Maximální doba dojezdu v minutách.
-      schema: { type: integer, minimum: 5, maximum: 180, default: 60 }
+      description: Nejdelší přijatelná doba dojezdu v minutách.
+      schema: { type: integer, minimum: 10, maximum: 120, default: 60 }
     Scenar:
       name: scenar
       in: query
-      description: Scénář předpočtu dojezdů.
-      schema: { type: string, enum: [skolni_den_prijezd_8_00], default: skolni_den_prijezd_8_00 }
+      description: Scénář dojezdu (seznam v `/ciselniky`). Zatím jen `rano` – příjezd 7:30–8:00.
+      schema: { type: string, default: rano, example: rano }
+    OborFiltr:
+      name: obor
+      in: query
+      description: Kód oboru KKOV (v query není třeba lomítko kódovat).
+      schema: { $ref: '#/components/schemas/KodOboru' }
+      example: 23-68-H/01
+    Stupen:
+      name: stupen
+      in: query
+      description: Stupeň vzdělání (písmeno v kódu KKOV); více hodnot oddělit čárkou.
+      schema: { type: string, pattern: '^[CEHKLM](,[CEHKLM])*$' }
+      example: H
+    Forma:
+      name: forma
+      in: query
+      description: Forma vzdělávání. Pro výpočet dosahu se vždy bere jen denní.
+      schema: { type: string, enum: [den, dal] }
 
   responses:
-    NenalezenoResponse:
+    Nenalezeno:
       description: Záznam neexistuje.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Chyba' }
           example:
-            error: { kod: nenalezeno, zprava: 'ZSJ 999999 neexistuje.', pole: kod_zsj }
+            error: { kod: nenalezeno, zprava: 'Škola 600000000 neexistuje.', pole: redizo }
     NeplatnyParametr:
-      description: Neplatný parametr.
+      description: Neplatný parametr (neznámý obor nebo scénář, bod mimo kraj…).
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Chyba' }
           example:
-            error: { kod: neplatny_vek, zprava: 'Věk musí sledovat 5leté skupiny, např. 15–19.', pole: vek_od }
+            error: { kod: mimo_kraj, zprava: 'Bod neleží v Karlovarském kraji.', pole: lat }
 
   schemas:
-    KodZsj:
-      type: string
-      pattern: '^\d{6}$'
-      description: Kód ZSJ včetně úvodních nul.
-    KodObce:
-      type: string
-      pattern: '^\d{6}$'
-    Redizo:
-      type: string
-      pattern: '^\d{9}$'
-    KodOboru:
-      type: string
-      pattern: '^\d{2}-\d{2}-[A-Z]/\d{2}$'
-      example: 23-68-H/01
-    LatLon:
-      type: string
-      pattern: '^-?\d+(\.\d+)?,-?\d+(\.\d+)?$'
+    KodZsj: { type: string, pattern: '^\d{6}$', example: '063622' }
+    KodObce: { type: string, pattern: '^\d{6}$', example: '554961' }
+    Redizo: { type: string, pattern: '^\d{9}$', example: '600009084' }
+    KodOboru: { type: string, pattern: '^\d{2}-\d{2}-[A-Z]/\d{2}$', example: 23-68-H/01 }
     Stupen:
       type: string
       enum: [C, E, H, K, L, M]
-      description: C praktická škola, E praktické obory, H výuční list, K gymnázium, L maturita s praxí/nástavba, M maturita.
-    PasmoDojezdu:
+      description: C praktická škola, E praktické obory, H výuční list, K gymnázium, L maturita s praxí / nástavba, M maturita.
+    Signal:
       type: string
-      enum: [do15, do30, do45, do60, nad60, bez_spojeni]
+      enum: [pretlak, nizky_zajem, spatna_dostupnost, poptavka_trhu]
+    Cas:
+      type: string
+      pattern: '^\d{2}:\d{2}$'
+      example: '07:41'
 
     Chyba:
       type: object
@@ -630,226 +388,123 @@ components:
           type: object
           required: [kod, zprava]
           properties:
-            kod: { type: string, description: Strojově čitelný kód chyby. }
-            zprava: { type: string, description: Česká zpráva pro uživatele. }
-            pole: { type: [string, 'null'], description: Parametr, kterého se chyba týká. }
+            kod: { type: string }
+            zprava: { type: string }
+            pole: { type: [string, 'null'] }
 
-    MetaStrankovani:
+    MetaDosah:
       type: object
+      required: [scenar, max_min]
       properties:
-        celkem: { type: integer }
-        limit: { type: integer }
-        offset: { type: integer }
-    MetaPrijimaciRizeni:
-      type: object
-      properties:
-        rok_prijimaciho_rizeni: { type: integer, example: 2026 }
-        kolo: { type: integer, example: 1 }
-    MetaDemografie:
-      type: object
-      properties:
-        rok: { type: integer, example: 2021 }
-        rozhodne_datum: { type: string, format: date, example: '2021-03-26' }
-        zdroj: { type: string, example: 'SLDB 2021, modelový odhad' }
-        odhad: { type: boolean, const: true }
+        scenar: { type: string, example: rano }
+        max_min: { type: integer, example: 60 }
 
-    VekovaSkupina:
-      type: object
-      required: [id, popis, vek_od]
-      properties:
-        id: { type: string, example: '1300150019' }
-        popis: { type: string, example: '15-19' }
-        vek_od: { type: integer, example: 15 }
-        vek_do: { type: [integer, 'null'], example: 19, description: '`null` u skupiny 100+.' }
-
-    PopulaceSkupiny:
-      type: object
-      required: [skupina, popis, populace]
-      properties:
-        skupina: { type: string, example: '1300150019' }
-        popis: { type: string, example: '15-19' }
-        vek_od: { type: integer }
-        vek_do: { type: [integer, 'null'] }
-        populace: { type: integer, minimum: 0 }
-
-    Obec:
-      type: object
-      required: [kod_obce, populace]
-      properties:
-        kod_obce: { $ref: '#/components/schemas/KodObce' }
-        nazev: { type: [string, 'null'], example: Karlovy Vary }
-        orp: { type: [string, 'null'], example: Karlovy Vary }
-        populace: { type: integer }
-        pocet_zsj: { type: integer }
-
-    Obor:
-      type: object
-      required: [kod, nazev, stupen, pocet_skol, kapacita, prihlasky]
-      properties:
-        kod: { $ref: '#/components/schemas/KodOboru' }
-        nazev: { type: string, example: Mechanik opravář motorových vozidel }
-        stupen: { $ref: '#/components/schemas/Stupen' }
-        pocet_skol: { type: integer, example: 4 }
-        kapacita: { type: integer, example: 109 }
-        prihlasky: { type: integer, example: 455 }
-        prihlasky_na_misto: { type: [number, 'null'], example: 4.17 }
-
-    OborStatistiky:
+    MetaAnalyza:
       allOf:
-        - $ref: '#/components/schemas/Obor'
+        - $ref: '#/components/schemas/MetaDosah'
         - type: object
           properties:
-            nabidky:
-              type: array
-              items: { $ref: '#/components/schemas/Nabidka' }
-            dostupnost:
-              type: ['null', array]
-              description: Podíl dětí 15–19 let s oborem do 30 / 45 / 60 minut.
-              items:
-                type: object
-                properties:
-                  max_min: { type: integer, enum: [30, 45, 60] }
-                  populace_v_dosahu: { type: integer }
-                  podil_v_dosahu: { type: number, description: '%' }
+            deti_celkem: { type: integer, description: Děti v celém kraji. }
+            prumer_prihlasek_na_misto: { type: number, example: 2.66 }
+            prahy:
+              type: object
+              description: Prahy pro `signaly`.
+              properties:
+                pretlak: { type: number, example: 1.5 }
+                nizky_zajem: { type: number, example: 0.5 }
+                spatna_dostupnost: { type: number, example: 50, description: '% dětí v dosahu' }
+                poptavka_trhu: { type: number, example: 2, description: volná místa na 1 místo ve škole }
+            definice_deti: { type: string, example: 'Odhad ročníku 2026: 10–14 let (SLDB 2021) / 5' }
 
-    ZsjVlastnosti:
+    Ciselniky:
       type: object
-      required: [kod_zsj, nazev, kod_obce, populace]
+      required: [obory, obce, scenare, stupne]
       properties:
-        kod_zsj: { $ref: '#/components/schemas/KodZsj' }
-        nazev: { type: string }
-        kod_obce: { $ref: '#/components/schemas/KodObce' }
-        nazev_obce: { type: [string, 'null'] }
-        populace: { type: integer }
-        lat: { type: number, description: Bod uvnitř polygonu (ST_PointOnSurface). }
-        lon: { type: number }
-
-    ZsjDetail:
-      allOf:
-        - $ref: '#/components/schemas/ZsjVlastnosti'
-        - type: object
-          required: [vekova_struktura]
-          properties:
-            podil_0_14: { type: number, description: '%' }
-            podil_15_64: { type: number, description: '%' }
-            podil_65_plus: { type: number, description: '%' }
-            vekova_struktura:
-              type: array
-              items: { $ref: '#/components/schemas/PopulaceSkupiny' }
-            geometry: { $ref: '#/components/schemas/GeoPolygon' }
-            meta: { $ref: '#/components/schemas/MetaDemografie' }
-
-    Demografie:
-      type: object
-      required: [uroven, rok, populace, data]
-      properties:
-        uroven: { type: string, enum: [zsj, obec, kraj] }
-        kod: { type: [string, 'null'] }
-        rok: { type: integer }
-        populace: { type: integer }
-        data:
-          type: array
-          items: { $ref: '#/components/schemas/PopulaceSkupiny' }
-        meta: { $ref: '#/components/schemas/MetaDemografie' }
-
-    GeoPolygon:
-      type: object
-      required: [type, coordinates]
-      properties:
-        type: { type: string, const: Polygon }
-        coordinates:
+        obory:
           type: array
           items:
-            type: array
-            items:
-              type: array
-              minItems: 2
-              maxItems: 2
-              items: { type: number }
+            type: object
+            required: [kod, nazev, stupen, pocet_skol]
+            properties:
+              kod: { $ref: '#/components/schemas/KodOboru' }
+              nazev: { type: string, example: Mechanik opravář motorových vozidel }
+              stupen: { $ref: '#/components/schemas/Stupen' }
+              skupina: { type: string, example: '23', description: První dvojčíslí KKOV. }
+              pocet_skol: { type: integer, example: 4 }
+        obce:
+          type: array
+          items:
+            type: object
+            required: [kod_obce, nazev, deti]
+            properties:
+              kod_obce: { $ref: '#/components/schemas/KodObce' }
+              nazev: { type: string, example: Karlovy Vary }
+              deti: { type: integer }
+              lat: { type: number }
+              lon: { type: number }
+        scenare:
+          type: array
+          items:
+            type: object
+            required: [id, popis, vychozi]
+            properties:
+              id: { type: string, example: rano }
+              popis: { type: string, example: 'Příjezd do školy 7:30–8:00, běžný školní den' }
+              smer: { type: string, enum: [do_skoly, ze_skoly] }
+              okno: { type: array, items: { $ref: '#/components/schemas/Cas' }, example: ['07:30', '08:00'] }
+              vychozi: { type: boolean }
+        stupne:
+          type: array
+          items:
+            type: object
+            properties:
+              kod: { $ref: '#/components/schemas/Stupen' }
+              popis: { type: string, example: Výuční list }
+        meta:
+          type: object
+          properties:
+            prijimaci_rizeni:
+              type: object
+              properties:
+                rok: { type: integer, example: 2026 }
+                kolo: { type: integer, example: 1 }
+            prumer_prihlasek_na_misto: { type: number, example: 2.66 }
+
+    Nabidka:
+      type: object
+      required: [kod_oboru, nazev_oboru, forma, kapacita, prihlasky]
+      properties:
+        kod_oboru: { $ref: '#/components/schemas/KodOboru' }
+        nazev_oboru: { type: string }
+        zamereni: { type: [string, 'null'] }
+        stupen: { $ref: '#/components/schemas/Stupen' }
+        forma: { type: string, enum: [den, dal] }
+        delka_let: { type: integer, example: 3 }
+        kapacita: { type: integer, example: 30 }
+        prihlasky: { type: integer, example: 131 }
+        prihlasky_na_misto: { type: [number, 'null'], example: 4.37 }
+        index_pretlaku: { type: [number, 'null'], example: 1.64 }
+
     GeoPoint:
       type: object
       required: [type, coordinates]
       properties:
         type: { type: string, const: Point }
+        coordinates: { type: array, minItems: 2, maxItems: 2, items: { type: number }, example: [12.95214, 50.30477] }
+    GeoPlocha:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type: { type: string, enum: [Polygon, MultiPolygon] }
+        coordinates: { type: array, items: {} }
+    GeoLinie:
+      type: object
+      required: [type, coordinates]
+      properties:
+        type: { type: string, const: LineString }
         coordinates:
           type: array
-          minItems: 2
-          maxItems: 2
-          items: { type: number }
-          example: [12.95214, 50.30477]
-
-    ZsjFeatureCollection:
-      type: object
-      required: [type, features]
-      properties:
-        type: { type: string, const: FeatureCollection }
-        features:
-          type: array
-          items:
-            type: object
-            required: [type, geometry, properties]
-            properties:
-              type: { type: string, const: Feature }
-              geometry: { $ref: '#/components/schemas/GeoPolygon' }
-              properties: { $ref: '#/components/schemas/ZsjVlastnosti' }
-        meta:
-          allOf:
-            - $ref: '#/components/schemas/MetaDemografie'
-            - $ref: '#/components/schemas/MetaStrankovani'
-
-    DemografieMapa:
-      type: object
-      required: [type, features, meta]
-      properties:
-        type: { type: string, const: FeatureCollection }
-        features:
-          type: array
-          items:
-            type: object
-            required: [type, geometry, properties]
-            properties:
-              type: { type: string, const: Feature }
-              geometry: { $ref: '#/components/schemas/GeoPolygon' }
-              properties:
-                type: object
-                required: [kod_zsj, nazev, populace, hodnota]
-                properties:
-                  kod_zsj: { $ref: '#/components/schemas/KodZsj' }
-                  nazev: { type: string }
-                  kod_obce: { $ref: '#/components/schemas/KodObce' }
-                  populace: { type: integer, description: Celková populace ZSJ. }
-                  pocet_ve_veku: { type: integer }
-                  hodnota: { type: [number, 'null'] }
-        meta:
-          allOf:
-            - $ref: '#/components/schemas/MetaDemografie'
-            - type: object
-              properties:
-                vek_od: { type: integer }
-                vek_do: { type: [integer, 'null'] }
-                ukazatel: { type: string, enum: [pocet, podil, hustota] }
-                jednotka: { type: string, example: '%' }
-                hranice:
-                  type: array
-                  description: Hranice tříd legendy (vzestupně).
-                  items: { type: number }
-                  example: [2, 4.5, 5.6, 6.8, 9.1]
-
-    SkolaSouhrn:
-      type: object
-      required: [redizo, nazev, pocet_nabidek]
-      properties:
-        redizo: { $ref: '#/components/schemas/Redizo' }
-        nazev: { type: string, example: 'Střední průmyslová škola Ostrov, příspěvková organizace' }
-        adresa: { type: string, example: 'Klínovecká 1197, 36301 Ostrov' }
-        kod_zsj: { $ref: '#/components/schemas/KodZsj' }
-        kod_obce: { $ref: '#/components/schemas/KodObce' }
-        web: { type: [string, 'null'], format: uri }
-        lat: { type: number, example: 50.304766 }
-        lon: { type: number, example: 12.952136 }
-        pocet_nabidek: { type: integer, example: 8 }
-        kapacita: { type: integer, example: 240 }
-        prihlasky: { type: integer, example: 724 }
+          items: { type: array, minItems: 2, maxItems: 2, items: { type: number } }
 
     SkolyFeatureCollection:
       type: object
@@ -864,75 +519,138 @@ components:
             properties:
               type: { type: string, const: Feature }
               geometry: { $ref: '#/components/schemas/GeoPoint' }
-              properties: { $ref: '#/components/schemas/SkolaSouhrn' }
-        meta: { $ref: '#/components/schemas/MetaPrijimaciRizeni' }
+              properties:
+                type: object
+                required: [redizo, nazev, pocet_nabidek]
+                properties:
+                  redizo: { $ref: '#/components/schemas/Redizo' }
+                  nazev: { type: string }
+                  obec: { type: string, example: Ostrov }
+                  pocet_nabidek: { type: integer, example: 8 }
+                  kapacita: { type: integer, example: 240 }
+                  prihlasky: { type: integer, example: 724 }
+                  index_pretlaku: { type: [number, 'null'], example: 1.14 }
 
     SkolaDetail:
-      allOf:
-        - $ref: '#/components/schemas/SkolaSouhrn'
-        - type: object
-          required: [nabidky]
-          properties:
-            nabidky:
-              type: array
-              items: { $ref: '#/components/schemas/Nabidka' }
-            meta: { $ref: '#/components/schemas/MetaPrijimaciRizeni' }
-
-    Nabidka:
       type: object
-      required: [id, redizo, kod_oboru, nazev_oboru, forma, delka_let, kapacita, prihlasky]
+      required: [redizo, nazev, lat, lon, nabidky, spadovost]
       properties:
-        id: { type: string, format: uuid, example: 6e1ebb5e-0333-4eee-9936-949ba60caee1 }
         redizo: { $ref: '#/components/schemas/Redizo' }
-        nazev_skoly: { type: string }
-        kod_oboru: { $ref: '#/components/schemas/KodOboru' }
-        nazev_oboru: { type: string, example: Kadeřník }
-        zamereni: { type: [string, 'null'], description: Sloupec `display_name`. }
-        stupen: { $ref: '#/components/schemas/Stupen' }
-        forma: { type: string, enum: [den, dal] }
-        delka_let: { type: integer, minimum: 1, maximum: 16, example: 3 }
-        kapacita: { type: integer, example: 15 }
-        prihlasky: { type: integer, example: 101, description: Přihlášky celkem za přijímací řízení 2026, 1. kolo. }
-        prihlasky_na_misto: { type: [number, 'null'], example: 6.73 }
+        nazev: { type: string }
+        adresa: { type: string, example: 'Klínovecká 1197, 36301 Ostrov' }
+        web: { type: [string, 'null'], format: uri }
+        lat: { type: number }
+        lon: { type: number }
+        nabidky:
+          type: array
+          items: { $ref: '#/components/schemas/Nabidka' }
+        spadovost:
+          type: object
+          description: Odkud se do školy dá dojet do `max_min`.
+          properties:
+            deti_v_dosahu: { type: integer }
+            obce:
+              type: array
+              items:
+                type: object
+                properties:
+                  kod_obce: { $ref: '#/components/schemas/KodObce' }
+                  nazev: { type: string }
+                  deti: { type: integer }
+                  nejkratsi_cas_min: { type: integer }
+        meta: { $ref: '#/components/schemas/MetaDosah' }
 
-    Dojezd:
+    Spoj:
       type: object
       required: [stav]
       properties:
         stav: { type: string, enum: [ok, bez_spojeni] }
-        cas_min: { type: [integer, 'null'], example: 24 }
-        prestupy: { type: [integer, 'null'], example: 1 }
-        chuze_m: { type: [integer, 'null'], example: 650 }
-        odjezd: { type: [string, 'null'], pattern: '^\d{2}:\d{2}$', example: '07:12' }
-        prijezd: { type: [string, 'null'], pattern: '^\d{2}:\d{2}$', example: '07:36' }
+        odjezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
+        prijezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
+        cas_min: { type: [integer, 'null'], example: 36 }
+        prestupy: { type: [integer, 'null'], example: 0 }
+        chuze_m: { type: [integer, 'null'], example: 540 }
+        linky: { type: array, items: { type: string }, example: ['421'] }
 
-    DojezdySkoly:
+    StudentSkoly:
       type: object
       required: [data, meta]
       properties:
         data:
           type: array
           items:
-            allOf:
-              - $ref: '#/components/schemas/Dojezd'
-              - type: object
-                required: [redizo, nazev]
+            type: object
+            required: [redizo, nazev, lat, lon, v_dosahu, spoj, nabidky]
+            properties:
+              redizo: { $ref: '#/components/schemas/Redizo' }
+              nazev: { type: string }
+              lat: { type: number }
+              lon: { type: number }
+              v_dosahu: { type: boolean }
+              spoj: { $ref: '#/components/schemas/Spoj' }
+              nabidky:
+                type: array
+                description: S filtrem `obor` jen nabídky tohoto oboru, jinak všechny.
+                items: { $ref: '#/components/schemas/Nabidka' }
+        meta:
+          allOf:
+            - $ref: '#/components/schemas/MetaDosah'
+            - type: object
+              properties:
+                zsj: { $ref: '#/components/schemas/KodZsj' }
+                v_dosahu: { type: integer }
+                mimo_dosah: { type: integer }
+                presnost: { type: string }
+
+    Trasa:
+      type: object
+      required: [type, features, spoje, meta]
+      properties:
+        type: { type: string, const: FeatureCollection }
+        features:
+          type: array
+          description: Úseky všech spojů.
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type: { type: string, const: Feature }
+              geometry: { $ref: '#/components/schemas/GeoLinie' }
+              properties:
+                type: object
+                required: [spoj, usek, druh, od, do, odjezd, prijezd]
                 properties:
-                  redizo: { $ref: '#/components/schemas/Redizo' }
-                  nazev: { type: string }
-                  lat: { type: number }
-                  lon: { type: number }
-                  nabidky:
-                    type: array
-                    items: { $ref: '#/components/schemas/Nabidka' }
+                  spoj: { type: integer, description: Index spoje v poli `spoje`. }
+                  usek: { type: integer }
+                  druh: { type: string, enum: [WALK, BUS, RAIL, TRAM, TROLLEYBUS] }
+                  linka: { type: [string, 'null'], example: '421' }
+                  od: { type: string, example: 'Karlovy Vary, Tržnice' }
+                  do: { type: string, example: 'Ostrov, aut. st.' }
+                  odjezd: { $ref: '#/components/schemas/Cas' }
+                  prijezd: { $ref: '#/components/schemas/Cas' }
+                  chuze_m: { type: [integer, 'null'] }
+        spoje:
+          type: array
+          maxItems: 3
+          items:
+            type: object
+            required: [spoj, odjezd, prijezd, cas_min, prestupy]
+            properties:
+              spoj: { type: integer }
+              odjezd: { $ref: '#/components/schemas/Cas' }
+              prijezd: { $ref: '#/components/schemas/Cas' }
+              cas_min: { type: integer }
+              prestupy: { type: integer }
+              chuze_m: { type: integer }
+              rezerva_min: { type: integer, description: Čas mezi příjezdem a koncem okna scénáře. }
         meta:
           type: object
           properties:
-            zsj: { $ref: '#/components/schemas/KodZsj' }
             scenar: { type: string }
-            nedosazitelne: { type: integer, example: 3 }
+            okno_prijezdu: { type: array, items: { $ref: '#/components/schemas/Cas' } }
+            den: { type: string, format: date }
 
-    DojezdyMapa:
+    AnalyzaObce:
       type: object
       required: [type, features, meta]
       properties:
@@ -944,63 +662,166 @@ components:
             required: [type, geometry, properties]
             properties:
               type: { type: string, const: Feature }
-              geometry: { $ref: '#/components/schemas/GeoPolygon' }
+              geometry: { $ref: '#/components/schemas/GeoPlocha' }
               properties:
                 type: object
-                required: [kod_zsj, pasmo]
+                required: [kod_obce, nazev, deti]
                 properties:
-                  kod_zsj: { $ref: '#/components/schemas/KodZsj' }
+                  kod_obce: { $ref: '#/components/schemas/KodObce' }
                   nazev: { type: string }
-                  cas_min: { type: [integer, 'null'] }
-                  pasmo: { $ref: '#/components/schemas/PasmoDojezdu' }
-                  nejblizsi_redizo: { type: [string, 'null'] }
-                  populace_15_19: { type: integer }
+                  deti: { type: integer }
+                  deti_bez_oboru: { type: integer, description: Jen s `obor`. }
+                  podil_bez_oboru: { type: number, description: '% (jen s `obor`)' }
+                  nejkratsi_cas_min: { type: [integer, 'null'], description: K nejbližší škole s oborem (bez `obor` s jakoukoli školou); null = bez spojení. }
+                  pocet_oboru_v_dosahu: { type: integer, description: Jen bez `obor`. }
+                  pocet_skol_v_dosahu: { type: integer }
+                  deti_bez_skoly: { type: integer, description: Jen bez `obor`. }
         meta:
-          type: object
-          properties:
-            scenar: { type: string }
-            obor: { type: [string, 'null'] }
-            redizo: { type: [string, 'null'] }
-            pasma:
-              type: array
-              items: { $ref: '#/components/schemas/PasmoDojezdu' }
+          allOf:
+            - $ref: '#/components/schemas/MetaDosah'
+            - type: object
+              properties:
+                obor: { type: [string, 'null'] }
+                stupen: { type: [string, 'null'] }
+                deti_celkem: { type: integer }
+                deti_bez_oboru_celkem: { type: [integer, 'null'] }
+                hranice: { type: array, items: { type: number }, description: Hranice tříd legendy. }
 
-    Usek:
+    BilanceOboru:
       type: object
-      required: [druh, od, do]
+      required: [kod, nazev, stupen, pocet_skol, kapacita, prihlasky, deti_v_dosahu, deti_bez_oboru, signaly]
       properties:
-        druh: { type: string, enum: [WALK, BUS, RAIL, TRAM, TROLLEYBUS] }
-        linka: { type: [string, 'null'], example: '421' }
-        od: { type: string, example: 'Karlovy Vary, Tržnice' }
-        do: { type: string, example: 'Ostrov, aut. st.' }
-        odjezd: { type: string, format: date-time }
-        prijezd: { type: string, format: date-time }
-        trvani_min: { type: number }
-        geometry:
-          type: object
-          description: GeoJSON LineString úseku.
-
-    Trasa:
-      type: object
-      required: [odjezd, prijezd, cas_min, prestupy, useky]
-      properties:
-        odjezd: { type: string, format: date-time }
-        prijezd: { type: string, format: date-time }
-        cas_min: { type: number }
-        prestupy: { type: integer }
-        chuze_m: { type: number }
-        useky:
-          type: array
-          items: { $ref: '#/components/schemas/Usek' }
-
-    DostupnostOboru:
-      type: object
-      required: [kod_oboru, nazev_oboru, populace_v_dosahu, podil_v_dosahu]
-      properties:
-        kod_oboru: { $ref: '#/components/schemas/KodOboru' }
-        nazev_oboru: { type: string }
+        kod: { $ref: '#/components/schemas/KodOboru' }
+        nazev: { type: string, example: Kadeřník }
         stupen: { $ref: '#/components/schemas/Stupen' }
-        pocet_skol: { type: integer }
-        populace_v_dosahu: { type: integer }
-        podil_v_dosahu: { type: number, description: '%' }
-        nejdelsi_cas_min: { type: [integer, 'null'], description: Nejdelší z nejkratších dojezdů ZSJ, které obor mají v dosahu. }
+        pocet_skol: { type: integer, example: 3 }
+        kapacita: { type: integer, example: 79 }
+        prihlasky: { type: integer, example: 323 }
+        prihlasky_na_misto: { type: [number, 'null'], example: 4.09 }
+        index_pretlaku: { type: [number, 'null'], example: 1.54 }
+        deti_v_dosahu: { type: integer }
+        deti_bez_oboru: { type: integer }
+        podil_deti_v_dosahu: { type: number, description: '%' }
+        mist_na_100_deti: { type: [number, 'null'] }
+        volna_mista: { type: [integer, 'null'], description: null = obor zatím nemá mapování na profese. }
+        volna_mista_na_misto: { type: [number, 'null'] }
+        signaly:
+          type: array
+          items: { $ref: '#/components/schemas/Signal' }
+
+    SimulaceZsj:
+      type: object
+      required: [cas_min, deti, potencialni_uchazeci, novy_dosah]
+      properties:
+        cas_min: { type: integer, description: Doba dojezdu ze ZSJ ke škole. }
+        deti: { type: integer }
+        potencialni_uchazeci: { type: number, description: deti × podil_zajmu, zaokrouhleno na 1 desetinné místo. }
+        novy_dosah: { type: boolean }
+        nejblizsi_stavajici_min: { type: [integer, 'null'] }
+
+    SimulaceSouhrn:
+      type: object
+      properties:
+        zsj_v_dosahu: { type: integer }
+        deti_v_dosahu: { type: integer }
+        potencialni_uchazeci: { type: number }
+        z_toho_novy_dosah: { type: number }
+        blize_ke_skole: { type: number, description: Uchazeči ze ZSJ, kde je simulovaná škola blíž než každá stávající s oborem. }
+        kapacita: { type: integer }
+        uchazecu_na_misto: { type: number }
+
+    SimulaceMeta:
+      allOf:
+        - $ref: '#/components/schemas/MetaDosah'
+        - type: object
+          properties:
+            redizo: { $ref: '#/components/schemas/Redizo' }
+            obor: { $ref: '#/components/schemas/KodOboru' }
+            podil_zajmu: { type: number, example: 0.048 }
+            skola_obor_uz_uci: { type: boolean }
+
+    Simulace:
+      type: object
+      required: [zsj, souhrn, meta]
+      properties:
+        zsj:
+          type: object
+          description: Slovník kod_zsj → hodnoty.
+          propertyNames: { $ref: '#/components/schemas/KodZsj' }
+          additionalProperties: { $ref: '#/components/schemas/SimulaceZsj' }
+        souhrn: { $ref: '#/components/schemas/SimulaceSouhrn' }
+        meta: { $ref: '#/components/schemas/SimulaceMeta' }
+
+    SimulaceGeojson:
+      type: object
+      required: [type, features, souhrn, meta]
+      properties:
+        type: { type: string, const: FeatureCollection }
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              type: { type: string, const: Feature }
+              geometry: { $ref: '#/components/schemas/GeoPlocha' }
+              properties:
+                allOf:
+                  - type: object
+                    properties:
+                      kod_zsj: { $ref: '#/components/schemas/KodZsj' }
+                      nazev: { type: string }
+                  - $ref: '#/components/schemas/SimulaceZsj'
+        souhrn: { $ref: '#/components/schemas/SimulaceSouhrn' }
+        meta: { $ref: '#/components/schemas/SimulaceMeta' }
+
+    DetailOboru:
+      type: object
+      required: [obor, nabidky, obce_bez_oboru, kandidati, meta]
+      properties:
+        obor: { $ref: '#/components/schemas/BilanceOboru' }
+        nabidky:
+          type: array
+          description: Školy, kde se obor učí.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Nabidka'
+              - type: object
+                properties:
+                  redizo: { $ref: '#/components/schemas/Redizo' }
+                  nazev_skoly: { type: string }
+                  deti_v_dosahu_skoly: { type: integer }
+        obce_bez_oboru:
+          type: array
+          description: Seřazené podle počtu dětí sestupně.
+          items:
+            type: object
+            properties:
+              kod_obce: { $ref: '#/components/schemas/KodObce' }
+              nazev: { type: string }
+              deti: { type: integer }
+              nejkratsi_cas_min: { type: [integer, 'null'] }
+        kandidati:
+          type: array
+          description: Školy, které obor neučí, seřazené podle `nove_dosazene_deti`.
+          items:
+            type: object
+            required: [redizo, nazev, nove_dosazene_deti, ma_pribuzny_obor]
+            properties:
+              redizo: { $ref: '#/components/schemas/Redizo' }
+              nazev: { type: string }
+              nove_dosazene_deti: { type: integer, description: Děti bez oboru, které by tuto školu stihly do `max_min`. }
+              ma_pribuzny_obor: { type: boolean, description: Škola učí obor ze stejné skupiny KKOV. }
+        trh_prace:
+          type: ['object', 'null']
+          description: null = obor zatím nemá mapování na profese.
+          properties:
+            volna_mista: { type: integer }
+            profese:
+              type: array
+              items:
+                type: object
+                properties:
+                  cz_isco: { type: string, example: '7231' }
+                  nazev: { type: string }
+                  pocet: { type: integer }
+        meta: { $ref: '#/components/schemas/MetaDosah' }
