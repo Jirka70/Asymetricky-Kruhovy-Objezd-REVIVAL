@@ -44,7 +44,25 @@ docker compose exec db psql -U obor -d obor_na_dosah
 
 PostGIS se v úvodní databázi aktivuje automaticky při prvním spuštění image.
 Pro další nově založené databáze použijte `CREATE EXTENSION IF NOT EXISTS postgis;`.
-Aplikační tabulky a import dat zatím nejsou součástí nastavení.
+
+Kompletní smazání a nové naplnění projektové databáze:
+
+```bash
+python3 scripts/drop_db.py
+python3 scripts/load_db.py
+```
+
+`drop_db.py` smaže celou projektovou databázi včetně dat a ukončí její aktivní
+připojení. `load_db.py` databázi případně vytvoří a postupně načte ZSJ, školy,
+obory s nabídkami a demografii. Samostatný load lze spustit opakovaně.
+Každý import má vlastní transakci; při chybě se načítání ihned zastaví a předchozí
+dokončené importy zůstanou uložené. Loader nepřidává kontroly počtů nabídek.
+
+Skripty vyžadují Python 3.9+ a běžící databázový kontejner. Vyhledají službu `db`
+podle adresáře tohoto projektu, takže fungují i po změně názvu Compose projektu.
+Jméno databáze a uživatele převezmou z nastavení kontejneru. Konkrétní cíl lze
+zadat pomocí `--container JMENO --database DATABAZE`. Skripty lze spouštět
+z libovolného pracovního adresáře. Lokální zálohy v `backups/` Git ignoruje.
 
 Data jsou v pojmenovaném volume `postgres_data`, pro PostgreSQL 18 připojeném
 na `/var/lib/postgresql`. `docker compose stop db` databázi zastaví a data zachová.

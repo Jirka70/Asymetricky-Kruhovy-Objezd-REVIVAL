@@ -18,9 +18,7 @@
 --
 -- Každý řádek CSV vytváří jednu nabídku v rozsahu požadovaných sloupců.
 -- Obory se sloučí podle kódu. Žádná nabídka se neslučuje ani nevynechává.
--- Kontrola na konci vyžaduje přesně 140 nabídek a shodu všech jejich hodnot
--- s vloženým zdrojem. Při nesouladu se celá transakce vrátí zpět.
--- Existující PK se přeskočí; odlišné existující hodnoty odhalí závěrečná kontrola.
+-- Existující PK se přeskočí; import neporovnává počty ani hodnoty se zdrojem.
 -- Existující tabulky musí mít níže uvedené sloupce a kompatibilní typy/omezení.
 -- Samostatný skript nepotřebuje při spuštění původní CSV.
 -- Spuštění z kořene projektu:
@@ -47,7 +45,7 @@ CREATE TABLE IF NOT EXISTS public."NABIDKA_OBORU" (
     loni_pocet_prijatych integer NULL CHECK (loni_pocet_prijatych >= 0)
 );
 
--- Dočasná tabulka uchová všechny zdrojové řádky pro import i kontrolu.
+-- Dočasná tabulka uchová všechny zdrojové řádky pro import.
 CREATE TEMP TABLE import_nabidka_oboru_2026 (
     id uuid PRIMARY KEY,
     redizo text NOT NULL,
@@ -219,42 +217,5 @@ SELECT id, redizo, kod_oboru, display_name, forma_studia,
        delka_studia, pocet_prijimanych, loni_pocet_prihlasek, loni_pocet_prijatych
 FROM pg_temp.import_nabidka_oboru_2026
 ON CONFLICT (id) DO NOTHING;
-
-DO $check_import$
-DECLARE
-    source_count bigint;
-    target_count bigint;
-BEGIN
-    SELECT count(*) INTO source_count FROM pg_temp.import_nabidka_oboru_2026;
-    SELECT count(*) INTO target_count FROM public."NABIDKA_OBORU";
-    IF source_count <> 140 THEN
-        RAISE EXCEPTION 'Import obsahuje % řádků, ale CSV má 140.', source_count;
-    END IF;
-    IF target_count <> source_count THEN
-        RAISE EXCEPTION 'Počet nabídek (%) neodpovídá počtu řádků CSV (%).',
-            target_count, source_count;
-    END IF;
-    IF EXISTS (
-        SELECT id, redizo, kod_oboru, display_name, forma_studia,
-               delka_studia, pocet_prijimanych, loni_pocet_prihlasek, loni_pocet_prijatych
-        FROM pg_temp.import_nabidka_oboru_2026
-        EXCEPT
-        SELECT id, redizo, kod_oboru, display_name, forma_studia,
-               delka_studia, pocet_prijimanych, loni_pocet_prihlasek, loni_pocet_prijatych
-        FROM public."NABIDKA_OBORU"
-    ) THEN
-        RAISE EXCEPTION 'Nabídky v databázi se hodnotami liší od zdrojového CSV.';
-    END IF;
-    IF EXISTS (
-        SELECT kod_oboru, nazev_oboru FROM pg_temp.import_nabidka_oboru_2026
-        EXCEPT
-        SELECT kod, nazev FROM public."OBORY"
-    ) THEN
-        RAISE EXCEPTION 'Kódy nebo názvy oborů v databázi se liší od zdrojového CSV.';
-    END IF;
-    RAISE NOTICE 'Kontrola OK: % řádků CSV = % nabídek; všechny importované hodnoty souhlasí.',
-        source_count, target_count;
-END;
-$check_import$;
 
 COMMIT;

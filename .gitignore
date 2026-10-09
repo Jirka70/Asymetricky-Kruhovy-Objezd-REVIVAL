@@ -16,3 +16,6 @@ Thumbs.db
 
 # OpenTripPlanner generated graph
 /location_data/graph.obj
+
+# Local database backups
+/backups/
