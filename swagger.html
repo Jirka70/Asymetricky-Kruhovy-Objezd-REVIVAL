@@ -10,9 +10,9 @@ const spec = {
   "openapi": "3.1.0",
   "info": {
     "title": "Obor na dosah API",
-    "version": "2.0.0",
-    "summary": "Výběr střední školy podle dojezdu a analýza kapacit a oborů v Karlovarském kraji.",
-    "description": "API slouží dvěma skupinám uživatelů:\n\n- **Student** zadá, odkud cestuje, a uvidí, které školy s jeho oborem stihne ráno dojet a jakým spojem.\n- **Úředník** vidí, kde děti nemají obor v dosahu, kde jsou přeplněné nebo poloprázdné kapacity\n  a na které škole by přidání oboru pomohlo nejvíc dětem.\n\nAPI je jen pro čtení. Mapové vrstvy jsou GeoJSON (WGS 84, EPSG:4326).\nJediný endpoint, který volá OpenTripPlanner živě, je `/student/trasa`; ostatní čtou\npředpočítanou matici dojezdů ZSJ × škola.\n\n**Klíčové definice**\n\n| Pojem | Definice |\n| --- | --- |\n| `deti` | Odhad jednoho ročníku nastupujícího na SŠ v roce 2026: věková skupina 10–14 let ze SLDB 2021 v ZSJ, děleno 5. Modelový odhad bez stěhování. |\n| Škola v dosahu | Doba dojezdu ze ZSJ ve scénáři `scenar` je nejvýš `max_min` minut. |\n| Obor v dosahu | Obor se v denní formě učí aspoň na jedné škole v dosahu. |\n| Děti bez oboru | Součet `deti` v ZSJ, kde obor v dosahu není. |\n| `prihlasky_na_misto` | Přihlášky / kapacita (přijímací řízení 2026, 1. kolo). |\n| `index_pretlaku` | `prihlasky_na_misto` / průměr kraje (2,66). 1,0 = průměr. |\n| `mist_na_100_deti` | 100 × kapacita oboru / děti, které mají obor v dosahu. |\n\n**Konvence**\n- Kódy (ZSJ, obec, REDIZO, obor) jsou vždy řetězce kvůli úvodním nulám.\n- Kód oboru obsahuje lomítko; v cestě se kóduje (`23-68-H%2F01`).\n- Nový scénář dojezdu (např. odpoledne zpět) = nový řádek v tabulce `SCENAR` a nový předpočet; API se nemění.\n"
+    "version": "3.1.0",
+    "summary": "Výběr střední školy podle dojezdu a plánování oborů v Karlovarském kraji.",
+    "description": "API slouží dvěma částem aplikace:\n\n- **Pro rodiny** – student zadá, odkud cestuje, a uvidí, které školy s jeho oborem stihne ráno dojet a jakým spojem.\n- **Pro kraj** – úředník vidí na mapě, odkud je obor v dosahu, které obory jsou přeplněné nebo nedostupné\n  a co by změnilo přidání oboru na konkrétní školu.\n\nAPI je jen pro čtení. Mapové vrstvy jsou GeoJSON (WGS 84, EPSG:4326).\nJediný endpoint, který volá OpenTripPlanner živě, je `/student/trasa`; ostatní čtou\npředpočítanou matici dojezdů ZSJ × škola.\n\n**Klíčové definice**\n\n| Pojem | Definice |\n| --- | --- |\n| `deti` | Odhad jednoho ročníku nastupujícího na SŠ v roce 2026: věková skupina 10–14 let ze SLDB 2021 v ZSJ, děleno 5. |\n| `cas_min` | Nejkratší spoj ze ZSJ k nejbližší škole s oborem (bez oboru k jakékoli SŠ), včetně chůze a přestupů. U obcí a ORP průměr ZSJ vážený počtem obyvatel. |\n| V dosahu | `cas_min` ≤ `max_min` (výchozí 120). |\n| `pasmo` | `do30`, `30_45`, `45_60`, `nad60` (60 až `max_min`), `mimo_dosah`, `bez_spojeni`. |\n| Děti bez oboru | Součet `deti` v ZSJ, kde obor v dosahu není. |\n| `prihlasky_na_misto` | Přihlášky / kapacita (přijímací řízení 2026, 1. kolo). |\n| `index_pretlaku` | `prihlasky_na_misto` / průměr kraje (2,66). 1,0 = průměr. |\n| `mist_na_100_deti` | 100 × kapacita oboru / děti, které mají obor v dosahu. |\n\n**Konvence**\n- Kódy (ZSJ, obec, ORP, REDIZO, obor) jsou vždy řetězce kvůli úvodním nulám.\n- Kód oboru obsahuje lomítko; v cestě se kóduje (`23-68-H%2F01`).\n- Nový scénář dojezdu = nový řádek v tabulce `SCENAR`, nový předpočet a nová hodnota ve výčtu `scenar`.\n"
   },
   "servers": [
     {
@@ -23,45 +23,18 @@ const spec = {
   "tags": [
     {
       "name": "Společné",
-      "description": "Číselníky a školy, používají oba pohledy."
+      "description": "Školy, používají obě části."
     },
     {
-      "name": "Student",
+      "name": "Pro rodiny",
       "description": "Školy v dosahu z bodu a spojení do školy."
     },
     {
-      "name": "Úředník",
-      "description": "Dostupnost oborů, bilance kapacit a návrhy, kde obor přidat."
+      "name": "Pro kraj",
+      "description": "Mapa dostupnosti oboru, bilance oborů a simulace nového oboru."
     }
   ],
   "paths": {
-    "/ciselniky": {
-      "get": {
-        "tags": [
-          "Společné"
-        ],
-        "operationId": "getCiselniky",
-        "summary": "Všechny číselníky jedním voláním",
-        "description": "Obory, obce s počtem dětí, scénáře dojezdu a stupně vzdělání. Načíst jednou při startu aplikace.",
-        "responses": {
-          "200": {
-            "description": "Číselníky.",
-            "headers": {
-              "ETag": {
-                "$ref": "#/components/headers/ETag"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Ciselniky"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/skoly": {
       "get": {
         "tags": [
@@ -145,7 +118,7 @@ const spec = {
     "/student/skoly": {
       "get": {
         "tags": [
-          "Student"
+          "Pro rodiny"
         ],
         "operationId": "listStudentSkoly",
         "summary": "Školy seřazené podle doby dojezdu z bodu",
@@ -190,7 +163,7 @@ const spec = {
     "/student/trasa": {
       "get": {
         "tags": [
-          "Student"
+          "Pro rodiny"
         ],
         "operationId": "getStudentTrasa",
         "summary": "Spojení z bodu do školy na mapě (živě z OpenTripPlanneru)",
@@ -245,20 +218,23 @@ const spec = {
         }
       }
     },
-    "/analyza/obce": {
+    "/zsj": {
       "get": {
         "tags": [
-          "Úředník"
+          "Pro kraj"
         ],
-        "operationId": "getAnalyzaObce",
-        "summary": "Mapa obcí – kde děti nemají obor nebo školu v dosahu",
-        "description": "S `obor`: kolik dětí v obci obor v dosahu nemá a jak daleko je nejbližší škola s oborem.\nBez `obor`: kolik oborů a škol má obec v dosahu a kolik dětí nemá v dosahu žádnou školu.\n`stupen` omezí obory na daný stupeň (např. `H` = má dítě v dosahu nějaký učební obor?).\n",
+        "operationId": "getZsj",
+        "summary": "Mapa – odkud je obor v dosahu a za kolik minut",
+        "description": "Doba dojezdu k nejbližší škole, která obor učí (bez `obor` k nejbližší jakékoli SŠ),\npro plochy na zvolené úrovni:\n\n| `uroven` | Plochy |\n| --- | --- |\n| `orp` | 7 obvodů pojmenovaných podle největších měst (Aš, Cheb, Karlovy Vary, Kraslice, Mariánské Lázně, Ostrov, Sokolov) |\n| `obec` | obce kraje (výchozí) |\n| `zsj` | 839 základních sídelních jednotek |\n\nU `orp` a `obec` je `cas_min` průměr ZSJ vážený počtem obyvatel (ZSJ bez spojení se nepočítají).\n`meta.v_limitu` počítá plochy do 30, 45, 60 a `max_min` minut.\n",
         "parameters": [
           {
             "$ref": "#/components/parameters/OborFiltr"
           },
           {
-            "$ref": "#/components/parameters/Stupen"
+            "$ref": "#/components/parameters/Forma"
+          },
+          {
+            "$ref": "#/components/parameters/Uroven"
           },
           {
             "$ref": "#/components/parameters/MaxMin"
@@ -269,11 +245,11 @@ const spec = {
         ],
         "responses": {
           "200": {
-            "description": "GeoJSON polygonů obcí s ukazateli.",
+            "description": "GeoJSON ploch s dobou dojezdu a pásmem.",
             "content": {
               "application/geo+json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AnalyzaObce"
+                  "$ref": "#/components/schemas/MapaDosahu"
                 }
               }
             }
@@ -284,16 +260,19 @@ const spec = {
         }
       }
     },
-    "/analyza/obory": {
+    "/obory": {
       "get": {
         "tags": [
-          "Úředník"
+          "Pro kraj"
         ],
-        "operationId": "listAnalyzaObory",
-        "summary": "Bilance oborů – přetlak, dostupnost, kapacita na děti, trh práce",
+        "operationId": "listObory",
+        "summary": "Obory s bilancí – seznam pro výběr i tabulka pro úředníky",
         "parameters": [
           {
             "$ref": "#/components/parameters/Stupen"
+          },
+          {
+            "$ref": "#/components/parameters/Forma"
           },
           {
             "$ref": "#/components/parameters/MaxMin"
@@ -317,6 +296,7 @@ const spec = {
             "schema": {
               "type": "string",
               "enum": [
+                "nazev",
                 "index_pretlaku",
                 "-index_pretlaku",
                 "deti_bez_oboru",
@@ -324,10 +304,9 @@ const spec = {
                 "mist_na_100_deti",
                 "-mist_na_100_deti",
                 "volna_mista_na_misto",
-                "-volna_mista_na_misto",
-                "nazev"
+                "-volna_mista_na_misto"
               ],
-              "default": "-index_pretlaku"
+              "default": "nazev"
             }
           }
         ],
@@ -350,7 +329,7 @@ const spec = {
                       }
                     },
                     "meta": {
-                      "$ref": "#/components/schemas/MetaAnalyza"
+                      "$ref": "#/components/schemas/MetaBilance"
                     }
                   }
                 }
@@ -363,13 +342,13 @@ const spec = {
         }
       }
     },
-    "/analyza/obory/{kod}": {
+    "/obory/{kod}": {
       "get": {
         "tags": [
-          "Úředník"
+          "Pro kraj"
         ],
-        "operationId": "getAnalyzaObor",
-        "summary": "Detail oboru – kde je přeplněný, kde chybí, kam ho přidat",
+        "operationId": "getObor",
+        "summary": "Detail oboru – nabídky, kandidátní školy a trh práce",
         "parameters": [
           {
             "name": "kod",
@@ -379,7 +358,7 @@ const spec = {
             "schema": {
               "$ref": "#/components/schemas/KodOboru"
             },
-            "example": "23-68-H%2F01"
+            "example": "18-20-M%2F01"
           },
           {
             "$ref": "#/components/parameters/MaxMin"
@@ -419,14 +398,76 @@ const spec = {
         }
       }
     },
-    "/analyza/simulace": {
+    "/obory/{kod}/zamestnavatele": {
       "get": {
         "tags": [
-          "Úředník"
+          "Pro kraj"
         ],
-        "operationId": "getAnalyzaSimulace",
-        "summary": "Simulace – co kdyby škola učila obor s danou kapacitou",
-        "description": "Vrátí slovník podle `kod_zsj` s dobou dojezdu ke škole a počtem potenciálních uchazečů.\nObsahuje jen ZSJ, které školu stihnou do `max_min`. Nic se neukládá.\n\n- Potenciální uchazeči v ZSJ = `deti` × `podil_zajmu`, kde `podil_zajmu` je podíl oboru\n  na všech přihláškách v kraji (např. 455 / 9 489 = 0,048). Hodnota je očekávaný počet, proto desetinná.\n- `novy_dosah` = ZSJ dnes obor v dosahu nemá.\n- `nejblizsi_stavajici_min` = čas ke stávající nejbližší škole s oborem (null = žádná v dosahu).\n- Když škola obor už učí, jde o navýšení kapacity (`meta.skola_obor_uz_uci: true`).\n\nS `format=geojson` vrací totéž jako GeoJSON polygonů ZSJ.\n",
+        "operationId": "listOborZamestnavatele",
+        "summary": "Zaměstnavatelé v kraji, kteří hledají profese související s oborem",
+        "description": "Body pracovišť (IČO + adresa) s volnými místy v profesních skupinách CZ-ISCO,\nkteré jsou na obor navázané přes `OBOR_PROFESE` (mapování NSP). Odpověď na otázku\n„existuje k oboru zaměstnavatel?“ je `meta.existuje`.\n\n- Každé místo se počítá jednou (vazba obor–skupina je unikátní).\n- Pracoviště bez souřadnic z RÚIAN se nekreslí; jsou sečtená po obcích v `meta.bez_souradnic`.\n- U oborů bez mapování v NSP je `meta.mapovani: false` a `meta.existuje: null` (nevíme, ne „nikdo“).\n",
+        "parameters": [
+          {
+            "name": "kod",
+            "in": "path",
+            "required": true,
+            "description": "Kód oboru KKOV, lomítko kódované jako `%2F`.",
+            "schema": {
+              "$ref": "#/components/schemas/KodOboru"
+            },
+            "example": "65-51-H%2F01"
+          },
+          {
+            "name": "vhodnost",
+            "in": "query",
+            "description": "Nejhorší povolená vhodnost vazby z NSP – 1 jen nejvhodnější, 2 i vhodné.",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                1,
+                2
+              ],
+              "default": 2
+            }
+          },
+          {
+            "name": "jen_ss",
+            "in": "query",
+            "description": "Vynechat místa vyžadující vyšší odborné nebo vysokoškolské vzdělání (vyssOdbor, bakal, vysoka, doktor).",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GeoJSON bodů pracovišť.",
+            "content": {
+              "application/geo+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZamestnavateleOboru"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Nenalezeno"
+          },
+          "422": {
+            "$ref": "#/components/responses/NeplatnyParametr"
+          }
+        }
+      }
+    },
+    "/simulace": {
+      "get": {
+        "tags": [
+          "Pro kraj"
+        ],
+        "operationId": "getSimulace",
+        "summary": "Co kdyby škola učila obor s danou kapacitou",
+        "description": "Výchozí formát je slovník `jednotky` podle kódu plochy (ZSJ, obce nebo ORP podle `uroven`)\npro plochy, které simulovanou školu stihnou do `max_min`. Nic se neukládá.\n\n- `cas_min` = min(`cas_min_puvodni`, `cas_ke_skole`), `zlepseni_min` = rozdíl.\n- `potencialni_uchazeci` = `deti` × `podil_zajmu` (podíl oboru na všech přihláškách v kraji).\n- `novy_dosah` = plocha dnes obor do `max_min` nestihne.\n- `souhrn.v_limitu` = počet ploch do 30, 45, 60 a `max_min` minut před a po.\n\nS `format=geojson` vrátí celou mapu „S novým oborem“ ve stejném tvaru jako `/zsj`\n(všechny plochy, nezměněné se `zlepseni_min: 0`).\nZatím jen pro stávající školy (`redizo`).\n",
         "parameters": [
           {
             "name": "redizo",
@@ -445,7 +486,7 @@ const spec = {
             "schema": {
               "$ref": "#/components/schemas/KodOboru"
             },
-            "example": "23-68-H/01"
+            "example": "18-20-M/01"
           },
           {
             "name": "kapacita",
@@ -457,7 +498,10 @@ const spec = {
               "minimum": 1,
               "maximum": 300
             },
-            "example": 24
+            "example": 30
+          },
+          {
+            "$ref": "#/components/parameters/Uroven"
           },
           {
             "$ref": "#/components/parameters/MaxMin"
@@ -487,37 +531,58 @@ const spec = {
                   "$ref": "#/components/schemas/Simulace"
                 },
                 "example": {
-                  "zsj": {
-                    "197769": {
-                      "cas_min": 6,
-                      "deti": 9,
-                      "potencialni_uchazeci": 0.4,
-                      "novy_dosah": true,
-                      "nejblizsi_stavajici_min": null
-                    },
-                    "006751": {
-                      "cas_min": 28,
-                      "deti": 12,
-                      "potencialni_uchazeci": 0.6,
-                      "novy_dosah": false,
-                      "nejblizsi_stavajici_min": 47
+                  "jednotky": {
+                    "555738": {
+                      "nazev": "Toužim",
+                      "cas_ke_skole": 4,
+                      "cas_min_puvodni": 52,
+                      "cas_min": 4,
+                      "zlepseni_min": 48,
+                      "pasmo": "do30",
+                      "pasmo_puvodni": 4560,
+                      "deti": 38,
+                      "potencialni_uchazeci": 1.0,
+                      "novy_dosah": false
                     }
                   },
                   "souhrn": {
-                    "zsj_v_dosahu": 96,
-                    "deti_v_dosahu": 640,
-                    "potencialni_uchazeci": 30.7,
-                    "z_toho_novy_dosah": 6.7,
-                    "blize_ke_skole": 18.4,
-                    "kapacita": 24,
-                    "uchazecu_na_misto": 1.28
+                    "jednotek_celkem": 100,
+                    "v_limitu": [
+                      {
+                        "limit_min": 30,
+                        "pred": 31,
+                        "po": 38
+                      },
+                      {
+                        "limit_min": 45,
+                        "pred": 46,
+                        "po": 58
+                      },
+                      {
+                        "limit_min": 60,
+                        "pred": 71,
+                        "po": 76
+                      },
+                      {
+                        "limit_min": 120,
+                        "pred": 94,
+                        "po": 95
+                      }
+                    ],
+                    "zlepsenych_jednotek": 12,
+                    "prumerne_zkraceni_min": 18,
+                    "potencialni_uchazeci": 41.2,
+                    "blize_ke_skole": 17.5,
+                    "kapacita": 30,
+                    "uchazecu_na_misto": 1.37
                   },
                   "meta": {
                     "redizo": "600009271",
-                    "obor": "23-68-H/01",
+                    "obor": "18-20-M/01",
+                    "uroven": "obec",
                     "scenar": "rano",
-                    "max_min": 60,
-                    "podil_zajmu": 0.048,
+                    "max_min": 120,
+                    "podil_zajmu": 0.026,
                     "skola_obor_uz_uci": false
                   }
                 }
@@ -540,14 +605,6 @@ const spec = {
     }
   },
   "components": {
-    "headers": {
-      "ETag": {
-        "description": "Verze importu dat; při shodě s `If-None-Match` vrací API 304.",
-        "schema": {
-          "type": "string"
-        }
-      }
-    },
     "parameters": {
       "Lat": {
         "name": "lat",
@@ -580,18 +637,34 @@ const spec = {
         "schema": {
           "type": "integer",
           "minimum": 10,
-          "maximum": 120,
-          "default": 60
+          "maximum": 180,
+          "default": 120
         }
       },
       "Scenar": {
         "name": "scenar",
         "in": "query",
-        "description": "Scénář dojezdu (seznam v `/ciselniky`). Zatím jen `rano` – příjezd 7:30–8:00.",
+        "description": "Scénář dojezdu („Příchod do školy“). Hodnoty odpovídají předpočítaným scénářům v tabulce `SCENAR`;\ndnes jen `rano` = příjezd 7:00–8:00 v běžný školní den.\n",
         "schema": {
           "type": "string",
-          "default": "rano",
-          "example": "rano"
+          "enum": [
+            "rano"
+          ],
+          "default": "rano"
+        }
+      },
+      "Uroven": {
+        "name": "uroven",
+        "in": "query",
+        "description": "Velikost ploch mapy – `orp` (7 obvodů největších měst), `obec`, `zsj`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "orp",
+            "obec",
+            "zsj"
+          ],
+          "default": "obec"
         }
       },
       "OborFiltr": {
@@ -601,7 +674,7 @@ const spec = {
         "schema": {
           "$ref": "#/components/schemas/KodOboru"
         },
-        "example": "23-68-H/01"
+        "example": "18-20-M/01"
       },
       "Stupen": {
         "name": "stupen",
@@ -611,18 +684,19 @@ const spec = {
           "type": "string",
           "pattern": "^[CEHKLM](,[CEHKLM])*$"
         },
-        "example": "H"
+        "example": "M"
       },
       "Forma": {
         "name": "forma",
         "in": "query",
-        "description": "Forma vzdělávání. Pro výpočet dosahu se vždy bere jen denní.",
+        "description": "Forma vzdělávání.",
         "schema": {
           "type": "string",
           "enum": [
             "den",
             "dal"
-          ]
+          ],
+          "default": "den"
         }
       }
     },
@@ -673,6 +747,12 @@ const spec = {
         "pattern": "^\\d{6}$",
         "example": "554961"
       },
+      "KodPlochy": {
+        "type": "string",
+        "pattern": "^\\d{4,6}$",
+        "description": "Kód ZSJ",
+        "obce nebo ORP podle `uroven`.": null
+      },
       "Redizo": {
         "type": "string",
         "pattern": "^\\d{9}$",
@@ -681,7 +761,7 @@ const spec = {
       "KodOboru": {
         "type": "string",
         "pattern": "^\\d{2}-\\d{2}-[A-Z]/\\d{2}$",
-        "example": "23-68-H/01"
+        "example": "18-20-M/01"
       },
       "Stupen": {
         "type": "string",
@@ -702,6 +782,17 @@ const spec = {
           "nizky_zajem",
           "spatna_dostupnost",
           "poptavka_trhu"
+        ]
+      },
+      "Pasmo": {
+        "type": "string",
+        "enum": [
+          "do30",
+          3045,
+          4560,
+          "nad60",
+          "mimo_dosah",
+          "bez_spojeni"
         ]
       },
       "Cas": {
@@ -751,11 +842,11 @@ const spec = {
           },
           "max_min": {
             "type": "integer",
-            "example": 60
+            "example": 120
           }
         }
       },
-      "MetaAnalyza": {
+      "MetaBilance": {
         "allOf": [
           {
             "$ref": "#/components/schemas/MetaDosah"
@@ -764,175 +855,12 @@ const spec = {
             "type": "object",
             "properties": {
               "deti_celkem": {
-                "type": "integer",
-                "description": "Děti v celém kraji."
+                "type": "integer"
               },
               "prumer_prihlasek_na_misto": {
                 "type": "number",
                 "example": 2.66
               },
-              "prahy": {
-                "type": "object",
-                "description": "Prahy pro `signaly`.",
-                "properties": {
-                  "pretlak": {
-                    "type": "number",
-                    "example": 1.5
-                  },
-                  "nizky_zajem": {
-                    "type": "number",
-                    "example": 0.5
-                  },
-                  "spatna_dostupnost": {
-                    "type": "number",
-                    "example": 50,
-                    "description": "% dětí v dosahu"
-                  },
-                  "poptavka_trhu": {
-                    "type": "number",
-                    "example": 2,
-                    "description": "volná místa na 1 místo ve škole"
-                  }
-                }
-              },
-              "definice_deti": {
-                "type": "string",
-                "example": "Odhad ročníku 2026: 10–14 let (SLDB 2021) / 5"
-              }
-            }
-          }
-        ]
-      },
-      "Ciselniky": {
-        "type": "object",
-        "required": [
-          "obory",
-          "obce",
-          "scenare",
-          "stupne"
-        ],
-        "properties": {
-          "obory": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "kod",
-                "nazev",
-                "stupen",
-                "pocet_skol"
-              ],
-              "properties": {
-                "kod": {
-                  "$ref": "#/components/schemas/KodOboru"
-                },
-                "nazev": {
-                  "type": "string",
-                  "example": "Mechanik opravář motorových vozidel"
-                },
-                "stupen": {
-                  "$ref": "#/components/schemas/Stupen"
-                },
-                "skupina": {
-                  "type": "string",
-                  "example": "23",
-                  "description": "První dvojčíslí KKOV."
-                },
-                "pocet_skol": {
-                  "type": "integer",
-                  "example": 4
-                }
-              }
-            }
-          },
-          "obce": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "kod_obce",
-                "nazev",
-                "deti"
-              ],
-              "properties": {
-                "kod_obce": {
-                  "$ref": "#/components/schemas/KodObce"
-                },
-                "nazev": {
-                  "type": "string",
-                  "example": "Karlovy Vary"
-                },
-                "deti": {
-                  "type": "integer"
-                },
-                "lat": {
-                  "type": "number"
-                },
-                "lon": {
-                  "type": "number"
-                }
-              }
-            }
-          },
-          "scenare": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "id",
-                "popis",
-                "vychozi"
-              ],
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "example": "rano"
-                },
-                "popis": {
-                  "type": "string",
-                  "example": "Příjezd do školy 7:30–8:00, běžný školní den"
-                },
-                "smer": {
-                  "type": "string",
-                  "enum": [
-                    "do_skoly",
-                    "ze_skoly"
-                  ]
-                },
-                "okno": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Cas"
-                  },
-                  "example": [
-                    "07:30",
-                    "08:00"
-                  ]
-                },
-                "vychozi": {
-                  "type": "boolean"
-                }
-              }
-            }
-          },
-          "stupne": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "kod": {
-                  "$ref": "#/components/schemas/Stupen"
-                },
-                "popis": {
-                  "type": "string",
-                  "example": "Výuční list"
-                }
-              }
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
               "prijimaci_rizeni": {
                 "type": "object",
                 "properties": {
@@ -946,11 +874,67 @@ const spec = {
                   }
                 }
               },
-              "prumer_prihlasek_na_misto": {
-                "type": "number",
-                "example": 2.66
+              "prahy": {
+                "type": "object",
+                "properties": {
+                  "pretlak": {
+                    "type": "number",
+                    "example": 1.5
+                  },
+                  "nizky_zajem": {
+                    "type": "number",
+                    "example": 0.5
+                  },
+                  "spatna_dostupnost": {
+                    "type": "number",
+                    "example": 50
+                  },
+                  "poptavka_trhu": {
+                    "type": "number",
+                    "example": 2
+                  }
+                }
               }
             }
+          }
+        ]
+      },
+      "VLimitu": {
+        "type": "object",
+        "required": [
+          "limit_min",
+          "jednotek"
+        ],
+        "properties": {
+          "limit_min": {
+            "type": "integer",
+            "example": 45
+          },
+          "jednotek": {
+            "type": "integer",
+            "example": 46
+          }
+        }
+      },
+      "VLimituPredPo": {
+        "type": "object",
+        "required": [
+          "limit_min",
+          "pred",
+          "po"
+        ],
+        "properties": {
+          "limit_min": {
+            "type": "integer",
+            "example": 45
+          },
+          "pred": {
+            "type": "integer",
+            "example": 46
+          },
+          "po": {
+            "type": "integer",
+            "example": 58
           }
         }
       },
@@ -1519,7 +1503,69 @@ const spec = {
           }
         }
       },
-      "AnalyzaObce": {
+      "PlochaDosahu": {
+        "type": "object",
+        "required": [
+          "kod",
+          "nazev",
+          "uroven",
+          "pasmo",
+          "v_dosahu",
+          "deti"
+        ],
+        "properties": {
+          "kod": {
+            "$ref": "#/components/schemas/KodPlochy"
+          },
+          "nazev": {
+            "type": "string",
+            "example": "Karlovy Vary"
+          },
+          "uroven": {
+            "type": "string",
+            "enum": [
+              "orp",
+              "obec",
+              "zsj"
+            ]
+          },
+          "cas_min": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 24,
+            "description": "null = bez spojení."
+          },
+          "pasmo": {
+            "$ref": "#/components/schemas/Pasmo"
+          },
+          "v_dosahu": {
+            "type": "boolean"
+          },
+          "deti": {
+            "type": "integer",
+            "example": 412
+          },
+          "deti_v_dosahu": {
+            "type": "integer",
+            "example": 412
+          },
+          "podil_deti_v_dosahu": {
+            "type": "number",
+            "example": 100.0,
+            "description": "%"
+          },
+          "nejblizsi_redizo": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "600009084"
+          }
+        }
+      },
+      "MapaDosahu": {
         "type": "object",
         "required": [
           "type",
@@ -1549,49 +1595,7 @@ const spec = {
                   "$ref": "#/components/schemas/GeoPlocha"
                 },
                 "properties": {
-                  "type": "object",
-                  "required": [
-                    "kod_obce",
-                    "nazev",
-                    "deti"
-                  ],
-                  "properties": {
-                    "kod_obce": {
-                      "$ref": "#/components/schemas/KodObce"
-                    },
-                    "nazev": {
-                      "type": "string"
-                    },
-                    "deti": {
-                      "type": "integer"
-                    },
-                    "deti_bez_oboru": {
-                      "type": "integer",
-                      "description": "Jen s `obor`."
-                    },
-                    "podil_bez_oboru": {
-                      "type": "number",
-                      "description": "% (jen s `obor`)"
-                    },
-                    "nejkratsi_cas_min": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "description": "K nejbližší škole s oborem (bez `obor` s jakoukoli školou); null = bez spojení."
-                    },
-                    "pocet_oboru_v_dosahu": {
-                      "type": "integer",
-                      "description": "Jen bez `obor`."
-                    },
-                    "pocet_skol_v_dosahu": {
-                      "type": "integer"
-                    },
-                    "deti_bez_skoly": {
-                      "type": "integer",
-                      "description": "Jen bez `obor`."
-                    }
-                  }
+                  "$ref": "#/components/schemas/PlochaDosahu"
                 }
               }
             }
@@ -1610,27 +1614,26 @@ const spec = {
                       "null"
                     ]
                   },
-                  "stupen": {
-                    "type": [
-                      "string",
-                      "null"
+                  "forma": {
+                    "type": "string"
+                  },
+                  "uroven": {
+                    "type": "string",
+                    "enum": [
+                      "orp",
+                      "obec",
+                      "zsj"
                     ]
                   },
-                  "deti_celkem": {
-                    "type": "integer"
+                  "jednotek_celkem": {
+                    "type": "integer",
+                    "example": 100
                   },
-                  "deti_bez_oboru_celkem": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ]
-                  },
-                  "hranice": {
+                  "v_limitu": {
                     "type": "array",
                     "items": {
-                      "type": "number"
-                    },
-                    "description": "Hranice tříd legendy."
+                      "$ref": "#/components/schemas/VLimitu"
+                    }
                   }
                 }
               }
@@ -1657,7 +1660,7 @@ const spec = {
           },
           "nazev": {
             "type": "string",
-            "example": "Kadeřník"
+            "example": "Informační technologie"
           },
           "stupen": {
             "$ref": "#/components/schemas/Stupen"
@@ -1668,25 +1671,25 @@ const spec = {
           },
           "kapacita": {
             "type": "integer",
-            "example": 79
+            "example": 90
           },
           "prihlasky": {
             "type": "integer",
-            "example": 323
+            "example": 248
           },
           "prihlasky_na_misto": {
             "type": [
               "number",
               "null"
             ],
-            "example": 4.09
+            "example": 2.76
           },
           "index_pretlaku": {
             "type": [
               "number",
               "null"
             ],
-            "example": 1.54
+            "example": 1.04
           },
           "deti_v_dosahu": {
             "type": "integer"
@@ -1704,12 +1707,19 @@ const spec = {
               "null"
             ]
           },
+          "zamestnavatelu": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Různá IČO s místy v souvisejících profesích; null = obor nemá mapování v NSP."
+          },
           "volna_mista": {
             "type": [
               "integer",
               "null"
             ],
-            "description": "null = obor zatím nemá mapování na profese."
+            "description": "null = obor nemá mapování v NSP (nikdy 0 místo null)."
           },
           "volna_mista_na_misto": {
             "type": [
@@ -1725,57 +1735,386 @@ const spec = {
           }
         }
       },
-      "SimulaceZsj": {
+      "DetailOboru": {
         "type": "object",
         "required": [
+          "obor",
+          "nabidky",
+          "kandidati",
+          "meta"
+        ],
+        "properties": {
+          "obor": {
+            "$ref": "#/components/schemas/BilanceOboru"
+          },
+          "nabidky": {
+            "type": "array",
+            "description": "Školy, kde se obor učí.",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Nabidka"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "redizo": {
+                      "$ref": "#/components/schemas/Redizo"
+                    },
+                    "nazev_skoly": {
+                      "type": "string"
+                    },
+                    "deti_v_dosahu_skoly": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "kandidati": {
+            "type": "array",
+            "description": "Školy, které obor neučí, seřazené podle `nove_dosazene_deti`. Plní výběr „Kandidátní škola“.",
+            "items": {
+              "type": "object",
+              "required": [
+                "redizo",
+                "nazev",
+                "nove_dosazene_deti",
+                "ma_pribuzny_obor"
+              ],
+              "properties": {
+                "redizo": {
+                  "$ref": "#/components/schemas/Redizo"
+                },
+                "nazev": {
+                  "type": "string"
+                },
+                "obec": {
+                  "type": "string"
+                },
+                "nove_dosazene_deti": {
+                  "type": "integer",
+                  "description": "Děti",
+                  "které dnes obor do `max_min` nestihnou a tuto školu ano.": null
+                },
+                "ma_pribuzny_obor": {
+                  "type": "boolean",
+                  "description": "Škola učí obor ze stejné skupiny KKOV."
+                }
+              }
+            }
+          },
+          "trh_prace": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "null = obor zatím nemá mapování na profese.",
+            "properties": {
+              "volna_mista": {
+                "type": "integer"
+              },
+              "zamestnavatelu": {
+                "type": "integer"
+              },
+              "profese": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cz_isco3": {
+                      "type": "string",
+                      "example": "512"
+                    },
+                    "vhodnost": {
+                      "type": "integer",
+                      "enum": [
+                        1,
+                        2
+                      ]
+                    },
+                    "nazev": {
+                      "type": "string"
+                    },
+                    "pocet": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/MetaDosah"
+          }
+        }
+      },
+      "ZamestnavateleOboru": {
+        "type": "object",
+        "required": [
+          "type",
+          "features",
+          "meta"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "type",
+                "geometry",
+                "properties"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "Feature"
+                },
+                "geometry": {
+                  "$ref": "#/components/schemas/GeoPoint"
+                },
+                "properties": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ico",
+                    "nazev",
+                    "kod_obce",
+                    "pocet_mist",
+                    "profese"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID pracoviště (63bitové číslo jako řetězec",
+                      "JavaScript ho jako číslo nepřečte přesně).": null,
+                      "example": "84980608601418621"
+                    },
+                    "ico": {
+                      "type": "string",
+                      "pattern": "^\\d{8}$",
+                      "example": "21124311"
+                    },
+                    "nazev": {
+                      "type": "string",
+                      "example": "Linhart Gastro s.r.o."
+                    },
+                    "kod_obce": {
+                      "$ref": "#/components/schemas/KodObce"
+                    },
+                    "pocet_mist": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "profese": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "cz_isco3": {
+                            "type": "string",
+                            "example": "512"
+                          },
+                          "nazev": {
+                            "type": "string"
+                          },
+                          "vhodnost": {
+                            "type": "integer",
+                            "enum": [
+                              1,
+                              2
+                            ]
+                          },
+                          "pocet_mist": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "required": [
+              "obor",
+              "mapovani",
+              "existuje"
+            ],
+            "properties": {
+              "obor": {
+                "$ref": "#/components/schemas/KodOboru"
+              },
+              "mapovani": {
+                "type": "boolean",
+                "description": "false = obor nemá v NSP vazbu na žádnou profesní skupinu."
+              },
+              "existuje": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "null = obor nemá mapování."
+              },
+              "zamestnavatelu": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Počet různých IČO.",
+                "example": 84
+              },
+              "pracovist": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 91
+              },
+              "pocet_mist": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 266
+              },
+              "bez_souradnic": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kod_obce": {
+                      "$ref": "#/components/schemas/KodObce"
+                    },
+                    "pracovist": {
+                      "type": "integer"
+                    },
+                    "pocet_mist": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "skupiny": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cz_isco3": {
+                      "type": "string"
+                    },
+                    "nazev": {
+                      "type": "string"
+                    },
+                    "vhodnost": {
+                      "type": "integer",
+                      "enum": [
+                        1,
+                        2
+                      ]
+                    }
+                  }
+                }
+              },
+              "importovano": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "SimulacePlocha": {
+        "type": "object",
+        "required": [
+          "nazev",
+          "cas_ke_skole",
           "cas_min",
+          "zlepseni_min",
+          "pasmo",
           "deti",
           "potencialni_uchazeci",
           "novy_dosah"
         ],
         "properties": {
+          "nazev": {
+            "type": "string"
+          },
+          "cas_ke_skole": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Dojezd k simulované škole."
+          },
+          "cas_min_puvodni": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Dnes k nejbližší škole s oborem; null = bez spojení."
+          },
           "cas_min": {
-            "type": "integer",
-            "description": "Doba dojezdu ze ZSJ ke škole."
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Nový nejkratší čas."
+          },
+          "zlepseni_min": {
+            "type": "integer"
+          },
+          "pasmo": {
+            "$ref": "#/components/schemas/Pasmo"
+          },
+          "pasmo_puvodni": {
+            "$ref": "#/components/schemas/Pasmo"
           },
           "deti": {
             "type": "integer"
           },
           "potencialni_uchazeci": {
-            "type": "number",
-            "description": "deti × podil_zajmu",
-            "zaokrouhleno na 1 desetinné místo.": null
+            "type": "number"
           },
           "novy_dosah": {
             "type": "boolean"
-          },
-          "nejblizsi_stavajici_min": {
-            "type": [
-              "integer",
-              "null"
-            ]
           }
         }
       },
       "SimulaceSouhrn": {
         "type": "object",
         "properties": {
-          "zsj_v_dosahu": {
+          "jednotek_celkem": {
             "type": "integer"
           },
-          "deti_v_dosahu": {
+          "v_limitu": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VLimituPredPo"
+            }
+          },
+          "zlepsenych_jednotek": {
             "type": "integer"
+          },
+          "prumerne_zkraceni_min": {
+            "type": "number",
+            "description": "Průměr `zlepseni_min` přes zlepšené plochy."
           },
           "potencialni_uchazeci": {
             "type": "number"
           },
-          "z_toho_novy_dosah": {
-            "type": "number"
-          },
           "blize_ke_skole": {
             "type": "number",
-            "description": "Uchazeči ze ZSJ",
-            "kde je simulovaná škola blíž než každá stávající s oborem.": null
+            "description": "Uchazeči z ploch",
+            "kde je simulovaná škola nejbližší.": null
           },
           "kapacita": {
             "type": "integer"
@@ -1799,9 +2138,17 @@ const spec = {
               "obor": {
                 "$ref": "#/components/schemas/KodOboru"
               },
+              "uroven": {
+                "type": "string",
+                "enum": [
+                  "orp",
+                  "obec",
+                  "zsj"
+                ]
+              },
               "podil_zajmu": {
                 "type": "number",
-                "example": 0.048
+                "example": 0.026
               },
               "skola_obor_uz_uci": {
                 "type": "boolean"
@@ -1813,19 +2160,19 @@ const spec = {
       "Simulace": {
         "type": "object",
         "required": [
-          "zsj",
+          "jednotky",
           "souhrn",
           "meta"
         ],
         "properties": {
-          "zsj": {
+          "jednotky": {
             "type": "object",
-            "description": "Slovník kod_zsj → hodnoty.",
+            "description": "Slovník kód plochy → hodnoty.",
             "propertyNames": {
-              "$ref": "#/components/schemas/KodZsj"
+              "$ref": "#/components/schemas/KodPlochy"
             },
             "additionalProperties": {
-              "$ref": "#/components/schemas/SimulaceZsj"
+              "$ref": "#/components/schemas/SimulacePlocha"
             }
           },
           "souhrn": {
@@ -1864,18 +2211,10 @@ const spec = {
                 "properties": {
                   "allOf": [
                     {
-                      "type": "object",
-                      "properties": {
-                        "kod_zsj": {
-                          "$ref": "#/components/schemas/KodZsj"
-                        },
-                        "nazev": {
-                          "type": "string"
-                        }
-                      }
+                      "$ref": "#/components/schemas/PlochaDosahu"
                     },
                     {
-                      "$ref": "#/components/schemas/SimulaceZsj"
+                      "$ref": "#/components/schemas/SimulacePlocha"
                     }
                   ]
                 }
@@ -1887,133 +2226,6 @@ const spec = {
           },
           "meta": {
             "$ref": "#/components/schemas/SimulaceMeta"
-          }
-        }
-      },
-      "DetailOboru": {
-        "type": "object",
-        "required": [
-          "obor",
-          "nabidky",
-          "obce_bez_oboru",
-          "kandidati",
-          "meta"
-        ],
-        "properties": {
-          "obor": {
-            "$ref": "#/components/schemas/BilanceOboru"
-          },
-          "nabidky": {
-            "type": "array",
-            "description": "Školy, kde se obor učí.",
-            "items": {
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Nabidka"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "redizo": {
-                      "$ref": "#/components/schemas/Redizo"
-                    },
-                    "nazev_skoly": {
-                      "type": "string"
-                    },
-                    "deti_v_dosahu_skoly": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          "obce_bez_oboru": {
-            "type": "array",
-            "description": "Seřazené podle počtu dětí sestupně.",
-            "items": {
-              "type": "object",
-              "properties": {
-                "kod_obce": {
-                  "$ref": "#/components/schemas/KodObce"
-                },
-                "nazev": {
-                  "type": "string"
-                },
-                "deti": {
-                  "type": "integer"
-                },
-                "nejkratsi_cas_min": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                }
-              }
-            }
-          },
-          "kandidati": {
-            "type": "array",
-            "description": "Školy, které obor neučí, seřazené podle `nove_dosazene_deti`.",
-            "items": {
-              "type": "object",
-              "required": [
-                "redizo",
-                "nazev",
-                "nove_dosazene_deti",
-                "ma_pribuzny_obor"
-              ],
-              "properties": {
-                "redizo": {
-                  "$ref": "#/components/schemas/Redizo"
-                },
-                "nazev": {
-                  "type": "string"
-                },
-                "nove_dosazene_deti": {
-                  "type": "integer",
-                  "description": "Děti bez oboru",
-                  "které by tuto školu stihly do `max_min`.": null
-                },
-                "ma_pribuzny_obor": {
-                  "type": "boolean",
-                  "description": "Škola učí obor ze stejné skupiny KKOV."
-                }
-              }
-            }
-          },
-          "trh_prace": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "description": "null = obor zatím nemá mapování na profese.",
-            "properties": {
-              "volna_mista": {
-                "type": "integer"
-              },
-              "profese": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "cz_isco": {
-                      "type": "string",
-                      "example": "7231"
-                    },
-                    "nazev": {
-                      "type": "string"
-                    },
-                    "pocet": {
-                      "type": "integer"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "meta": {
-            "$ref": "#/components/schemas/MetaDosah"
           }
         }
       }
