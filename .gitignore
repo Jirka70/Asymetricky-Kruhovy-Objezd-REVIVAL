@@ -16,8 +16,3 @@ Thumbs.db
 
 # OpenTripPlanner generated graph
 /location_data/graph.obj
-
-/datasety/volna-mista.json
-
-# Large downloaded bus feed (keep local)
-/location_data/busy.gtfs.zip

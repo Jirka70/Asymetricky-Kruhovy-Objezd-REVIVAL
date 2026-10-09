@@ -129,3 +129,13 @@ Outputs are saved under `location_data/api_tests/<run timestamp>/`:
 itineraries), and `summary.json`. Override this with `--output-dir PATH`.
 The CSV contains one row per directed pair, with travel times, departure,
 arrival, transfer counts, modes, route names and errors.
+
+## Large source datasets (Git LFS)
+
+`datasety/volna-mista.json` and `location_data/busy.gtfs.zip` are tracked
+with Git LFS. Install Git LFS before cloning; for an existing checkout, run:
+
+```bash
+git lfs install --local
+git lfs pull
+```
