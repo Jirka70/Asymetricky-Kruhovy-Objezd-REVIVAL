@@ -18,7 +18,10 @@ fn fixtures() -> Vec<Value> {
     serde_json::from_str(include_str!("fixtures/openapi_responses.json")).unwrap()
 }
 fn response_schema(path: &str, status: &str, media: &str) -> Value {
-    let response = contract::resolve(&SPEC["paths"][path]["get"]["responses"][status]);
+    let response = contract::resolve(
+        &SPEC["paths"][path][OPERATIONS.iter().find(|op| op.path == path).unwrap().method]["responses"]
+            [status],
+    );
     let schema = &response["content"][media]["schema"];
     assert!(
         !schema.is_null(),
@@ -90,10 +93,10 @@ fn operation_and_success_fixture_coverage_matches_spec() {
             {
                 continue;
             }
-            // New operations must receive a stub and tests, not be silently skipped.
-            assert_eq!(method, "get", "Add support and tests for this HTTP method");
+            // Every operation must have route registration and contract tests.
             specified.insert((
                 path.clone(),
+                method.clone(),
                 operation["operationId"].as_str().unwrap().to_owned(),
             ));
             for media in operation["responses"]["200"]["content"]
@@ -107,7 +110,13 @@ fn operation_and_success_fixture_coverage_matches_spec() {
     }
     let implemented: BTreeSet<_> = OPERATIONS
         .iter()
-        .map(|operation| (operation.path.to_owned(), operation.id.to_owned()))
+        .map(|operation| {
+            (
+                operation.path.to_owned(),
+                operation.method.to_owned(),
+                operation.id.to_owned(),
+            )
+        })
         .collect();
     assert_eq!(
         implemented.len(),
@@ -143,13 +152,23 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
                 | "/obory"
                 | "/obory/{kod}"
                 | "/simulace"
+                | "/simulace/zmeny"
                 | "/student/skoly"
                 | "/obory/{kod}/zamestnavatele"
         ) {
             check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
         }
         assert_eq!(
-            request(uri, Method::POST).await.status(),
+            request(
+                uri,
+                if path == "/simulace/zmeny" {
+                    Method::GET
+                } else {
+                    Method::POST
+                }
+            )
+            .await
+            .status(),
             StatusCode::METHOD_NOT_ALLOWED
         );
     }
@@ -200,6 +219,8 @@ async fn rust_success_dtos_and_media_types_match_openapi() {
             "/simulace" => {
                 SimulaceResponse::Slovnik(serde_json::from_value(body).unwrap()).into_response()
             }
+            "/simulace/zmeny" if geo => dto_response::<dto::BatchSimulaceGeojson>(body, geo).await,
+            "/simulace/zmeny" => dto_response::<dto::BatchSimulace>(body, geo).await,
             _ => panic!("Add a Rust DTO contract test for {path}"),
         };
         assert_eq!(response.status(), StatusCode::OK);
@@ -411,7 +432,7 @@ fn every_component_and_declared_response_schema_compiles() {
         contract::schema_validator(schema);
     }
     for operation in OPERATIONS {
-        for response in SPEC["paths"][operation.path]["get"]["responses"]
+        for response in SPEC["paths"][operation.path][operation.method]["responses"]
             .as_object()
             .unwrap()
             .values()
@@ -580,6 +601,19 @@ fn all_response_dto_fields_types_enums_and_required_fields_match_spec() {
         "200",
         "application/geo+json",
     ));
+    check_dto_shape::<dto::BatchSimulace>(response_schema(
+        "/simulace/zmeny",
+        "200",
+        "application/json",
+    ));
+    check_dto_shape::<dto::BatchSimulaceGeojson>(response_schema(
+        "/simulace/zmeny",
+        "200",
+        "application/geo+json",
+    ));
+    check_dto_shape::<obor_backend::requests::BatchSimulaceRequest>(
+        SPEC["components"]["schemas"]["BatchSimulaceRequest"].clone(),
+    );
     check_dto_shape::<dto::Chyba>(SPEC["components"]["schemas"]["Chyba"].clone());
 }
 
@@ -744,6 +778,7 @@ async fn every_typed_query_serializes_values_accepted_by_openapi() {
             "/obory/{kod}" => check::<OborQuery>(&fixture).await,
             "/simulace" => check::<SimulaceQuery>(&fixture).await,
             "/obory/{kod}/zamestnavatele" => check::<OborZamestnavateleQuery>(&fixture).await,
+            "/simulace/zmeny" => continue,
             path => panic!("Missing typed query test for {path}"),
         }
     }
@@ -1033,4 +1068,93 @@ async fn student_school_endpoint_validates_travel_parameters() {
         )
         .await;
     }
+}
+
+#[tokio::test]
+async fn batch_simulation_validates_json_body_before_accessing_database() {
+    let pool = diesel::r2d2::Pool::builder()
+        .max_size(1)
+        .connection_timeout(std::time::Duration::from_millis(50))
+        .build_unchecked(
+            diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(
+                "postgres://localhost:1/unused_contract_test",
+            ),
+        );
+    let app = contract::router(pool);
+    let valid = json!({"obor":"23-68-H/01","zmeny":[{"redizo":"600009271","zmena_kapacity":30}]});
+    let typed: obor_backend::requests::BatchSimulaceRequest =
+        serde_json::from_value(valid.clone()).unwrap();
+    assert_eq!(typed.max_min, 120);
+    assert_eq!(typed.uroven, obor_backend::requests::Uroven::Obec);
+    assert_eq!(typed.format, obor_backend::requests::Format::Slovnik);
+    assert_valid(
+        &SPEC["components"]["schemas"]["BatchSimulaceRequest"],
+        &serde_json::to_value(typed).unwrap(),
+    );
+    let mut invalids = vec![json!({}), json!({"obor":"23-68-H/01","zmeny":[]})];
+    for (pointer, value) in [
+        ("/obor", json!("invalid")),
+        ("/zmeny/0/redizo", json!(123)),
+        ("/zmeny/0/redizo", json!("abc")),
+        ("/zmeny/0/zmena_kapacity", json!(0)),
+        ("/zmeny/0/zmena_kapacity", json!(-301)),
+        ("/zmeny/0/zmena_kapacity", json!(301)),
+        ("/zmeny/0/zmena_kapacity", json!(1.5)),
+        ("/zmeny", json!(vec![valid["zmeny"][0].clone(); 101])),
+    ] {
+        let mut v = valid.clone();
+        *v.pointer_mut(pointer).unwrap() = value;
+        invalids.push(v);
+    }
+    for (field, value) in [
+        ("max_min", json!(9)),
+        ("max_min", json!(181)),
+        ("scenar", json!("odpoledne")),
+        ("uroven", json!("invalid")),
+        ("format", json!("xml")),
+        ("unexpected", json!(true)),
+    ] {
+        let mut v = valid.clone();
+        v[field] = value;
+        invalids.push(v);
+    }
+    for (value, status) in invalids
+        .into_iter()
+        .map(|v| (v, StatusCode::UNPROCESSABLE_ENTITY))
+        .chain([(valid, StatusCode::SERVICE_UNAVAILABLE)])
+    {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(Method::POST)
+                    .uri("/api/v1/simulace/zmeny")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(value.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), status, "{value}");
+        let body = json_body(response).await;
+        assert_valid(
+            &response_schema("/simulace/zmeny", status.as_str(), "application/json"),
+            &body,
+        );
+        if status == StatusCode::UNPROCESSABLE_ENTITY {
+            assert_eq!(body["error"]["pole"], "body");
+        }
+    }
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/v1/simulace/zmeny")
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from("{"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
 }

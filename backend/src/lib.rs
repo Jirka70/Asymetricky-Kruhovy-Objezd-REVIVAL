@@ -1,3 +1,4 @@
+pub mod batch_simulation;
 mod catalog;
 pub mod contract;
 pub mod db;

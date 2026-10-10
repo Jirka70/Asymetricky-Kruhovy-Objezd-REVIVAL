@@ -442,6 +442,74 @@ paths:
         '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
+  /simulace/zmeny:
+    post:
+      tags:
+      - Pro kraj
+      operationId: postSimulaceZmeny
+      summary: Simulace více změn kapacity jednoho oboru
+      description: 'Pouze čtení: všechny změny denního oboru se aplikují současně na jeden konzistentní
+        snímek databáze. Změny stejné školy se nejprve sečtou; kontroluje se výsledná nezáporná kapacita.
+        Každá položka je nenulová změna od -300 do 300 míst; maximálně 100 položek. Výsledná nulová kapacita
+        vyřazuje školu ze simulované nabídky, včetně původních nulových nabídek. Lze odebrat i poslední
+        nabídku. Původní stav zahrnuje všechny uložené denní nabídky.
+
+
+        Zájem je podíl přihlášek tohoto oboru mezi všemi denními přihláškami před změnami. Děti jsou populace
+        10–14 let / 5, bez předčasného zaokrouhlení. Spád přiřazuje ZSJ nejbližší škole v max_min (shody
+        rozhoduje REDIZO); kapacita neomezuje přidělení, bilance je kapacita minus spád. Částečné snížení
+        při kladné zbývající kapacitě mění bilanci, nikoli dojezd. Přesuny uchazečů jsou změny spádové školy,
+        nikoli simulace přijímacího řízení; null označuje stav mimo dosah.
+
+
+        Slovník obsahuje jednotky s odlišným dojezdem nebo nejbližší školou, včetně zhoršení. GeoJSON obsahuje
+        celou vrstvu. Časy obcí a ORP jsou populačně vážené průměry konečných časů ZSJ. Příznaky zlepšení,
+        zhoršení, nového a ztraceného dosahu znamenají alespoň jednu odpovídající ZSJ; smíšená jednotka
+        může mít více příznaků. zlepseni_min je původní minus nový čas (zhoršení záporné), null při neznámém
+        čase. Počty jednotek a průměrné změny odpovídají požadované úrovni; součty dětí, spád a přesuny
+        se počítají z jednotlivých ZSJ. Průměrné změny vynechávají neznámé časy. Údaje jsou zaokrouhleny
+        až při výstupu.
+
+
+        Chybějící řádky dojezdů nebo demografie způsobí 500; uložený null dojezdu je platný neznámý dojezd.
+        Neznámý obor nebo škola vrací 404, obor bez denních nabídek nebo záporná výsledná kapacita 422.
+        Původní GET /simulace má vlastní nezměněný kontrakt.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSimulaceRequest'
+            example:
+              obor: 23-68-H/01
+              zmeny:
+              - redizo: '600009084'
+                zmena_kapacity: -30
+              - redizo: '600009271'
+                zmena_kapacity: 30
+              max_min: 120
+              scenar: rano
+              uroven: obec
+              format: slovnik
+      responses:
+        '200':
+          description: Dopady společného scénáře před a po změnách.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSimulace'
+            application/geo+json:
+              schema:
+                $ref: '#/components/schemas/BatchSimulaceGeojson'
+        '404':
+          $ref: '#/components/responses/Nenalezeno'
+        '422':
+          $ref: '#/components/responses/NeplatnyParametr'
+        '500':
+          $ref: '#/components/responses/InterniChyba'
+        '503':
+          $ref: '#/components/responses/DatabazeNedostupna'
+
 components:
   parameters:
     Lat:
@@ -1110,3 +1178,430 @@ components:
         redizo: { $ref: '#/components/schemas/Redizo' }
         nazev: { type: string }
         chybi_mist: { type: number }
+    BatchBilanceSkoly:
+      properties:
+        bilance_po:
+          format: double
+          type: number
+        bilance_pred:
+          format: double
+          type: number
+        kapacita_po:
+          format: int64
+          type: integer
+        kapacita_pred:
+          format: int64
+          type: integer
+        nazev:
+          type: string
+        novi_v_dosahu:
+          format: double
+          type: number
+        odchozi_uchazeci:
+          format: double
+          type: number
+        prichozi_uchazeci:
+          format: double
+          type: number
+        redizo:
+          $ref: '#/components/schemas/Redizo'
+        spad_po:
+          format: double
+          type: number
+        spad_pred:
+          format: double
+          type: number
+        zmena_kapacity:
+          format: int64
+          type: integer
+        ztraceni_v_dosahu:
+          format: double
+          type: number
+      required:
+      - redizo
+      - nazev
+      - zmena_kapacity
+      - kapacita_pred
+      - kapacita_po
+      - spad_pred
+      - spad_po
+      - bilance_pred
+      - bilance_po
+      - prichozi_uchazeci
+      - odchozi_uchazeci
+      - novi_v_dosahu
+      - ztraceni_v_dosahu
+      type: object
+    BatchPresun:
+      properties:
+        deti:
+          format: double
+          type: number
+        kam:
+          anyOf:
+          - $ref: '#/components/schemas/Redizo'
+          - type: 'null'
+        odkud:
+          anyOf:
+          - $ref: '#/components/schemas/Redizo'
+          - type: 'null'
+        uchazeci:
+          format: double
+          type: number
+      required:
+      - deti
+      - uchazeci
+      type: object
+    BatchSimulaceMeta:
+      properties:
+        max_min:
+          format: int64
+          type: integer
+        obor:
+          $ref: '#/components/schemas/KodOboru'
+        podil_zajmu:
+          format: double
+          type: number
+        scenar:
+          type: string
+          enum:
+          - rano
+        uroven:
+          $ref: '#/components/schemas/BatchSimulaceMetaUroven'
+        zmeny:
+          items:
+            $ref: '#/components/schemas/ZmenaKapacity'
+          type: array
+      required:
+      - obor
+      - zmeny
+      - max_min
+      - scenar
+      - uroven
+      - podil_zajmu
+      type: object
+    BatchSimulacePlocha:
+      properties:
+        cas_min:
+          format: double
+          type:
+          - number
+          - 'null'
+        cas_min_puvodni:
+          format: double
+          type:
+          - number
+          - 'null'
+        deti:
+          format: double
+          type: number
+        nazev:
+          type: string
+        novy_dosah:
+          type: boolean
+        pasmo:
+          $ref: '#/components/schemas/Pasmo'
+        pasmo_puvodni:
+          $ref: '#/components/schemas/Pasmo'
+        potencialni_uchazeci:
+          format: double
+          type: number
+        zhorseno:
+          type: boolean
+        zlepseni_min:
+          format: double
+          type:
+          - number
+          - 'null'
+        zlepseno:
+          type: boolean
+        ztraceny_dosah:
+          type: boolean
+      required:
+      - nazev
+      - pasmo_puvodni
+      - pasmo
+      - deti
+      - potencialni_uchazeci
+      - novy_dosah
+      - ztraceny_dosah
+      - zlepseno
+      - zhorseno
+      type: object
+    BatchSimulaceSouhrn:
+      properties:
+        bilance_skol:
+          items:
+            $ref: '#/components/schemas/BatchBilanceSkoly'
+          type: array
+        deti_v_dosahu_po:
+          format: double
+          type: number
+        deti_v_dosahu_pred:
+          format: double
+          type: number
+        jednotek_celkem:
+          format: int64
+          type: integer
+        kapacita_po:
+          format: int64
+          type: integer
+        kapacita_pred:
+          format: int64
+          type: integer
+        nove_dosazene_deti:
+          format: double
+          type: number
+        novi_v_dosahu:
+          format: double
+          type: number
+        presuny:
+          items:
+            $ref: '#/components/schemas/BatchPresun'
+          type: array
+        prumerne_prodlouzeni_min:
+          format: double
+          type: number
+        prumerne_zkraceni_min:
+          format: double
+          type: number
+        v_limitu:
+          items:
+            $ref: '#/components/schemas/VLimituPredPo'
+          type: array
+        zhorsenych_jednotek:
+          format: int64
+          type: integer
+        zlepsenych_jednotek:
+          format: int64
+          type: integer
+        ztracene_deti:
+          format: double
+          type: number
+        ztraceni_v_dosahu:
+          format: double
+          type: number
+      required:
+      - jednotek_celkem
+      - zlepsenych_jednotek
+      - zhorsenych_jednotek
+      - v_limitu
+      - prumerne_zkraceni_min
+      - prumerne_prodlouzeni_min
+      - deti_v_dosahu_pred
+      - deti_v_dosahu_po
+      - nove_dosazene_deti
+      - ztracene_deti
+      - novi_v_dosahu
+      - ztraceni_v_dosahu
+      - kapacita_pred
+      - kapacita_po
+      - bilance_skol
+      - presuny
+      type: object
+    BatchSimulaceMetaUroven:
+      enum:
+      - orp
+      - obec
+      - zsj
+      type: string
+    ZmenaKapacity:
+      additionalProperties: false
+      properties:
+        redizo:
+          $ref: '#/components/schemas/Redizo'
+        zmena_kapacity:
+          format: int64
+          type: integer
+      required:
+      - redizo
+      - zmena_kapacity
+      type: object
+    BatchSimulace:
+      properties:
+        jednotky:
+          additionalProperties:
+            $ref: '#/components/schemas/BatchSimulacePlocha'
+          type: object
+          propertyNames:
+            $ref: '#/components/schemas/KodPlochy'
+        meta:
+          $ref: '#/components/schemas/BatchSimulaceMeta'
+        souhrn:
+          $ref: '#/components/schemas/BatchSimulaceSouhrn'
+      required:
+      - jednotky
+      - souhrn
+      - meta
+      type: object
+    BatchSimulaceFeature:
+      properties:
+        geometry:
+          $ref: '#/components/schemas/GeoPlocha'
+        properties:
+          $ref: '#/components/schemas/BatchSimulaceProperties'
+        type:
+          $ref: '#/components/schemas/BatchSimulaceGeojsonFeaturesItemType'
+      required:
+      - type
+      - geometry
+      - properties
+      type: object
+    BatchSimulaceProperties:
+      properties:
+        cas_min:
+          format: double
+          type:
+          - number
+          - 'null'
+        cas_min_puvodni:
+          format: double
+          type:
+          - number
+          - 'null'
+        deti:
+          format: double
+          type: number
+        deti_v_dosahu:
+          format: double
+          type: number
+        kod:
+          $ref: '#/components/schemas/KodPlochy'
+        nazev:
+          type: string
+        nejblizsi_redizo:
+          anyOf:
+          - $ref: '#/components/schemas/Redizo'
+          - type: 'null'
+        novy_dosah:
+          type: boolean
+        pasmo:
+          $ref: '#/components/schemas/Pasmo'
+        pasmo_puvodni:
+          $ref: '#/components/schemas/Pasmo'
+        podil_deti_v_dosahu:
+          format: double
+          type: number
+        potencialni_uchazeci:
+          format: double
+          type: number
+        uroven:
+          $ref: '#/components/schemas/BatchSimulaceMetaUroven'
+        v_dosahu:
+          type: boolean
+        zhorseno:
+          type: boolean
+        zlepseni_min:
+          format: double
+          type:
+          - number
+          - 'null'
+        zlepseno:
+          type: boolean
+        ztraceny_dosah:
+          type: boolean
+      required:
+      - kod
+      - uroven
+      - v_dosahu
+      - deti_v_dosahu
+      - podil_deti_v_dosahu
+      - nazev
+      - pasmo_puvodni
+      - pasmo
+      - deti
+      - potencialni_uchazeci
+      - novy_dosah
+      - ztraceny_dosah
+      - zlepseno
+      - zhorseno
+      type: object
+    BatchGeoPlochaType:
+      enum:
+      - Polygon
+      - MultiPolygon
+      type: string
+    BatchSimulaceGeojsonFeaturesItemType:
+      enum:
+      - Feature
+      type: string
+    BatchSimulaceGeojsonType:
+      enum:
+      - FeatureCollection
+      type: string
+    BatchSimulaceGeojson:
+      properties:
+        features:
+          items:
+            $ref: '#/components/schemas/BatchSimulaceFeature'
+          type: array
+        meta:
+          $ref: '#/components/schemas/BatchSimulaceMeta'
+        souhrn:
+          $ref: '#/components/schemas/BatchSimulaceSouhrn'
+        type:
+          $ref: '#/components/schemas/BatchSimulaceGeojsonType'
+      required:
+      - type
+      - features
+      - souhrn
+      - meta
+      type: object
+    BatchFormat:
+      enum:
+      - slovnik
+      - geojson
+      type: string
+    BatchScenar:
+      enum:
+      - rano
+      type: string
+    BatchUroven:
+      enum:
+      - orp
+      - obec
+      - zsj
+      type: string
+    BatchSimulaceRequest:
+      additionalProperties: false
+      properties:
+        format:
+          $ref: '#/components/schemas/BatchFormat'
+          default: slovnik
+        max_min:
+          default: 120
+          format: uint16
+          maximum: 180
+          minimum: 10
+          type: integer
+        obor:
+          $ref: '#/components/schemas/KodOboru'
+        scenar:
+          $ref: '#/components/schemas/BatchScenar'
+          default: rano
+        uroven:
+          $ref: '#/components/schemas/BatchUroven'
+          default: obec
+        zmeny:
+          items:
+            type: object
+            additionalProperties: false
+            required:
+            - redizo
+            - zmena_kapacity
+            properties:
+              redizo:
+                $ref: '#/components/schemas/Redizo'
+              zmena_kapacity:
+                type: integer
+                minimum: -300
+                maximum: 300
+                not:
+                  const: 0
+          type: array
+          minItems: 1
+          maxItems: 100
+      required:
+      - obor
+      - zmeny
+      type: object

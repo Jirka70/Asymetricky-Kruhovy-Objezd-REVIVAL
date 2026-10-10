@@ -956,3 +956,100 @@ pub enum SimulaceVerdikt {
     SpatneMisto,
     Neutralni,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulacePlocha {
+    pub nazev: String,
+    pub cas_min_puvodni: Option<f64>,
+    pub cas_min: Option<f64>,
+    pub zlepseni_min: Option<f64>,
+    pub pasmo_puvodni: Pasmo,
+    pub pasmo: Pasmo,
+    pub deti: f64,
+    pub potencialni_uchazeci: f64,
+    pub novy_dosah: bool,
+    pub ztraceny_dosah: bool,
+    pub zlepseno: bool,
+    pub zhorseno: bool,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchBilanceSkoly {
+    pub redizo: Redizo,
+    pub nazev: String,
+    pub zmena_kapacity: i64,
+    pub kapacita_pred: i64,
+    pub kapacita_po: i64,
+    pub spad_pred: f64,
+    pub spad_po: f64,
+    pub bilance_pred: f64,
+    pub bilance_po: f64,
+    pub prichozi_uchazeci: f64,
+    pub odchozi_uchazeci: f64,
+    pub novi_v_dosahu: f64,
+    pub ztraceni_v_dosahu: f64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchPresun {
+    pub odkud: Option<Redizo>,
+    pub kam: Option<Redizo>,
+    pub deti: f64,
+    pub uchazeci: f64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulaceSouhrn {
+    pub jednotek_celkem: i64,
+    pub zlepsenych_jednotek: i64,
+    pub zhorsenych_jednotek: i64,
+    pub v_limitu: Vec<VLimituPredPo>,
+    pub prumerne_zkraceni_min: f64,
+    pub prumerne_prodlouzeni_min: f64,
+    pub deti_v_dosahu_pred: f64,
+    pub deti_v_dosahu_po: f64,
+    pub nove_dosazene_deti: f64,
+    pub ztracene_deti: f64,
+    pub novi_v_dosahu: f64,
+    pub ztraceni_v_dosahu: f64,
+    pub kapacita_pred: i64,
+    pub kapacita_po: i64,
+    pub bilance_skol: Vec<BatchBilanceSkoly>,
+    pub presuny: Vec<BatchPresun>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulaceMeta {
+    pub obor: KodOboru,
+    pub zmeny: Vec<crate::requests::ZmenaKapacity>,
+    pub max_min: i64,
+    pub scenar: crate::requests::Scenar,
+    pub uroven: SimulaceMetaUroven,
+    pub podil_zajmu: f64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulace {
+    pub jednotky: BTreeMap<String, BatchSimulacePlocha>,
+    pub souhrn: BatchSimulaceSouhrn,
+    pub meta: BatchSimulaceMeta,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulaceProperties {
+    pub kod: KodPlochy,
+    pub uroven: SimulaceMetaUroven,
+    pub v_dosahu: bool,
+    pub deti_v_dosahu: f64,
+    pub podil_deti_v_dosahu: f64,
+    pub nejblizsi_redizo: Option<Redizo>,
+    #[serde(flatten)]
+    pub simulace: BatchSimulacePlocha,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulaceFeature {
+    pub r#type: SimulaceGeojsonFeaturesItemType,
+    pub geometry: GeoPlocha,
+    pub properties: BatchSimulaceProperties,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct BatchSimulaceGeojson {
+    pub r#type: SimulaceGeojsonType,
+    pub features: Vec<BatchSimulaceFeature>,
+    pub souhrn: BatchSimulaceSouhrn,
+    pub meta: BatchSimulaceMeta,
+}

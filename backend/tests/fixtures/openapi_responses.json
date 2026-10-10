@@ -622,5 +622,242 @@
         "kod_obce": "554979"
       }
     ]
+  },
+  {
+    "path": "/simulace/zmeny",
+    "request": "/api/v1/simulace/zmeny",
+    "method": "post",
+    "media_type": "application/json",
+    "body": {
+      "jednotky": {
+        "063622": {
+          "nazev": "063622",
+          "cas_min_puvodni": 20.0,
+          "cas_min": 10.0,
+          "zlepseni_min": 10.0,
+          "pasmo_puvodni": "do30",
+          "pasmo": "do30",
+          "deti": 10.0,
+          "potencialni_uchazeci": 1.0,
+          "novy_dosah": false,
+          "ztraceny_dosah": false,
+          "zlepseno": true,
+          "zhorseno": false
+        },
+        "063623": {
+          "nazev": "063623",
+          "cas_min_puvodni": 10.0,
+          "cas_min": 20.0,
+          "zlepseni_min": -10.0,
+          "pasmo_puvodni": "do30",
+          "pasmo": "do30",
+          "deti": 10.0,
+          "potencialni_uchazeci": 1.0,
+          "novy_dosah": false,
+          "ztraceny_dosah": false,
+          "zlepseno": false,
+          "zhorseno": true
+        }
+      },
+      "souhrn": {
+        "jednotek_celkem": 2,
+        "zlepsenych_jednotek": 1,
+        "zhorsenych_jednotek": 1,
+        "v_limitu": [
+          {
+            "limit_min": 120,
+            "pred": 2,
+            "po": 2
+          }
+        ],
+        "prumerne_zkraceni_min": 10.0,
+        "prumerne_prodlouzeni_min": 10.0,
+        "deti_v_dosahu_pred": 20.0,
+        "deti_v_dosahu_po": 20.0,
+        "nove_dosazene_deti": 0.0,
+        "ztracene_deti": 0.0,
+        "novi_v_dosahu": 0.0,
+        "ztraceni_v_dosahu": 0.0,
+        "kapacita_pred": 30,
+        "kapacita_po": 30,
+        "bilance_skol": [],
+        "presuny": [
+          {
+            "odkud": "600009084",
+            "kam": "600009271",
+            "deti": 20.0,
+            "uchazeci": 2.0
+          }
+        ]
+      },
+      "meta": {
+        "obor": "23-68-H/01",
+        "zmeny": [
+          {
+            "redizo": "600009084",
+            "zmena_kapacity": -30
+          },
+          {
+            "redizo": "600009271",
+            "zmena_kapacity": 30
+          }
+        ],
+        "max_min": 120,
+        "scenar": "rano",
+        "uroven": "zsj",
+        "podil_zajmu": 0.1
+      }
+    }
+  },
+  {
+    "path": "/simulace/zmeny",
+    "request": "/api/v1/simulace/zmeny",
+    "method": "post",
+    "media_type": "application/geo+json",
+    "body": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  12.0,
+                  50.0
+                ],
+                [
+                  13.0,
+                  50.0
+                ],
+                [
+                  13.0,
+                  51.0
+                ],
+                [
+                  12.0,
+                  50.0
+                ]
+              ]
+            ]
+          },
+          "properties": {
+            "nazev": "063622",
+            "cas_min_puvodni": 20.0,
+            "cas_min": 10.0,
+            "zlepseni_min": 10.0,
+            "pasmo_puvodni": "do30",
+            "pasmo": "do30",
+            "deti": 10.0,
+            "potencialni_uchazeci": 1.0,
+            "novy_dosah": false,
+            "ztraceny_dosah": false,
+            "zlepseno": true,
+            "zhorseno": false,
+            "kod": "063622",
+            "uroven": "zsj",
+            "v_dosahu": true,
+            "deti_v_dosahu": 10.0,
+            "podil_deti_v_dosahu": 100.0,
+            "nejblizsi_redizo": "600009271"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  12.0,
+                  50.0
+                ],
+                [
+                  13.0,
+                  50.0
+                ],
+                [
+                  13.0,
+                  51.0
+                ],
+                [
+                  12.0,
+                  50.0
+                ]
+              ]
+            ]
+          },
+          "properties": {
+            "nazev": "063623",
+            "cas_min_puvodni": 10.0,
+            "cas_min": 20.0,
+            "zlepseni_min": -10.0,
+            "pasmo_puvodni": "do30",
+            "pasmo": "do30",
+            "deti": 10.0,
+            "potencialni_uchazeci": 1.0,
+            "novy_dosah": false,
+            "ztraceny_dosah": false,
+            "zlepseno": false,
+            "zhorseno": true,
+            "kod": "063623",
+            "uroven": "zsj",
+            "v_dosahu": true,
+            "deti_v_dosahu": 10.0,
+            "podil_deti_v_dosahu": 100.0,
+            "nejblizsi_redizo": "600009271"
+          }
+        }
+      ],
+      "souhrn": {
+        "jednotek_celkem": 2,
+        "zlepsenych_jednotek": 1,
+        "zhorsenych_jednotek": 1,
+        "v_limitu": [
+          {
+            "limit_min": 120,
+            "pred": 2,
+            "po": 2
+          }
+        ],
+        "prumerne_zkraceni_min": 10.0,
+        "prumerne_prodlouzeni_min": 10.0,
+        "deti_v_dosahu_pred": 20.0,
+        "deti_v_dosahu_po": 20.0,
+        "nove_dosazene_deti": 0.0,
+        "ztracene_deti": 0.0,
+        "novi_v_dosahu": 0.0,
+        "ztraceni_v_dosahu": 0.0,
+        "kapacita_pred": 30,
+        "kapacita_po": 30,
+        "bilance_skol": [],
+        "presuny": [
+          {
+            "odkud": "600009084",
+            "kam": "600009271",
+            "deti": 20.0,
+            "uchazeci": 2.0
+          }
+        ]
+      },
+      "meta": {
+        "obor": "23-68-H/01",
+        "zmeny": [
+          {
+            "redizo": "600009084",
+            "zmena_kapacity": -30
+          },
+          {
+            "redizo": "600009271",
+            "zmena_kapacity": 30
+          }
+        ],
+        "max_min": 120,
+        "scenar": "rano",
+        "uroven": "zsj",
+        "podil_zajmu": 0.1
+      }
+    }
   }
 ]

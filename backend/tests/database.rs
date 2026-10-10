@@ -109,6 +109,7 @@ async fn migrations_and_api() {
     zsj_api(&app, &mut connection).await;
     zsj_accessibility_api(&app, &mut connection).await;
     simulation_api(&app, &mut connection).await;
+    batch_simulation_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
     program_detail_api(&app, &mut connection).await;
 
@@ -1940,4 +1941,156 @@ async fn simulation_api(app: &axum::Router, connection: &mut PgConnection) {
     diesel::delete(obory::table.find("99-94-H/01"))
         .execute(connection)
         .unwrap();
+}
+
+async fn batch_simulation_api(app: &axum::Router, connection: &mut PgConnection) {
+    use serde_json::{Value, json};
+    use std::collections::BTreeMap;
+    async fn post(app: &axum::Router, body: &Value, expected: StatusCode) -> Value {
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/api/v1/simulace/zmeny")
+                    .header("content-type", "application/json")
+                    .body(Body::from(body.to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), expected, "{body}");
+        let media = if expected == StatusCode::OK && body["format"] == "geojson" {
+            "application/geo+json"
+        } else {
+            "application/json"
+        };
+        assert_eq!(response.headers()["content-type"], media);
+        let value: Value =
+            serde_json::from_slice(&to_bytes(response.into_body(), 64_000_000).await.unwrap())
+                .unwrap();
+        let declared = contract::resolve(
+            &contract::SPEC["paths"]["/simulace/zmeny"]["post"]["responses"][expected.as_str()],
+        );
+        let errors: Vec<_> = contract::schema_validator(&declared["content"][media]["schema"])
+            .iter_errors(&value)
+            .map(|e| e.to_string())
+            .collect();
+        assert!(errors.is_empty(), "{}", errors.join("; "));
+        value
+    }
+    fn offers(connection: &mut PgConnection) -> Vec<(String, String, String, i32, i32)> {
+        nabidka_oboru::table
+            .order(nabidka_oboru::id)
+            .select((
+                nabidka_oboru::redizo,
+                nabidka_oboru::kod_oboru,
+                nabidka_oboru::forma_studia,
+                nabidka_oboru::pocet_prijimanych,
+                nabidka_oboru::loni_pocet_prihlasek,
+            ))
+            .load(connection)
+            .unwrap()
+    }
+    let before = offers(connection);
+    let mut capacities = BTreeMap::<String, i32>::new();
+    for (school, program, form, capacity, _) in &before {
+        if program == "23-68-H/01" && form == "den" {
+            *capacities.entry(school.clone()).or_default() += capacity;
+        }
+    }
+    let (school, capacity) = capacities
+        .iter()
+        .find(|(_, c)| **c > 1 && **c <= 300)
+        .unwrap();
+    let old_uri = "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=30&uroven=zsj";
+    let original = contract_response(app, old_uri, "/simulace", StatusCode::OK).await;
+    let mut body = json!({"obor":"23-68-H/01","zmeny":[{"redizo":school,"zmena_kapacity":-capacity},{"redizo":"600009271","zmena_kapacity":capacity}],"uroven":"zsj"});
+    let expected = post(app, &body, StatusCode::OK).await;
+    assert_eq!(
+        expected["souhrn"]["kapacita_pred"],
+        expected["souhrn"]["kapacita_po"]
+    );
+    assert_eq!(expected["souhrn"]["jednotek_celkem"], 839);
+    let effects = expected["souhrn"]["bilance_skol"].clone();
+    body["zmeny"].as_array_mut().unwrap().reverse();
+    assert_eq!(post(app, &body, StatusCode::OK).await, expected);
+    for (level, count) in [("zsj", 839), ("obec", 134), ("orp", 7)] {
+        body["uroven"] = json!(level);
+        body["format"] = json!("slovnik");
+        let dictionary = post(app, &body, StatusCode::OK).await;
+        assert_eq!(dictionary["souhrn"]["jednotek_celkem"], count);
+        assert_eq!(dictionary["souhrn"]["bilance_skol"], effects);
+        body["format"] = json!("geojson");
+        let geo = post(app, &body, StatusCode::OK).await;
+        assert_eq!(geo["features"].as_array().unwrap().len(), count as usize);
+        assert_eq!(geo["souhrn"], dictionary["souhrn"]);
+        assert_eq!(geo["meta"], dictionary["meta"]);
+        for feature in geo["features"].as_array().unwrap() {
+            let p = &feature["properties"];
+            if let Some(unit) = dictionary["jednotky"].get(p["kod"].as_str().unwrap()) {
+                for (field, v) in unit.as_object().unwrap() {
+                    assert_eq!(&p[field], v);
+                }
+            }
+        }
+    }
+    let partial =
+        json!({"obor":"23-68-H/01","uroven":"zsj","zmeny":[{"redizo":school,"zmena_kapacity":-1}]});
+    let v = post(app, &partial, StatusCode::OK).await;
+    assert_eq!(
+        v["souhrn"]["kapacita_pred"].as_i64().unwrap() - 1,
+        v["souhrn"]["kapacita_po"].as_i64().unwrap()
+    );
+    // Positive remaining capacity retains all existing routes and catchments.
+    assert_eq!(v["jednotky"], json!({}));
+    assert_eq!(v["souhrn"]["presuny"], json!([]));
+    let removal = json!({"obor":"23-68-H/01","uroven":"zsj","zmeny":capacities.iter().filter(|(_,c)|**c>0).map(|(s,c)|json!({"redizo":s,"zmena_kapacity":-c})).collect::<Vec<_>>()});
+    let v = post(app, &removal, StatusCode::OK).await;
+    assert_eq!(v["souhrn"]["kapacita_po"], 0);
+    assert_eq!(v["souhrn"]["deti_v_dosahu_po"], 0.0);
+    assert!(v["souhrn"]["ztracene_deti"].as_f64().unwrap() > 0.0);
+    post(
+        app,
+        &json!({"obor":"23-68-H/01","zmeny":[{"redizo":school,"zmena_kapacity":-300}]}),
+        StatusCode::UNPROCESSABLE_ENTITY,
+    )
+    .await;
+    post(
+        app,
+        &json!({"obor":"23-68-H/01","zmeny":[{"redizo":"600000000","zmena_kapacity":1}]}),
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    post(
+        app,
+        &json!({"obor":"99-94-H/99","zmeny":[{"redizo":school,"zmena_kapacity":1}]}),
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    let missing = dojezdove_doby::table.find(("000019", "600009271", "07:00-08:00"));
+    let time = missing
+        .select(DojezdovaDoba::as_select())
+        .first::<DojezdovaDoba>(connection)
+        .unwrap();
+    diesel::delete(missing).execute(connection).unwrap();
+    post(app, &body, StatusCode::INTERNAL_SERVER_ERROR).await;
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&time.kod_zsj),
+            dojezdove_doby::redizo.eq(&time.redizo),
+            dojezdove_doby::slot_prijezdu.eq(&time.slot_prijezdu),
+            dojezdove_doby::doba_jizdy.eq(time.doba_jizdy),
+        ))
+        .execute(connection)
+        .unwrap();
+    assert_eq!(
+        offers(connection),
+        before,
+        "Simulation must not write admissions data"
+    );
+    assert_eq!(
+        contract_response(app, old_uri, "/simulace", StatusCode::OK).await,
+        original
+    );
 }

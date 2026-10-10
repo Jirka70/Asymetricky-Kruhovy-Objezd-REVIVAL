@@ -264,3 +264,24 @@ operation!(OboryQuery, "listObory");
 operation!(OborQuery, "getObor");
 operation!(OborZamestnavateleQuery, "listOborZamestnavatele");
 operation!(SimulaceQuery, "getSimulace");
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BatchSimulaceRequest {
+    pub obor: KodOboru,
+    pub zmeny: Vec<ZmenaKapacity>,
+    #[serde(default = "default_max_min")]
+    pub max_min: u16,
+    #[serde(default)]
+    pub scenar: Scenar,
+    #[serde(default)]
+    pub uroven: Uroven,
+    #[serde(default)]
+    pub format: Format,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ZmenaKapacity {
+    pub redizo: Redizo,
+    pub zmena_kapacity: i64,
+}

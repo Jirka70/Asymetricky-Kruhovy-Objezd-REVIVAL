@@ -40,15 +40,18 @@ pub struct Input {
     pub times: Vec<(String, String, Option<f64>)>,
 }
 #[derive(Debug, Clone)]
-struct Row {
-    area: Area,
-    before: Option<f64>,
-    after: Option<f64>,
-    target: Option<f64>,
-    school_after: Option<String>,
-    improved: bool,
-    new_reach: bool,
-    demand: f64,
+pub(crate) struct Row {
+    pub(crate) area: Area,
+    pub(crate) before: Option<f64>,
+    pub(crate) after: Option<f64>,
+    pub(crate) target: Option<f64>,
+    pub(crate) school_after: Option<String>,
+    pub(crate) improved: bool,
+    pub(crate) new_reach: bool,
+    pub(crate) demand: f64,
+    pub(crate) worsened: bool,
+    pub(crate) lost_reach: bool,
+    pub(crate) changed: bool,
 }
 pub struct Calculation {
     rows: Vec<Row>,
@@ -58,7 +61,7 @@ pub struct Calculation {
 
 const UTILIZATION_THRESHOLD: f64 = 0.5;
 
-fn round(value: f64, digits: i32) -> f64 {
+pub(crate) fn round(value: f64, digits: i32) -> f64 {
     // Decimal formatting rounds the original binary float, matching Python round.
     format!("{value:.precision$}", precision = digits as usize)
         .parse()
@@ -74,7 +77,7 @@ fn band(time: Option<f64>, limit: u16) -> dto::Pasmo {
         Some(_) => dto::Pasmo::Nad60,
     }
 }
-fn in_limit(time: Option<f64>, limit: f64) -> bool {
+pub(crate) fn in_limit(time: Option<f64>, limit: f64) -> bool {
     time.is_some_and(|t| t <= limit)
 }
 fn level(level: requests::Uroven) -> dto::SimulaceMetaUroven {
@@ -212,6 +215,9 @@ pub fn calculate(input: Input, params: &requests::SimulaceQuery) -> Result<Calcu
         }
         before_assignments.push(before.map(|v| v.1));
         rows.push(Row {
+            worsened: false,
+            lost_reach: false,
+            changed: t.is_some_and(|t| before_time.is_none_or(|b| t < b)),
             improved: t.is_some_and(|t| before_time.is_none_or(|b| t < b)),
             new_reach: !in_limit(before_time, f64::from(params.max_min))
                 && in_limit(after_time, f64::from(params.max_min)),
@@ -318,19 +324,26 @@ fn weighted(rows: &[&Row], time: impl Fn(&Row) -> Option<f64>) -> Option<f64> {
     }
     (weight > 0.0).then(|| sum / weight)
 }
-struct OutputArea {
-    code: String,
-    value: dto::SimulacePlocha,
-    improved: bool,
-    before: Option<f64>,
-    after: Option<f64>,
-    children_reached: f64,
-    school: Option<String>,
+pub(crate) struct OutputArea {
+    pub(crate) code: String,
+    pub(crate) value: dto::SimulacePlocha,
+    pub(crate) improved: bool,
+    pub(crate) before: Option<f64>,
+    pub(crate) after: Option<f64>,
+    pub(crate) children_reached: f64,
+    pub(crate) school: Option<String>,
+    pub(crate) worsened: bool,
+    pub(crate) lost_reach: bool,
+    pub(crate) changed: bool,
 }
-fn aggregate(rows: &[Row], params: &requests::SimulaceQuery) -> Result<Vec<OutputArea>, StubError> {
+pub(crate) fn aggregate(
+    rows: &[Row],
+    level: requests::Uroven,
+    max_min: u16,
+) -> Result<Vec<OutputArea>, StubError> {
     let mut groups = BTreeMap::<String, Vec<&Row>>::new();
     for row in rows {
-        let code = match params.uroven {
+        let code = match level {
             requests::Uroven::Zsj => &row.area.code,
             requests::Uroven::Obec => row.area.municipality.as_ref().ok_or_else(internal_error)?,
             requests::Uroven::Orp => row.area.orp.as_ref().ok_or_else(internal_error)?,
@@ -341,8 +354,8 @@ fn aggregate(rows: &[Row], params: &requests::SimulaceQuery) -> Result<Vec<Outpu
         .into_iter()
         .map(|(code, rows)| {
             let first = rows[0];
-            let zsj = params.uroven == requests::Uroven::Zsj;
-            let name = match params.uroven {
+            let zsj = level == requests::Uroven::Zsj;
+            let name = match level {
                 requests::Uroven::Zsj => first.area.name.clone(),
                 requests::Uroven::Obec => first
                     .area
@@ -367,7 +380,7 @@ fn aggregate(rows: &[Row], params: &requests::SimulaceQuery) -> Result<Vec<Outpu
                 weighted(&rows, |r| r.target)
             };
             let improved = rows.iter().any(|r| r.improved);
-            let improvement = if !improved {
+            let improvement = if !improved && !rows.iter().any(|r| r.worsened) {
                 Some(0.0)
             } else {
                 before.zip(after).map(|(b, a)| round(b - a, 2))
@@ -375,10 +388,13 @@ fn aggregate(rows: &[Row], params: &requests::SimulaceQuery) -> Result<Vec<Outpu
             let children = rows.iter().map(|r| r.area.children).sum::<f64>();
             let children_reached = rows
                 .iter()
-                .filter(|r| in_limit(r.after, f64::from(params.max_min)))
+                .filter(|r| in_limit(r.after, f64::from(max_min)))
                 .map(|r| r.area.children)
                 .sum::<f64>();
             Ok(OutputArea {
+                worsened: rows.iter().any(|r| r.worsened),
+                lost_reach: rows.iter().any(|r| r.lost_reach),
+                changed: rows.iter().any(|r| r.changed),
                 code,
                 improved,
                 before,
@@ -395,8 +411,8 @@ fn aggregate(rows: &[Row], params: &requests::SimulaceQuery) -> Result<Vec<Outpu
                     cas_min_puvodni: before.map(|t| round(t, 2)),
                     cas_min: after.map(|t| round(t, 2)),
                     zlepseni_min: improvement,
-                    pasmo: band(after, params.max_min),
-                    pasmo_puvodni: Some(band(before, params.max_min)),
+                    pasmo: band(after, max_min),
+                    pasmo_puvodni: Some(band(before, max_min)),
                     deti: round(children, 1),
                     potencialni_uchazeci: round(rows.iter().map(|r| r.demand).sum(), 2),
                     novy_dosah: rows.iter().any(|r| r.new_reach),
@@ -412,7 +428,7 @@ impl Calculation {
         params: &requests::SimulaceQuery,
         geometries: BTreeMap<String, dto::GeoPlocha>,
     ) -> Result<SimulaceResponse, StubError> {
-        let areas = aggregate(&self.rows, params)?;
+        let areas = aggregate(&self.rows, params.uroven, params.max_min)?;
         if let Some(summary) = &mut self.summary {
             summary.jednotek_celkem = Some(areas.len() as i64);
             summary.zlepsenych_jednotek = Some(areas.iter().filter(|a| a.improved).count() as i64);
@@ -562,14 +578,32 @@ fn load_and_render(
     connection: &mut PgConnection,
     params: &requests::SimulaceQuery,
 ) -> Result<SimulaceResponse, StubError> {
-    use schema::{
-        dojezdove_doby as times, nabidka_oboru as offers, obory, stredni_skoly as schools,
+    let mut input = load_base(connection, &params.obor.0, Some(&params.redizo.0))?;
+    let initial = calculate(input.clone(), params)?;
+    if initial.summary.is_none() {
+        return initial.render(params, BTreeMap::new());
+    }
+    load_analytical(connection, &mut input, params.scenar)?;
+    let result = calculate(input, params)?;
+    let geometries = if params.format == requests::Format::Geojson {
+        load_geometries(connection, params.uroven)?
+    } else {
+        BTreeMap::new()
     };
+    result.render(params, geometries)
+}
+
+pub(crate) fn load_base(
+    connection: &mut PgConnection,
+    program: &str,
+    target: Option<&str>,
+) -> Result<Input, StubError> {
+    use schema::{nabidka_oboru as offers, obory, stredni_skoly as schools};
     let school_rows = schools::table
         .select((schools::redizo, schools::nazev))
         .load::<(String, Option<String>)>(connection)
         .map_err(database_error)?;
-    if !school_rows.iter().any(|(code, _)| code == &params.redizo.0) {
+    if target.is_some_and(|target| !school_rows.iter().any(|(code, _)| code == target)) {
         return Err(api_error(
             StatusCode::NOT_FOUND,
             "skola_nenalezena",
@@ -580,7 +614,7 @@ fn load_and_render(
         .into_iter()
         .map(|(s, n)| n.map(|n| (s, n)).ok_or_else(internal_error))
         .collect::<Result<BTreeMap<_, _>, _>>()?;
-    let program_exists = diesel::select(diesel::dsl::exists(obory::table.find(&params.obor.0)))
+    let program_exists = diesel::select(diesel::dsl::exists(obory::table.find(program)))
         .get_result(connection)
         .map_err(database_error)?;
     let offers = offers::table
@@ -596,18 +630,21 @@ fn load_and_render(
             prihlasky: i64::from(o.loni_pocet_prihlasek),
         })
         .collect();
-    let mut input = Input {
+    Ok(Input {
         program_exists,
         schools,
         offers,
         areas: vec![],
         times: vec![],
-    };
-    // Validate and handle capacity-sufficient results before analytical queries.
-    let initial = calculate(input.clone(), params)?;
-    if initial.summary.is_none() {
-        return initial.render(params, BTreeMap::new());
-    }
+    })
+}
+
+pub(crate) fn load_analytical(
+    connection: &mut PgConnection,
+    input: &mut Input,
+    scenario: requests::Scenar,
+) -> Result<(), StubError> {
+    use schema::dojezdove_doby as times;
     let areas=diesel::sql_query(r#"SELECT z.kod AS code,z.nazev AS name,z.kod_obce AS municipality,
                 o.nazev_obce AS municipality_name,o.kod_orp AS orp,o.nazev_orp AS orp_name,
                 d.population,d.children,d.age_groups FROM "ZSJ" z LEFT JOIN "SIMULATION_OBCE" o USING(kod_obce)
@@ -633,7 +670,7 @@ fn load_and_render(
             })
         })
         .collect::<Result<Vec<_>, StubError>>()?;
-    let slot = match params.scenar {
+    let slot = match scenario {
         requests::Scenar::Rano => "07:00-08:00",
     };
     input.times = times::table
@@ -644,29 +681,33 @@ fn load_and_render(
         .into_iter()
         .map(|t| (t.kod_zsj, t.redizo, t.doba_jizdy.map(f64::from)))
         .collect();
-    let result = calculate(input, params)?;
+    Ok(())
+}
+
+pub(crate) fn load_geometries(
+    connection: &mut PgConnection,
+    level: requests::Uroven,
+) -> Result<BTreeMap<String, dto::GeoPlocha>, StubError> {
     let mut geometries = BTreeMap::new();
-    if params.format == requests::Format::Geojson {
-        let sql = match params.uroven {
-            requests::Uroven::Zsj => {
-                r#"SELECT kod AS code,ST_AsGeoJSON(boundary,15,0) AS geometry FROM "ZSJ""#
-            }
-            requests::Uroven::Obec => {
-                r#"SELECT kod_obce AS code,ST_AsGeoJSON(ST_UnaryUnion(ST_Collect(ST_MakeValid(boundary))),15,0) AS geometry FROM "ZSJ" GROUP BY kod_obce"#
-            }
-            requests::Uroven::Orp => {
-                r#"SELECT o.kod_orp AS code,ST_AsGeoJSON(ST_UnaryUnion(ST_Collect(ST_MakeValid(z.boundary))),15,0) AS geometry FROM "ZSJ" z JOIN "SIMULATION_OBCE" o USING(kod_obce) GROUP BY o.kod_orp"#
-            }
-        };
-        for row in diesel::sql_query(sql)
-            .load::<GeometryData>(connection)
-            .map_err(database_error)?
-        {
-            geometries.insert(
-                row.code,
-                serde_json::from_str(&row.geometry).map_err(|_| internal_error())?,
-            );
+    let sql = match level {
+        requests::Uroven::Zsj => {
+            r#"SELECT kod AS code,ST_AsGeoJSON(boundary,15,0) AS geometry FROM "ZSJ""#
         }
+        requests::Uroven::Obec => {
+            r#"SELECT kod_obce AS code,ST_AsGeoJSON(ST_UnaryUnion(ST_Collect(ST_MakeValid(boundary))),15,0) AS geometry FROM "ZSJ" GROUP BY kod_obce"#
+        }
+        requests::Uroven::Orp => {
+            r#"SELECT o.kod_orp AS code,ST_AsGeoJSON(ST_UnaryUnion(ST_Collect(ST_MakeValid(z.boundary))),15,0) AS geometry FROM "ZSJ" z JOIN "SIMULATION_OBCE" o USING(kod_obce) GROUP BY o.kod_orp"#
+        }
+    };
+    for row in diesel::sql_query(sql)
+        .load::<GeometryData>(connection)
+        .map_err(database_error)?
+    {
+        geometries.insert(
+            row.code,
+            serde_json::from_str(&row.geometry).map_err(|_| internal_error())?,
+        );
     }
-    result.render(params, geometries)
+    Ok(geometries)
 }

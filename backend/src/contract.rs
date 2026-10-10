@@ -10,7 +10,7 @@ use axum::{
     extract::{FromRequestParts, Path, Query, State},
     http::{StatusCode, header, request::Parts},
     response::{Html, IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
 };
 use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
@@ -27,47 +27,63 @@ pub static SPEC: LazyLock<Value> = LazyLock::new(|| {
 pub struct Operation {
     pub path: &'static str,
     pub id: &'static str,
+    pub method: &'static str,
 }
 pub const OPERATIONS: &[Operation] = &[
     Operation {
         path: "/skoly",
         id: "listSkoly",
+        method: "get",
     },
     Operation {
         path: "/skoly/{redizo}",
         id: "getSkola",
+        method: "get",
     },
     Operation {
         path: "/student/skoly",
         id: "listStudentSkoly",
+        method: "get",
     },
     Operation {
         path: "/student/trasa",
         id: "getStudentTrasa",
+        method: "get",
     },
     Operation {
         path: "/zsj/seznam",
         id: "listZsj",
+        method: "get",
     },
     Operation {
         path: "/zsj",
         id: "getZsj",
+        method: "get",
     },
     Operation {
         path: "/obory",
         id: "listObory",
+        method: "get",
     },
     Operation {
         path: "/obory/{kod}",
         id: "getObor",
+        method: "get",
     },
     Operation {
         path: "/obory/{kod}/zamestnavatele",
         id: "listOborZamestnavatele",
+        method: "get",
     },
     Operation {
         path: "/simulace",
         id: "getSimulace",
+        method: "get",
+    },
+    Operation {
+        path: "/simulace/zmeny",
+        id: "postSimulaceZmeny",
+        method: "post",
     },
 ];
 
@@ -107,7 +123,7 @@ static PARAMETERS: LazyLock<BTreeMap<&'static str, Vec<Parameter>>> = LazyLock::
     OPERATIONS
         .iter()
         .map(|operation| {
-            let parameters = SPEC["paths"][operation.path]["get"]["parameters"]
+            let parameters = SPEC["paths"][operation.path][operation.method]["parameters"]
                 .as_array()
                 .into_iter()
                 .flatten()
@@ -460,7 +476,8 @@ pub fn router(pool: DbPool) -> Router {
         .route("/obory", get(list_obory))
         .route("/obory/{kod}", get(get_obor))
         .route("/obory/{kod}/zamestnavatele", get(list_obor_zamestnavatele))
-        .route("/simulace", get(get_simulace));
+        .route("/simulace", get(get_simulace))
+        .route("/simulace/zmeny", post(post_simulace_zmeny));
     Router::new()
         .nest("/api/v1", routes)
         .route(
@@ -479,4 +496,23 @@ impl From<diesel::result::Error> for StubError {
     fn from(error: diesel::result::Error) -> Self {
         crate::catalog::database_error(error)
     }
+}
+
+pub async fn post_simulace_zmeny(
+    State(pool): State<DbPool>,
+    body: Result<Json<Value>, axum::extract::rejection::JsonRejection>,
+) -> Result<crate::batch_simulation::BatchResponse, StubError> {
+    static VALIDATOR: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
+        schema_validator(
+            &SPEC["paths"]["/simulace/zmeny"]["post"]["requestBody"]["content"]["application/json"]
+                ["schema"],
+        )
+    });
+    let Json(value) = body.map_err(|_| StubError::invalid("body"))?;
+    if !VALIDATOR.is_valid(&value) {
+        return Err(StubError::invalid("body"));
+    }
+    let request: requests::BatchSimulaceRequest =
+        serde_json::from_value(value).map_err(|_| StubError::invalid("body"))?;
+    crate::batch_simulation::run(pool, request).await
 }
