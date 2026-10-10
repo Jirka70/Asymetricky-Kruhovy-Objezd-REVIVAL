@@ -186,7 +186,7 @@ fn build(data: Snapshot, params: requests::OborQuery) -> Result<dto::DetailOboru
             if duration.is_some_and(|v| !v.is_finite() || v < 0.0) {
                 return Err(internal_error());
             }
-            if duration.is_some_and(|v| v <= f32::from(params.max_min)) {
+            if duration.is_some_and(|v| v <= (requests::travel_limit(params.max_min) as f32)) {
                 reachable.insert(school);
                 *school_children.get_mut(school).ok_or_else(internal_error)? += children;
             }

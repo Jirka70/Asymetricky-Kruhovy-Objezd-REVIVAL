@@ -129,6 +129,15 @@ impl JsonSchema for SignalFilter {
     }
 }
 
+/// Zero is the API's explicit unlimited-duration option; the morning window is unchanged.
+pub fn travel_limit(minutes: u16) -> f64 {
+    if minutes == 0 {
+        f64::INFINITY
+    } else {
+        f64::from(minutes)
+    }
+}
+
 fn default_max_min() -> u16 {
     120
 }

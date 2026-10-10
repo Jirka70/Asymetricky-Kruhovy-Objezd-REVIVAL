@@ -119,6 +119,38 @@ export type RemovalResponse = Omit<SimulationResponse, "souhrn"> & {
   };
 };
 
+export type BatchSimulationParams = {
+  obor: string;
+  zmeny: { redizo: string; zmena_kapacity: number }[];
+  max_min: number;
+};
+
+export function batchSimulationQuery(input: BatchSimulationParams) {
+  const body = {
+    ...input,
+    zmeny: [...input.zmeny].sort((a, b) => a.redizo.localeCompare(b.redizo)),
+    scenar: "rano", uroven: "zsj", format: "geojson",
+  };
+  return queryOptions({
+    queryKey: ["simulace-zmeny", body] as const,
+    queryFn: ({ signal }) => getJson<RemovalResponse>("/api/backend/simulace/zmeny", signal, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+    // Retain a map during parameter edits, but never for a different set of schools/actions.
+    placeholderData: (previous, query) => {
+      const old = query?.queryKey[1];
+      return old?.obor === body.obor && old.zmeny.length === body.zmeny.length &&
+        old.zmeny.every((change, i) => change.redizo === body.zmeny[i].redizo &&
+          Math.sign(change.zmena_kapacity) === Math.sign(body.zmeny[i].zmena_kapacity))
+        ? previous : undefined;
+    },
+    enabled: Boolean(input.obor) && input.zmeny.length > 0 && input.zmeny.length <= 100 &&
+      input.zmeny.every(change => Boolean(change.redizo) && Number.isInteger(change.zmena_kapacity) &&
+        change.zmena_kapacity !== 0 && Math.abs(change.zmena_kapacity) <= 300),
+  });
+}
+
 export function removalQuery(input: SimulationParams) {
   return queryOptions({
     queryKey: ["simulace-odebrani", input] as const,

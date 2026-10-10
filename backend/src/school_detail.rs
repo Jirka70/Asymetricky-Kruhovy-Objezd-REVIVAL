@@ -120,7 +120,10 @@ fn catchment(
         if row.time_code.is_none() || row.minutes.is_some_and(|m| !m.is_finite() || m < 0.0) {
             return Err(internal_error());
         }
-        let Some(minutes) = row.minutes.filter(|m| *m <= f32::from(params.max_min)) else {
+        let Some(minutes) = row
+            .minutes
+            .filter(|m| *m <= (requests::travel_limit(params.max_min) as f32))
+        else {
             continue;
         };
         let code = row.municipality.ok_or_else(internal_error)?;

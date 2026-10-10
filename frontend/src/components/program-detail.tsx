@@ -12,7 +12,7 @@ export default function ProgramDetail({ field, limit, onSelectSchool }: {
   return (
     <section className="section program-detail">
       <h2>Detail oboru</h2>
-      <p className="data-note">Současná nabídka · všechny formy studia · ranní dojezd do {limit} minut.</p>
+      <p className="data-note">Současná nabídka · všechny formy studia · ranní dojezd {limit === 0 ? "bez časového limitu" : `do ${limit} minut`}.</p>
       {result && <QueryStatus queries={[query]} />}
       <QueryBoundary queries={[query]} compact>
         {result && <>

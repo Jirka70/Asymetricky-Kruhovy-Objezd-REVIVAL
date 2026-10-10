@@ -127,8 +127,11 @@ svg {
   line-height: 1.25;
   letter-spacing: -0.6px;
 }
-.brand svg {
-  color: var(--green);
+.brand-logo {
+  display: block;
+  width: 74px;
+  height: auto;
+  flex-shrink: 0;
 }
 .brand-caption {
   display: block;

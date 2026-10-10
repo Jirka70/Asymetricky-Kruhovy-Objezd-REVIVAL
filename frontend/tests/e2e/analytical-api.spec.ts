@@ -99,3 +99,25 @@ test("analytical endpoints share the daily server cache and strip redundant ZSJ 
   expect(keys).toHaveLength(3);
   expect(keys.map(key => counts[key])).toEqual([1, 1, 1]);
 });
+
+test("unlimited duration is sent to student and map APIs and can be switched back", async ({page}) => {
+  const urls: URL[] = [];
+  page.on("request", request => { if (request.url().includes("/api/backend/student/skoly?") || request.url().includes("/api/backend/zsj?")) urls.push(new URL(request.url())); });
+  await page.goto("/rodiny");
+  await expect(page.locator(".journey-results .journey-result")).toHaveCount(3);
+  await page.getByRole("combobox", {name: "Maximální dojezd"}).selectOption("0");
+  await page.getByRole("button", {name: "Najít školy", exact: true}).click();
+  await expect(page.locator(".journey-list-heading")).toContainText("Bez časového limitu");
+  await expect(page.locator(".journey-results .journey-result").nth(1)).toContainText("Spojení nalezeno · bez časového limitu");
+  await expect(page.locator(".journey-results .journey-result").nth(2)).toContainText("Dojezd neznámý");
+  expect(urls.filter(url => url.searchParams.get("max_min") === "0")).toHaveLength(2);
+  await page.getByRole("combobox", {name: "Maximální dojezd"}).selectOption("30");
+  await page.getByRole("button", {name: "Najít školy", exact: true}).click();
+  await expect(page.locator(".journey-list-heading")).toContainText("Do 30 minut");
+  await expect(page.locator(".journey-results .journey-result").nth(1)).toContainText("Mimo zadaný limit");
+  await page.goto("/kraj");
+  await page.getByRole("combobox", {name: "Hranice dostupnosti"}).selectOption("0");
+  await expect(page.locator(".coverage-summary")).toContainText("bez časového limitu");
+  await expect(page.locator(".coverage-summary")).toContainText("100 %");
+  await expect(page.locator(".program-detail")).toContainText("ranní dojezd bez časového limitu");
+});

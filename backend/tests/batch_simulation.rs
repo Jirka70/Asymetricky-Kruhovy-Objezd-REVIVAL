@@ -284,3 +284,28 @@ fn fractional_cutoffs_and_cohorts_are_not_rounded_before_computing_access() {
     assert_eq!(v["souhrn"]["novi_v_dosahu"], 1.3);
     assert_eq!(v["jednotky"]["000000"]["novy_dosah"], true);
 }
+
+#[test]
+fn unlimited_includes_long_journeys_and_preserves_unknown_connections() {
+    let mut input = input();
+    for (_, _, time) in &mut input.times {
+        if let Some(t) = time {
+            *t += 240.0;
+        }
+    }
+    let mut request = move_request();
+    request.max_min = 180;
+    assert_eq!(
+        value(input.clone(), &request)["souhrn"]["deti_v_dosahu_pred"],
+        0.0
+    );
+    request.max_min = 0;
+    let result = value(input, &request);
+    assert_eq!(result["meta"]["max_min"], 0);
+    assert_eq!(result["souhrn"]["deti_v_dosahu_pred"], 60.0);
+    assert_eq!(result["souhrn"]["deti_v_dosahu_po"], 70.0);
+    assert_eq!(
+        result["souhrn"]["v_limitu"][0],
+        json!({"limit_min":0,"pred":3,"po":3})
+    );
+}

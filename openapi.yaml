@@ -20,7 +20,7 @@ info:
     | --- | --- |
     | `deti` | Odhad jednoho ročníku nastupujícího na SŠ v roce 2026: věková skupina 10–14 let ze SLDB 2021 v ZSJ, děleno 5. |
     | `cas_min` | Nejkratší spoj ze ZSJ k nejbližší škole s oborem (bez oboru k jakékoli SŠ), včetně chůze a přestupů. U obcí a ORP průměr ZSJ vážený počtem obyvatel. |
-    | V dosahu | `cas_min` ≤ `max_min` (výchozí 120). |
+    | V dosahu | `cas_min` ≤ `max_min` (výchozí 120); `max_min=0` přijímá každý známý konečný dojezd. |
     | `pasmo` | `do30`, `30_45`, `45_60`, `nad60` (60 až `max_min`), `mimo_dosah`, `bez_spojeni`, `data_nedostupna`. |
     | Děti bez oboru | Součet `deti` v ZSJ, kde obor v dosahu není. |
     | `prihlasky_na_misto` | Přihlášky / kapacita (přijímací řízení 2026, 1. kolo). |
@@ -222,7 +222,7 @@ paths:
         Bez odpovídající školy je pásmo `bez_spojeni`; bez známé doby k vybraným školám
         `data_nedostupna`. V obou případech chybí `cas_min` i `nejblizsi_redizo` a `v_dosahu=false`.
         Chybějící řádky matice nebo demografické vstupy vracejí 500.
-        `meta.v_limitu` počítá plochy do 30, 45, 60 a `max_min` minut; limity jsou seřazené a bez duplicit.
+        `meta.v_limitu` počítá plochy do 30, 45, 60 a `max_min` minut (limit_min=0 znamená všechny známé konečné dojezdy); limity jsou seřazené a bez duplicit.
       parameters:
         - $ref: '#/components/parameters/OborFiltr'
         - $ref: '#/components/parameters/Forma'
@@ -548,8 +548,13 @@ components:
     MaxMin:
       name: max_min
       in: query
-      description: Nejdelší přijatelná doba dojezdu v minutách.
-      schema: { type: integer, minimum: 10, maximum: 180, default: 120 }
+      description: Nejdelší přijatelná doba dojezdu v minutách; 0 znamená bez časového limitu (ranní okno zůstává).
+      schema:
+        type: integer
+        default: 120
+        minimum: 0
+        maximum: 180
+        not: { minimum: 1, maximum: 9 }
     Scenar:
       name: scenar
       in: query
@@ -1602,9 +1607,11 @@ components:
         max_min:
           default: 120
           format: uint16
-          maximum: 180
-          minimum: 10
           type: integer
+          description: 0 znamená bez časového limitu; jinak 10–180 minut.
+          minimum: 0
+          maximum: 180
+          not: { minimum: 1, maximum: 9 }
         obor:
           $ref: '#/components/schemas/KodOboru'
         scenar:

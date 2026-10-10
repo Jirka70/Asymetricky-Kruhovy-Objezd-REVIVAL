@@ -97,14 +97,14 @@ export function accessibility(params = new URLSearchParams()) {
   return {type: "FeatureCollection", features: zones.map((zone, index) => ({
     properties: {kod: zone.id, nazev: zone.name, cas_min: params.get("forma") === "dal" ? undefined : index === 0 ? 45 : 80,
       nejblizsi_redizo: params.get("forma") === "dal" ? undefined : zone.id === "001261" ? "600170527" : "600009084",
-      deti: 10, v_dosahu: false, deti_v_dosahu: 0, pasmo: "nad_60"},
+      deti: 10, v_dosahu: params.get("max_min") === "0" && params.get("forma") !== "dal", deti_v_dosahu: 0, pasmo: "nad_60"},
   })), meta: {}};
 }
 export function studentSchools(params = new URLSearchParams()) {
   return {data: params.get("forma") === "dal" ? [] : schools.features.map((feature, i) => ({
     redizo: feature.properties.redizo, nazev: feature.properties.nazev,
     lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0],
-    v_dosahu: i === 0, spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180, odjezd: i === 0 ? "07:12" : "04:29", prijezd: "07:29", prestupy: 0, chuze_m: 250, vzdalenost_m: 4100, linky: ["421"]},
+    v_dosahu: i === 0 || (params.get("max_min") === "0" && i < 2), spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180, odjezd: i === 0 ? "07:12" : "04:29", prijezd: "07:29", prestupy: 0, chuze_m: 250, vzdalenost_m: 4100, linky: ["421"]},
     nabidky: [{kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 77, prihlasky: 999, prijati: 50}],
   })), meta: {max_min: Number(params.get("max_min") ?? 120), zsj: "063550", den: "2026-10-12"}};
 }
@@ -134,7 +134,7 @@ export function removal(input = {max_min: 45, zmeny: [{redizo: "600009084", zmen
     souhrn: {zlepsenych_jednotek: 0, zhorsenych_jednotek: 1,
       deti_v_dosahu_pred: 10, deti_v_dosahu_po: lost ? 0 : 10,
       ztracene_deti: lost ? 10 : 0, nove_dosazene_deti: 0,
-      kapacita_pred: 154, kapacita_po: 154 + input.zmeny[0].zmena_kapacity,
+      kapacita_pred: 154, kapacita_po: 154 + input.zmeny.reduce((sum, change) => sum + change.zmena_kapacity, 0),
     }, meta: {},
   };
 }

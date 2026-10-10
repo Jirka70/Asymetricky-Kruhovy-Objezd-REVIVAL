@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { accessibilityQuery, simulationQuery, removalQuery, type SimulationResponse, type RemovalResponse } from "@/lib/api";
+import { accessibilityQuery, simulationQuery, batchSimulationQuery, type SimulationResponse, type RemovalResponse } from "@/lib/api";
 import ProgramDetail from "./program-detail";
 import { accessibilityData } from "@/lib/accessibility-data";
 import { simulationData } from "@/lib/simulation-data";
@@ -46,7 +46,7 @@ const DistributionChart = dynamic(() =>
   import("./analytics").then((m) => m.DistributionChart),
 );
 type Selection = { kind: "school" | "employer"; id: string } | null;
-type ScenarioChanges = [] | [Change];
+type ScenarioChanges = (Change & { capacity?: string })[];
 export default function RegionDashboard() {
   return <DataProvider>{(data) => <Dashboard data={data} />}</DataProvider>;
 }
@@ -60,26 +60,30 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     [notice, setNotice] = useState("");
   const [capacity, setCapacity] = useState("30");
   const validCapacity = Number.isInteger(Number(capacity)) && Number(capacity) >= 1 && Number(capacity) <= 300;
-  const addition = changes[0]?.action === "add";
-  const removal = changes[0]?.action === "remove";
-  const additionSimulation = useQuery(simulationQuery({
-    redizo: addition && form === "den" ? changes[0]?.school ?? "" : "",
-    obor: field, kapacita: Number(capacity), max_min: threshold,
-  }));
+  const addition = changes.length === 1 && changes[0].action === "add";
   const selection = useSelectionData(baseData, field, form);
   const { data } = selection;
-  const removalCapacity = data.offerings.find((offer) => offer.school === changes[0]?.school)?.capacity ?? NaN;
-  const removalSimulation = useQuery(removalQuery({
-    redizo: removal && form === "den" ? changes[0]?.school ?? "" : "",
-    obor: field, kapacita: removalCapacity, max_min: threshold,
+  const additionSimulation = useQuery(simulationQuery({
+    redizo: addition && form === "den" ? changes[0].school : "",
+    obor: field, kapacita: Number(changes[0]?.capacity), max_min: threshold,
   }));
-  const simulation = removal ? removalSimulation : additionSimulation;
+  const batchSimulation = useQuery(batchSimulationQuery({
+    obor: field,
+    zmeny: !addition && form === "den" ? changes.map(change => ({
+      redizo: change.school,
+      zmena_kapacity: change.action === "add" ? Number(change.capacity) :
+        -(data.offerings.find(offer => offer.school === change.school)?.capacity ?? NaN),
+    })) : [],
+    max_min: threshold,
+  }));
+  const simulation = addition ? additionSimulation : batchSimulation;
   const result = useMemo(() => simulation.data?.souhrn ? simulationData(simulation.data) : undefined, [simulation.data]);
   const canRemove = (id: string) => {
     const places = data.offerings.find((offer) => offer.school === id)?.capacity;
     return form === "den" && places != null && Number.isInteger(places) && places >= 1 && places <= 300;
   };
-  const scenarioValid = addition ? validCapacity : removal && canRemove(changes[0]?.school ?? "");
+  const scenarioValid = form === "den" && changes.length > 0 && changes.length <= 100 && changes.every(change =>
+    change.action === "add" ? Number.isInteger(Number(change.capacity)) && Number(change.capacity) >= 1 && Number(change.capacity) <= 300 : canRemove(change.school));
   const [panel, setPanel] = useState<Selection>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [undo, setUndo] = useState<{
@@ -102,7 +106,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   const zones = result?.zones ?? current?.zones ?? [];
   const beforeCoverage = result ? within(zones, before, threshold) : current?.coverage ?? within([], {}, threshold);
   const afterCoverage = within(zones, after, threshold);
-  const removalSummary = removal ? removalSimulation.data?.souhrn : undefined;
+  const removalSummary = !addition ? batchSimulation.data?.souhrn : undefined;
   // API summaries use unrounded times when deciding whether a ZSJ is reachable.
   const coverage = (value: typeof beforeCoverage, accessible: number | undefined) => accessible === undefined ? value : {
     ...value, accessible, percent: value.total ? accessible / value.total * 100 : null,
@@ -136,7 +140,11 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
-    if (kind === "school") setCandidate(id);
+    if (kind === "school") {
+      setCandidate(id);
+      const change = changes.find(change => change.school === id);
+      if (change?.action === "add") setCapacity(change.capacity ?? "30");
+    }
     setPanel({ kind, id });
     focusSection("detail-heading");
   }
@@ -153,24 +161,27 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     });
   }
   function removeChange(id: string) {
-    if (changes[0]?.school !== id) return;
-    setChanges([]);
-    setMode("current");
+    const remaining = changes.filter(change => change.school !== id);
+    setChanges(remaining);
+    setMode(remaining.length ? "scenario" : "current");
     setNotice("Změna byla odstraněna ze scénáře.");
   }
   function addChange(action: Change["action"]) {
     if (action === "add" && !ids.has(candidate) && (form !== "den" || !validCapacity)) return;
     if (action === "remove" && ids.has(candidate) && !canRemove(candidate)) return;
     const desired = action === "add";
-    const updated: ScenarioChanges =
-      ids.has(candidate) === desired
-        ? []
-        : [{ school: candidate, action }];
+    const other = changes.filter(change => change.school !== candidate);
+    if (ids.has(candidate) !== desired && other.length >= 100) {
+      setNotice("Scénář může obsahovat nejvýše 100 změn.");
+      return;
+    }
+    const updated: ScenarioChanges = ids.has(candidate) === desired ? other :
+      [...other, { school: candidate, action, ...(action === "add" ? { capacity } : {}) }];
     setChanges(updated);
     setMode(updated.length ? "scenario" : "current");
     setPanel({ kind: "school", id: candidate });
     setNotice(
-      `${changes.length && updated.length && changes[0].school !== candidate ? "Předchozí změna byla nahrazena. " : ""}${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Scénář byl změněn.`,
+      `${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Scénář byl změněn.`,
     );
     focusSection("detail-heading");
   }
@@ -229,6 +240,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                 Do {t} min
               </option>
             ))}
+            <option value={0}>Bez limitu</option>
           </select>
         </label>
         <SearchSelect
@@ -263,7 +275,11 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           <span>Kapacita nového oboru</span>
           <input type="number" min={1} max={300} step={1} value={capacity}
             aria-invalid={!validCapacity} aria-describedby="simulation-hint"
-            onChange={(event) => setCapacity(event.target.value)} />
+            onChange={(event) => {
+              const value = event.target.value;
+              setCapacity(value);
+              setChanges(previous => previous.map(change => change.school === candidate && change.action === "add" ? { ...change, capacity: value } : change));
+            }} />
         </label>
         <span id="simulation-hint">1–300 míst v prvním ročníku. Simulace je dostupná pouze pro denní studium.</span>
         {changes.length > 0 && !hasScenario && (
@@ -278,7 +294,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
         </span>
       </div>
       <p className="workspace-caption">
-        Ve scénáři lze změnit nabídku jen na jedné škole. Další přidání nebo odebrání nahradí předchozí změnu.
+        Ve scénáři lze změnit nabídku až na 100 školách. Kapacitu přidaného oboru upravíte výběrem příslušné školy.
       </p>
       <p className="sr-only" role="status" aria-atomic="true">
         {notice}
@@ -439,7 +455,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                   <section className="detail-section simulation-feedback" aria-label="Výpočet simulace" aria-busy={Boolean(scenarioValid && simulation.isFetching)}>
                     <h3>Dopad celého scénáře</h3>
                     {!scenarioValid ? (
-                      <p role="alert">{addition ? "Zadejte celou kapacitu od 1 do 300 míst." : "Odebrání vyžaduje denní nabídku se známou kapacitou 1–300 míst."}</p>
+                      <p role="alert">Zadejte celou kapacitu od 1 do 300 míst pro každou změnu. Simulace vyžaduje denní studium. Scénář může obsahovat nejvýše 100 změn.</p>
                     ) : simulation.isFetching ? (
                       <DataSkeleton compact label="Počítám simulaci… Mapa zůstává na posledním zobrazeném stavu." />
                     ) : <>
@@ -455,7 +471,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     {addition && additionSimulation.data?.souhrn && (
                       <SimulationSummary summary={additionSimulation.data.souhrn} />
                     )}
-                    {removalSummary && <RemovalSummary summary={removalSummary} />}
+                    {removalSummary && <RemovalSummary summary={removalSummary} multiple={changes.length > 1} />}
                     <div className="scenario-impact">
                       <div>
                         <strong>{better}</strong>
@@ -501,12 +517,11 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     {Math.round(base.percent ?? 0)} % →{" "}
                     {Math.round(next.percent ?? 0)} %
                   </span>
-                  <small>dětí má školu do {threshold} minut</small>
+                  <small>dětí má školu {threshold === 0 ? "bez časového limitu" : `do ${threshold} minut`}</small>
                 </>
               ) : (
                 <>
-                  {Math.round(base.percent ?? 0)} % dětí má školu do {threshold}{" "}
-                  minut
+                  {Math.round(base.percent ?? 0)} % dětí má školu {threshold === 0 ? "bez časového limitu" : `do ${threshold} minut`}
                 </>
               )}
             </h2>
@@ -588,9 +603,9 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   );
 }
 
-function RemovalSummary({ summary }: { summary: RemovalResponse["souhrn"] }) {
+function RemovalSummary({ summary, multiple }: { summary: RemovalResponse["souhrn"]; multiple: boolean }) {
   return <div className="simulation-result">
-    <p><strong>Dopad odebrání oboru</strong></p>
+    <p><strong>{multiple ? "Dopad celého scénáře" : "Dopad odebrání oboru"}</strong></p>
     <p>Kapacita oboru v kraji: {number(summary.kapacita_pred)} → {number(summary.kapacita_po)} míst</p>
     <p>Děti, které ztratí dostupnost oboru: <strong>{number(summary.ztracene_deti)}</strong></p>
     <p>Děti nově v dosahu: {number(summary.nove_dosazene_deti)}</p>

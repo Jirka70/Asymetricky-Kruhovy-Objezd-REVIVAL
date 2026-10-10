@@ -5,9 +5,9 @@ import type { School } from "@/lib/data";
 import AdmissionStats from "./admission-stats";
 import ConnectionSummary from "./connection-summary";
 
-export default function StudentSchoolCard({ result, school, active, onSelect, showAdmissions = true }: {
+export default function StudentSchoolCard({ result, school, active, onSelect, showAdmissions = true, unlimited = false }: {
   result: StudentSchool; school?: School; active?: boolean; onSelect?: () => void;
-  showAdmissions?: boolean;
+  showAdmissions?: boolean; unlimited?: boolean;
 }) {
   const duration = result.spoj.cas_min;
   const capacity = result.nabidky.reduce((sum, offer) => sum + offer.kapacita, 0);
@@ -20,7 +20,7 @@ export default function StudentSchoolCard({ result, school, active, onSelect, sh
   return <article className={`journey-result${active ? " is-selected" : ""}`}>
     {onSelect ? <button className="journey-select" onClick={onSelect} aria-label={`Detail školy ${result.nazev}`}>{title}</button> : <div className="journey-select">{title}</div>}
     <ConnectionSummary connection={result.spoj} />
-    <p className="detail-note">{result.spoj.stav === "bez_spojeni" ? "V ranním okně nebylo nalezeno spojení." : duration == null ? "Doba dojezdu není v datech dostupná; spojení může existovat." : result.v_dosahu ? "V zadaném limitu dojezdu" : "Mimo zadaný limit dojezdu"}</p>
+    <p className="detail-note">{result.spoj.stav === "bez_spojeni" ? "V ranním okně nebylo nalezeno spojení." : duration == null ? "Doba dojezdu není v datech dostupná; spojení může existovat." : result.v_dosahu ? unlimited ? "Spojení nalezeno · bez časového limitu" : "V zadaném limitu dojezdu" : "Mimo zadaný limit dojezdu"}</p>
     {showAdmissions && <>
       <p className="detail-note">Kapacita: {capacity}</p>
       <AdmissionStats offers={result.nabidky} />

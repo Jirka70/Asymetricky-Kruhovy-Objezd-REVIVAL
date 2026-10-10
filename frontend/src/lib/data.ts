@@ -135,7 +135,7 @@ export function within(zones: Zone[], times: Travel, threshold: number) {
   const total = zones.reduce((a, z) => a + (z.children ?? 0), 0);
   const accessible = zones.reduce(
     (a, z) =>
-      a + (times[z.id] != null && times[z.id]! <= threshold ? z.children ?? 0 : 0),
+      a + (times[z.id] != null && (threshold === 0 || times[z.id]! <= threshold) ? z.children ?? 0 : 0),
     0,
   );
   return {
