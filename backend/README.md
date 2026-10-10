@@ -44,7 +44,7 @@ After a migration has been applied, add a new migration for subsequent schema/da
 
 ## OpenAPI endpoints
 
-The root `openapi.yaml` is the public API contract. All nine GET operations are mounted under `http://localhost:8000/api/v1`:
+The root `openapi.yaml` is the public API contract. The server uses `contract::router` directly and exposes only its API routes, plus `/docs` and `/openapi.yaml` for documentation. All nine GET operations are mounted under `http://localhost:8000/api/v1`:
 
 - `/skoly`, `/skoly/{redizo}`
 - `/student/skoly`, `/student/trasa`
@@ -75,19 +75,6 @@ cargo test --test openapi_contract
 ```
 
 The fifteen contract tests run without PostgreSQL or OTP. They compare route/operation coverage and every success response media type; compare all response DTO properties and query fields, Rust field types, enums, required fields and query defaults with the specification; validate independent representative fixtures before and after Rust serialization; and exercise actual stub/error responses, database-unavailable responses, and documentation routes. The disposable-database test additionally validates real read responses against OpenAPI and checks catalog filters, counts, missing coordinates, mapping semantics, and required-data failures. Negative cases check missing fields, nullable/non-nullable values, identifiers, coordinate dimensions, dates, enums, dictionary keys and array limits. Numeric bounds, formats, patterns and nullability are checked by the YAML JSON Schema validator; plain Rust String/Vec types do not encode every value constraint. These tests verify structural contracts and representative payloads, not business calculations or correctness for every possible future response.
-
-## Database inspection API
-
-```sh
-curl http://127.0.0.1:8000/health
-curl 'http://127.0.0.1:8000/api/skoly?limit=100&offset=0'
-curl http://127.0.0.1:8000/api/skoly/600008975
-curl http://127.0.0.1:8000/api/zsj/000540
-```
-
-Read-only JSON list endpoints: `/api/skoly`, `/api/zsj`, `/api/obory`, `/api/nabidky`, `/api/zamestnavatele`, `/api/profesni-skupiny`, `/api/poptavka-profesi`, `/api/obor-profese`. Lists return arrays sorted by primary key, with `limit` (1–1000, default 100) and `offset` (nonnegative, default 0). School and ZSJ detail endpoints return 404 for unknown identifiers. Health verifies a database query; unavailable pool connections return 503. Invalid pagination returns 400.
-
-Identifiers remain strings with leading zeros. Nullable database values remain JSON null. School decimal coordinates serialize as decimal strings to retain precision; ZSJ and employer float coordinates serialize as JSON numbers. ZSJ polygon boundaries are stored and indexed in PostGIS and represented by a custom Diesel SQL type, but omitted from the basic JSON model. Demand timestamps represent import time, following the original SQL.
 
 ## Verification
 

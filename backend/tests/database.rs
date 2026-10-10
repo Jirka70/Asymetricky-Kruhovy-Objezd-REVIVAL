@@ -4,7 +4,7 @@ use axum::{
 };
 use diesel::prelude::*;
 use diesel_migrations::MigrationHarness;
-use obor_backend::{api, db, models::*, schema::*};
+use obor_backend::{contract, db, models::*, schema::*};
 use tower::ServiceExt;
 
 // Always use a fresh owned container: rollback must never touch a user database.
@@ -97,63 +97,7 @@ async fn migrations_and_api() {
     assert_eq!(school.kod_zsj.as_deref(), Some("000540"));
     assert!(school.lat.is_some());
 
-    let app = api::router(db::pool(&url, 2).unwrap());
-    for (endpoint, expected) in [
-        ("skoly", 34),
-        ("zsj", 839),
-        ("obory", 81),
-        ("nabidky", 140),
-        ("zamestnavatele", 422),
-        ("profesni-skupiny", 88),
-        ("poptavka-profesi", 641),
-        ("obor-profese", 291),
-    ] {
-        let response = app
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .uri(format!("/api/{endpoint}?limit=1000"))
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(response.status(), StatusCode::OK, "{endpoint}");
-        let body = to_bytes(response.into_body(), 1_000_000).await.unwrap();
-        let rows: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
-        assert_eq!(rows.len(), expected, "{endpoint}");
-    }
-    for (uri, expected) in [
-        ("/health", StatusCode::OK),
-        ("/api/skoly/600008975", StatusCode::OK),
-        ("/api/zsj/000540", StatusCode::OK),
-        ("/api/skoly/does-not-exist", StatusCode::NOT_FOUND),
-        ("/api/zsj/does-not-exist", StatusCode::NOT_FOUND),
-        ("/api/zsj?limit=0", StatusCode::BAD_REQUEST),
-        ("/api/skoly?offset=-1", StatusCode::BAD_REQUEST),
-    ] {
-        let response = app
-            .clone()
-            .oneshot(Request::builder().uri(uri).body(Body::empty()).unwrap())
-            .await
-            .unwrap();
-        assert_eq!(response.status(), expected, "{uri}");
-    }
-    let response = app
-        .clone()
-        .oneshot(
-            Request::builder()
-                .uri("/api/zsj?limit=2&offset=1")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    let body = to_bytes(response.into_body(), 100_000).await.unwrap();
-    let rows: Vec<serde_json::Value> = serde_json::from_slice(&body).unwrap();
-    assert_eq!(rows.len(), 2);
-    assert_eq!(rows[0]["kod"], "000027");
-
+    let app = contract::router(db::pool(&url, 2).unwrap());
     catalog_api(&app, &mut connection).await;
 
     assert_eq!(

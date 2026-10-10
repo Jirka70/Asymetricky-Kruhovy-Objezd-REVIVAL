@@ -1,6 +1,6 @@
 use anyhow::Context;
 use diesel_migrations::MigrationHarness;
-use obor_backend::{api, db};
+use obor_backend::{contract, db};
 use std::{env, net::SocketAddr};
 use tracing_subscriber::EnvFilter;
 
@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
         .context("BIND_ADDRESS must be an IP address and port")?;
     let listener = tokio::net::TcpListener::bind(address).await?;
     tracing::info!(%address, "Backend listening");
-    axum::serve(listener, api::router(db::pool(&url, size)?))
+    axum::serve(listener, contract::router(db::pool(&url, size)?))
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
         })

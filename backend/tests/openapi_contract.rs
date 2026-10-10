@@ -774,6 +774,17 @@ async fn new_enum_and_employer_parameters_validate_and_apply_defaults() {
         check_error(uri, path, StatusCode::UNPROCESSABLE_ENTITY, Some(field)).await;
     }
     for uri in [
+        "/health",
+        "/api/skoly",
+        "/api/skoly/600008975",
+        "/api/zsj",
+        "/api/zsj/000540",
+        "/api/obory",
+        "/api/nabidky",
+        "/api/zamestnavatele",
+        "/api/profesni-skupiny",
+        "/api/poptavka-profesi",
+        "/api/obor-profese",
         "/api/v1/ciselniky",
         "/api/v1/analyza/obce",
         "/api/v1/analyza/obory",
