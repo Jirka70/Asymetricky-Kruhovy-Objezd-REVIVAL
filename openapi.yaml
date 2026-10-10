@@ -11,8 +11,8 @@ info:
       a co by změnilo přidání oboru na konkrétní školu.
 
     API je jen pro čtení. Mapové vrstvy jsou GeoJSON (WGS 84, EPSG:4326).
-    Jediný endpoint, který volá OpenTripPlanner živě, je `/student/trasa`; ostatní čtou
-    předpočítanou matici dojezdů ZSJ × škola.
+    Studentské endpointy `/student/trasa` a `/student/skoly` volají OpenTripPlanner živě.
+    Ostatní analytické endpointy čtou předpočítanou matici dojezdů ZSJ × škola.
 
     **Klíčové definice**
 
@@ -93,20 +93,17 @@ paths:
       operationId: listStudentSkoly
       summary: Školy seřazené podle doby dojezdu z bodu
       description: |
-        API najde ZSJ, do které bod padne, a vrátí doby dojezdu z předpočtu pro tuto ZSJ
-        (časy jsou orientační z reprezentačního bodu ZSJ). Přesné spojení z bodu vrací `/student/trasa`.
-
-        Bez `obor` vrací jen školy v dosahu. S `obor` vrací všechny školy s tímto oborem,
-        i mimo dosah (`v_dosahu: false`).
-
-        Scénář `rano` používá předpočítaný slot `07:00-08:00`. Limit se porovnává
-        s původní desetinnou dobou, zobrazené `cas_min` se zaokrouhluje na celé minuty.
-        Řazení používá původní dobu; chybějící doby jsou na konci, shody rozhoduje název a REDIZO.
-        Metadata počítají školy v dosahu a mimo dosah před filtrováním výsledků podle limitu.
-        NULL v předpočtu znamená nedostupná data (bez trasy nebo chyba výpočtu):
-        `spoj.stav` je `data_nedostupna`, `cas_min` se neuvádí a `v_dosahu` je false.
-        Odjezdy, příjezdy, přestupy, chůze a linky se neuvádějí, protože je předpočet neobsahuje.
-        Bod mimo všechny známé ZSJ vrací 422 (`mimo_uzemi`); chybějící řádek matice vrací 500.
+        Z databáze vybírá školy a nabídky, dojezdy počítá živě OpenTripPlanner ze zadaného bodu.
+        Nejkratší z až 20 vrácených kandidátů s příjezdem v okně 07:00–08:00 (konec nezahrnut)
+        Europe/Prague určuje čas, chůzi, přestupy a linky. Odjezd musí být ve stejný den.
+        Den je nejbližší pracovní den s dosud neuplynulým oknem; lze nastavit OTP_SERVICE_DATE.
+        Nejde o výběr podle fyzické vzdálenosti ani o garantované globální optimum.
+        Bez oboru vrací jen školy v dosahu; s oborem všechny odpovídající školy, i bez spojení.
+        Limit a řazení používají nezaokrouhlenou dobu, zobrazené cas_min jsou celé minuty.
+        Shody rozhoduje název a REDIZO. Metadata počítají školy před filtrováním dle limitu.
+        Platný výsledek bez vhodného spoje má spoj.stav=bez_spojeni. Chyba OTP vrací 502
+        pro celou odpověď; nepoužívá se skrytý návrat k předpočtu. Bod mimo známé ZSJ vrací 422.
+        Trasy se sdílejí s /student/trasa a cachují 24 hodin podle přesného bodu, školy a dne.
       parameters:
         - $ref: '#/components/parameters/Lat'
         - $ref: '#/components/parameters/Lon'
@@ -115,6 +112,7 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
+        '502': { $ref: '#/components/responses/OtpNedostupne' }
         '500': { $ref: '#/components/responses/InterniChyba' }
         '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
@@ -132,7 +130,15 @@ paths:
       description: |
         Vrací až 3 spoje s příjezdem v okně scénáře, seřazené od nejkratšího.
         Každý úsek je GeoJSON `Feature` s geometrií `LineString`; úseky stejného spoje
-        spojuje `properties.spoj`. Odpověď se cachuje 24 hodin podle bodu zaokrouhleného na ~100 m.
+        spojuje `properties.spoj`. Používá GTFS GraphQL planConnection a skutečnou geometrii OTP.
+        Okno rano je 07:00–08:00 Europe/Prague, konec nezahrnut; odjezd ve stejný den.
+        Nejbližší pracovní den s dosud neuplynulým oknem je uveden v meta.den;
+        OTP_SERVICE_DATE umožňuje pevný den pro konkrétní jízdní řád. Neřeší školní prázdniny.
+        Kandidáti se řadí podle nezaokrouhlené délky cesty, shody podle pozdějšího příjezdu.
+        Bez vhodného spoje vrací prázdná pole features a spoje, nikoli chybu.
+        Odpověď se cachuje 24 hodin podle přesného bodu, cílových souřadnic a dne.
+        Chybějící jízdní řád pro den, chyba či neplatná odpověď OTP vrací 502.
+        Neznámá škola vrací 404, bod mimo známé ZSJ 422.
       parameters:
         - $ref: '#/components/parameters/Lat'
         - $ref: '#/components/parameters/Lon'
@@ -143,12 +149,13 @@ paths:
           example: '600009084'
         - $ref: '#/components/parameters/Scenar'
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Spoje a jejich úseky.
           content:
             application/geo+json:
               schema: { $ref: '#/components/schemas/Trasa' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
         '502':
@@ -562,6 +569,11 @@ components:
       schema: { type: string, enum: [den, dal], default: den }
 
   responses:
+    OtpNedostupne:
+      description: OpenTripPlanner je nedostupný, vrátil neplatná data nebo nemá jízdní řád pro den.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Chyba' }
     InterniChyba:
       description: Nepodařilo se načíst data nebo uložená data neodpovídají požadovanému formátu.
       content:
@@ -781,12 +793,13 @@ components:
       type: object
       required: [stav]
       properties:
-        stav: { type: string, enum: [ok, bez_spojeni, data_nedostupna], description: data_nedostupna znamená neznámou dobu z předpočtu; nerozlišuje chybějící trasu od chyby výpočtu. }
+        stav: { type: string, enum: [ok, bez_spojeni, data_nedostupna], description: bez_spojeni znamená platný výsledek OTP bez vhodného spoje; data_nedostupna je vyhrazeno neznámým historickým údajům. }
         odjezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
         prijezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
         cas_min: { type: [integer, 'null'], example: 36 }
         prestupy: { type: [integer, 'null'], example: 0 }
         chuze_m: { type: [integer, 'null'], example: 540 }
+        vzdalenost_m: { type: [integer, 'null'], description: Celková vzdálenost všech úseků OTP v metrech. }
         linky: { type: array, items: { type: string }, example: ['421'] }
 
     StudentSkoly:
@@ -818,6 +831,7 @@ components:
                 v_dosahu: { type: integer }
                 mimo_dosah: { type: integer }
                 presnost: { type: string }
+                den: { type: string, format: date }
 
     Trasa:
       type: object
@@ -859,6 +873,7 @@ components:
               cas_min: { type: integer }
               prestupy: { type: integer }
               chuze_m: { type: integer }
+              vzdalenost_m: { type: integer, description: Celková vzdálenost všech úseků OTP v metrech. }
               rezerva_min: { type: integer, description: Čas mezi příjezdem a koncem okna scénáře. }
         meta:
           type: object

@@ -325,6 +325,8 @@ pub struct Spoj {
     pub chuze_m: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub linky: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vzdalenost_m: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
@@ -350,6 +352,8 @@ pub struct StudentSkolyMeta {
     pub mimo_dosah: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub presnost: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub den: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
@@ -417,6 +421,8 @@ pub struct TrasaSpojeItem {
     pub chuze_m: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rezerva_min: Option<i64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vzdalenost_m: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]

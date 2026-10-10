@@ -59,7 +59,7 @@ docker compose stop
 Frontend načítá školy, obory a zaměstnavatele z REST API. Geometrie, demografie
 a předpočítané dojezdy zůstávají v lokálním snímku. OTP je volitelný profil `otp`; spustí se výslovně
 přes `docker compose up -d otp` nebo spolu s aplikací přes
-`docker compose --profile otp up -d`. Běžné spuštění jej nepotřebuje.
+`docker compose --profile otp up -d`. Studentské endpointy `/student/skoly` a `/student/trasa` vyžadují běžící OTP. Katalogové a krajské endpointy jej nepotřebují.
 
 ### Frontend (Next.js)
 

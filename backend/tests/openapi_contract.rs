@@ -154,6 +154,7 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
                 | "/simulace"
                 | "/simulace/zmeny"
                 | "/student/skoly"
+                | "/student/trasa"
                 | "/obory/{kod}/zamestnavatele"
         ) {
             check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
@@ -975,6 +976,10 @@ async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
         (
             "/api/v1/student/skoly?lat=50.2312&lon=12.8711",
             "/student/skoly",
+        ),
+        (
+            "/api/v1/student/trasa?lat=50.2312&lon=12.8711&redizo=600009084",
+            "/student/trasa",
         ),
         ("/api/v1/zsj/seznam", "/zsj/seznam"),
         ("/api/v1/zsj?uroven=zsj", "/zsj"),

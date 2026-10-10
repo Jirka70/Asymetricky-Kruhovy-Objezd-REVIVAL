@@ -17,7 +17,7 @@ async fn main() -> anyhow::Result<()> {
     let command = args.first().map(String::as_str).unwrap_or("serve");
     if command == "--help" || command == "-h" {
         println!(
-            "Usage: obor-backend [serve|migrate|migrate-status]\nConfiguration: DATABASE_URL, BIND_ADDRESS (127.0.0.1:8000), DB_POOL_SIZE (8)"
+            "Usage: obor-backend [serve|migrate|migrate-status]\nConfiguration: DATABASE_URL, BIND_ADDRESS (127.0.0.1:8000), DB_POOL_SIZE (8), OTP_URL (http://localhost:8080/otp/gtfs/v1), OTP_SERVICE_DATE (optional YYYY-MM-DD)"
         );
         return Ok(());
     }
@@ -57,10 +57,16 @@ async fn main() -> anyhow::Result<()> {
         .context("BIND_ADDRESS must be an IP address and port")?;
     let listener = tokio::net::TcpListener::bind(address).await?;
     tracing::info!(%address, "Backend listening");
-    axum::serve(listener, contract::router(db::pool(&url, size)?))
-        .with_graceful_shutdown(async {
-            let _ = tokio::signal::ctrl_c().await;
-        })
-        .await?;
+    axum::serve(
+        listener,
+        contract::router_with_otp(
+            db::pool(&url, size)?,
+            obor_backend::otp::Client::new(obor_backend::otp::Config::from_env()?)?,
+        ),
+    )
+    .with_graceful_shutdown(async {
+        let _ = tokio::signal::ctrl_c().await;
+    })
+    .await?;
     Ok(())
 }

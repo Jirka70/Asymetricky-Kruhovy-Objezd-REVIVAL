@@ -6,7 +6,7 @@ use crate::{
     schema,
 };
 use axum::{
-    Json, Router,
+    Extension, Json, Router,
     extract::{FromRequestParts, Path, Query, State},
     http::{StatusCode, header, request::Parts},
     response::{Html, IntoResponse, Response},
@@ -320,15 +320,17 @@ pub async fn list_skoly(
 }
 pub async fn list_student_skoly(
     State(pool): State<DbPool>,
+    Extension(otp): Extension<crate::otp::Client>,
     ContractQuery(params): ContractQuery<requests::StudentSkolyQuery>,
 ) -> Result<Json<dto::StudentSkoly>, StubError> {
-    let inputs = crate::student::load_school_data(pool, params).await?;
-    crate::student::build_response(inputs).map(Json)
+    crate::student::schools(pool, params, otp).await.map(Json)
 }
 pub async fn get_student_trasa(
-    ContractQuery(_params): ContractQuery<requests::StudentTrasaQuery>,
+    State(pool): State<DbPool>,
+    Extension(otp): Extension<crate::otp::Client>,
+    ContractQuery(params): ContractQuery<requests::StudentTrasaQuery>,
 ) -> Result<GeoJson<dto::Trasa>, StubError> {
-    Err(StubError::unimplemented("getStudentTrasa"))
+    crate::student::route(pool, params, otp).await.map(GeoJson)
 }
 pub async fn list_zsj(
     State(pool): State<DbPool>,
@@ -464,8 +466,12 @@ pub async fn list_obor_zamestnavatele(
         .map(GeoJson)
 }
 
-/// Database reads use the supplied pool; analytical operations remain stubs.
+/// Build the API with local default OTP settings; tests may inject a client below.
 pub fn router(pool: DbPool) -> Router {
+    router_with_otp(pool, crate::otp::Client::default())
+}
+
+pub fn router_with_otp(pool: DbPool, otp: crate::otp::Client) -> Router {
     let routes = Router::new()
         .route("/skoly", get(list_skoly))
         .route("/skoly/{redizo}", get(get_skola))
@@ -488,6 +494,7 @@ pub fn router(pool: DbPool) -> Router {
             "/docs",
             get(|| async { Html(include_str!("../../swagger.html")) }),
         )
+        .layer(Extension(otp))
         .layer(axum::middleware::from_fn(crate::logging::log_request))
         .with_state(pool)
 }

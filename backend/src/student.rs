@@ -1,9 +1,9 @@
-//! Student school lookup using precomputed ZSJ-to-school travel times.
+//! Database school selection with live, shared OTP route calculations.
 use crate::{
     catalog::{database_error, internal_error, offering, read},
     contract::{StubError, api_error},
     db::DbPool,
-    dto, models, requests, schema,
+    dto, models, otp, requests, schema,
 };
 use axum::http::StatusCode;
 use bigdecimal::ToPrimitive;
@@ -14,6 +14,7 @@ use diesel::{
 use std::{
     cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
+    sync::Arc,
 };
 
 /// Internal database data, not the public StudentSkoly response DTO.
@@ -26,9 +27,6 @@ pub struct StudentSchoolData {
     pub origin: Option<models::Zsj>,
     pub schools: Vec<models::Skola>,
     pub offerings: Vec<(models::NabidkaOboru, models::Obor)>,
-    /// Preserve missing rows and NULL durations as distinct cases. Do not turn
-    /// them into zero-minute journeys or remove journeys above max_min here.
-    pub travel_times: Vec<models::DojezdovaDoba>,
 }
 
 pub async fn load_school_data(
@@ -50,9 +48,7 @@ fn load(
     connection: &mut PgConnection,
     params: requests::StudentSkolyQuery,
 ) -> QueryResult<StudentSchoolData> {
-    use schema::{
-        dojezdove_doby as times, nabidka_oboru as offers, obory, stredni_skoly as schools, zsj,
-    };
+    use schema::{nabidka_oboru as offers, obory, stredni_skoly as schools, zsj};
     let arrival_slot = match params.scenar {
         requests::Scenar::Rano => "07:00-08:00",
     };
@@ -98,29 +94,21 @@ fn load(
         .order(schools::redizo)
         .select(models::Skola::as_select())
         .load::<models::Skola>(connection)?;
-    let travel_times = if let Some(ref origin) = origin {
-        times::table
-            .filter(times::kod_zsj.eq(&origin.kod))
-            .filter(times::slot_prijezdu.eq(arrival_slot))
-            .filter(times::redizo.eq_any(schools.iter().map(|school| &school.redizo)))
-            .order(times::redizo)
-            .select(models::DojezdovaDoba::as_select())
-            .load(connection)?
-    } else {
-        Vec::new()
-    };
     Ok(StudentSchoolData {
         params,
         arrival_slot,
         origin,
         schools,
         offerings,
-        travel_times,
     })
 }
 
 /// Transform a database snapshot into the public response without further I/O.
-pub fn build_response(inputs: StudentSchoolData) -> Result<dto::StudentSkoly, StubError> {
+pub fn build_response(
+    inputs: StudentSchoolData,
+    routes: BTreeMap<String, Arc<otp::RouteSet>>,
+    date: chrono::NaiveDate,
+) -> Result<dto::StudentSkoly, StubError> {
     let origin = inputs.origin.ok_or_else(|| {
         api_error(
             StatusCode::UNPROCESSABLE_ENTITY,
@@ -128,11 +116,6 @@ pub fn build_response(inputs: StudentSchoolData) -> Result<dto::StudentSkoly, St
             "Bod leží mimo známé základní sídelní jednotky Karlovarského kraje.",
         )
     })?;
-    let times: BTreeMap<_, _> = inputs
-        .travel_times
-        .into_iter()
-        .map(|time| (time.redizo, time.doba_jizdy))
-        .collect();
     let mut offerings = BTreeMap::<String, Vec<dto::Nabidka>>::new();
     for (offer, program) in inputs.offerings {
         offerings
@@ -144,13 +127,9 @@ pub fn build_response(inputs: StudentSchoolData) -> Result<dto::StudentSkoly, St
     let mut reachable_count = 0;
     let mut unreachable_count = 0;
     for school in inputs.schools {
-        // A complete matrix contains a row even when no duration was obtained.
-        // Missing rows signal incomplete database input rather than no connection.
-        let duration = *times.get(&school.redizo).ok_or_else(internal_error)?;
-        if duration.is_some_and(|value| !value.is_finite() || value < 0.0) {
-            return Err(internal_error());
-        }
-        let reachable = duration.is_some_and(|minutes| minutes <= f32::from(inputs.params.max_min));
+        let route = routes.get(&school.redizo).ok_or_else(internal_error)?;
+        let duration = route.itineraries.first().map(|i| i.duration_seconds / 60.0);
+        let reachable = duration.is_some_and(|minutes| minutes <= f64::from(inputs.params.max_min));
         if reachable {
             reachable_count += 1;
         } else {
@@ -178,21 +157,7 @@ pub fn build_response(inputs: StudentSchoolData) -> Result<dto::StudentSkoly, St
                 lat,
                 lon,
                 v_dosahu: reachable,
-                spoj: dto::Spoj {
-                    // NULL mixes unavailable routes and routing errors in the seed.
-                    // Report unavailable data, without claiming a route cannot exist.
-                    stav: if duration.is_some() {
-                        dto::SpojStav::Ok
-                    } else {
-                        dto::SpojStav::DataNedostupna
-                    },
-                    cas_min: duration.map(|minutes| minutes.round() as i64),
-                    odjezd: None,
-                    prijezd: None,
-                    prestupy: None,
-                    chuze_m: None,
-                    linky: None,
-                },
+                spoj: route.summary(),
                 nabidky,
             },
         ));
@@ -215,7 +180,114 @@ pub fn build_response(inputs: StudentSchoolData) -> Result<dto::StudentSkoly, St
             zsj: Some(origin.kod),
             v_dosahu: Some(reachable_count),
             mimo_dosah: Some(unreachable_count),
-            presnost: Some("Orientační doba z reprezentačního bodu ZSJ; nejde o přesnou trasu ze zadaného bodu.".into()),
+            presnost: Some("Spojení OpenTripPlanner ze zadaného bodu; nejkratší z vrácených spojů s příjezdem 07:00–08:00 Europe/Prague.".into()),
+            den: Some(date.to_string()),
         },
     })
+}
+
+fn outside() -> StubError {
+    api_error(
+        StatusCode::UNPROCESSABLE_ENTITY,
+        "mimo_uzemi",
+        "Bod leží mimo známé základní sídelní jednotky Karlovarského kraje.",
+    )
+}
+fn coordinates(school: &models::Skola) -> Result<(f64, f64), StubError> {
+    let lat = school
+        .lat
+        .as_ref()
+        .and_then(|v| v.to_f64())
+        .filter(|v| v.is_finite() && (-90.0..=90.0).contains(v))
+        .ok_or_else(internal_error)?;
+    let lon = school
+        .lon
+        .as_ref()
+        .and_then(|v| v.to_f64())
+        .filter(|v| v.is_finite() && (-180.0..=180.0).contains(v))
+        .ok_or_else(internal_error)?;
+    Ok((lat, lon))
+}
+pub async fn schools(
+    pool: DbPool,
+    params: requests::StudentSkolyQuery,
+    client: otp::Client,
+) -> Result<dto::StudentSkoly, StubError> {
+    let origin = (params.lat, params.lon);
+    let inputs = load_school_data(pool, params).await?;
+    if inputs.origin.is_none() {
+        return Err(outside());
+    }
+    let targets = inputs
+        .schools
+        .iter()
+        .map(|s| {
+            if s.nazev.is_none() {
+                return Err(internal_error());
+            }
+            Ok((s.redizo.clone(), coordinates(s)?))
+        })
+        .collect::<Result<Vec<_>, StubError>>()?;
+    let date = client.service_date();
+    let mut tasks = tokio::task::JoinSet::new();
+    for (redizo, destination) in targets {
+        let client = client.clone();
+        tasks.spawn(async move {
+            client
+                .routes(origin, destination, date)
+                .await
+                .map(|routes| (redizo, routes))
+        });
+    }
+    let mut routes = BTreeMap::new();
+    while let Some(result) = tasks.join_next().await {
+        let (school, route) = result.map_err(|_| internal_error())??;
+        routes.insert(school, route);
+    }
+    build_response(inputs, routes, date)
+}
+pub async fn route(
+    pool: DbPool,
+    params: requests::StudentTrasaQuery,
+    client: otp::Client,
+) -> Result<dto::Trasa, StubError> {
+    let origin = (params.lat, params.lon);
+    let destination = read(pool, move |connection| {
+        connection
+            .build_transaction()
+            .read_only()
+            .repeatable_read()
+            .run::<_, StubError, _>(|connection| {
+                use schema::{stredni_skoly, zsj};
+                let school = stredni_skoly::table
+                    .find(&params.redizo.0)
+                    .select(models::Skola::as_select())
+                    .first::<models::Skola>(connection)
+                    .optional()?
+                    .ok_or_else(|| {
+                        api_error(
+                            StatusCode::NOT_FOUND,
+                            "skola_nenalezena",
+                            "Škola nebyla nalezena.",
+                        )
+                    })?;
+                let contains =
+                    diesel::dsl::sql::<Bool>("ST_Covers(boundary, ST_SetSRID(ST_MakePoint(")
+                        .bind::<Double, _>(params.lon)
+                        .sql(", ")
+                        .bind::<Double, _>(params.lat)
+                        .sql("), 4326))");
+                if !diesel::select(diesel::dsl::exists(zsj::table.filter(contains)))
+                    .get_result::<bool>(connection)?
+                {
+                    return Err(outside());
+                }
+                coordinates(&school)
+            })
+    })
+    .await?;
+    client
+        .routes(origin, destination, client.service_date())
+        .await?
+        .geojson()
 }
