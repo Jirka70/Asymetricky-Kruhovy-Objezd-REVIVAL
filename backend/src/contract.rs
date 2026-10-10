@@ -350,9 +350,10 @@ pub async fn get_simulace(
 }
 pub async fn get_skola(
     State(pool): State<DbPool>,
-    Path(redizo): Path<requests::Redizo>,
+    path: Result<Path<requests::Redizo>, axum::extract::rejection::PathRejection>,
     ContractQuery(params): ContractQuery<requests::SkolaQuery>,
 ) -> Result<Json<dto::SkolaDetail>, StubError> {
+    let Path(redizo) = path.map_err(|_| StubError::invalid("redizo"))?;
     validate_path("getSkola", "redizo", &redizo.0)?;
     crate::school_detail::get(pool, redizo.0, params)
         .await
@@ -361,9 +362,10 @@ pub async fn get_skola(
 
 pub async fn get_obor(
     State(pool): State<DbPool>,
-    Path(kod): Path<requests::KodOboru>,
+    path: Result<Path<requests::KodOboru>, axum::extract::rejection::PathRejection>,
     ContractQuery(params): ContractQuery<requests::OborQuery>,
 ) -> Result<Json<dto::DetailOboru>, StubError> {
+    let Path(kod) = path.map_err(|_| StubError::invalid("kod"))?;
     validate_path("getObor", "kod", &kod.0)?;
     crate::program_detail::get(pool, kod.0, params)
         .await
@@ -372,9 +374,10 @@ pub async fn get_obor(
 
 pub async fn list_obor_zamestnavatele(
     State(pool): State<DbPool>,
-    Path(kod): Path<requests::KodOboru>,
+    path: Result<Path<requests::KodOboru>, axum::extract::rejection::PathRejection>,
     ContractQuery(params): ContractQuery<requests::OborZamestnavateleQuery>,
 ) -> Result<GeoJson<dto::ZamestnavateleOboru>, StubError> {
+    let Path(kod) = path.map_err(|_| StubError::invalid("kod"))?;
     validate_path("listOborZamestnavatele", "kod", &kod.0)?;
     crate::catalog::employers(pool, kod.0, params)
         .await

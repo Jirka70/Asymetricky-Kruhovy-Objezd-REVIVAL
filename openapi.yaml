@@ -30,6 +30,7 @@ info:
     **Konvence**
     - Kódy (ZSJ, obec, ORP, REDIZO, obor) jsou vždy řetězce kvůli úvodním nulám.
     - Kód oboru obsahuje lomítko; v cestě se kóduje (`23-68-H%2F01`).
+    - Neplatné identifikátory v cestě, včetně neplatného UTF-8 po dekódování, vrací JSON Chyba se stavem 422.
     - Nový scénář dojezdu = nový řádek v tabulce `SCENAR`, nový předpočet a nová hodnota ve výčtu `scenar`.
 servers:
   - url: http://localhost:8000/api/v1

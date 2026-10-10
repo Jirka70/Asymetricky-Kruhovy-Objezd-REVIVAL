@@ -1200,3 +1200,24 @@ fn batch_json_integer_fields_accept_decimal_and_exponent_notation_without_trunca
         );
     }
 }
+
+#[tokio::test]
+async fn invalid_utf8_path_identifiers_return_documented_json_422() {
+    for invalid in ["%FF", "%C3%28", "%E2%82", "valid%FFsuffix"] {
+        for (uri, path, field) in [
+            (
+                format!("/api/v1/skoly/{invalid}"),
+                "/skoly/{redizo}",
+                "redizo",
+            ),
+            (format!("/api/v1/obory/{invalid}"), "/obory/{kod}", "kod"),
+            (
+                format!("/api/v1/obory/{invalid}/zamestnavatele"),
+                "/obory/{kod}/zamestnavatele",
+                "kod",
+            ),
+        ] {
+            check_error(&uri, path, StatusCode::UNPROCESSABLE_ENTITY, Some(field)).await;
+        }
+    }
+}
