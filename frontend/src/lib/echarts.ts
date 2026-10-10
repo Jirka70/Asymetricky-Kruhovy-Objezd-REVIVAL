@@ -5,6 +5,7 @@ import {
   BarChart,
   CustomChart,
   LineChart,
+  LinesChart,
 } from "echarts/charts";
 import {
   GeoComponent,
@@ -22,6 +23,7 @@ echarts.use([
   BarChart,
   CustomChart,
   LineChart,
+  LinesChart,
   GeoComponent,
   TooltipComponent,
   GridComponent,

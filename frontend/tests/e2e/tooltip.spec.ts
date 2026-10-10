@@ -27,13 +27,13 @@ async function hoverZone(page: Page, id: string) {
   await page.mouse.move(point.x, point.y);
 }
 
-test("ZSJ tooltip waits two seconds, describes the area and clears when leaving", async ({ page }) => {
+test("ZSJ tooltip waits half a second, describes the area and clears when leaving", async ({ page }) => {
   await page.goto("/kraj");
   await expect(page.locator(".map-frame .echart svg path").first()).toBeVisible();
   const tooltip = page.locator(".zsj-tooltip");
   await hoverZone(page, "001261");
   // Real timing is intentional: verify the visible hover behaviour.
-  await page.waitForTimeout(1700);
+  await page.waitForTimeout(200);
   await expect(tooltip).toBeHidden();
   await expect(tooltip).toBeVisible({ timeout: 1500 });
   await expect(tooltip).toContainText("Bečov nad Teplou");
@@ -46,7 +46,7 @@ test("ZSJ tooltip waits two seconds, describes the area and clears when leaving"
 
   await hoverZone(page, "000019");
   await expect(tooltip).toBeHidden();
-  await page.waitForTimeout(1700);
+  await page.waitForTimeout(200);
   await expect(tooltip).toBeHidden();
   await expect(tooltip).toBeVisible({ timeout: 1500 });
   await expect(tooltip).toContainText("Abertamy");
@@ -55,9 +55,9 @@ test("ZSJ tooltip waits two seconds, describes the area and clears when leaving"
   await expect(tooltip).toBeHidden();
 
   await hoverZone(page, "001261");
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(100);
   await page.mouse.move(10, 10);
-  await page.waitForTimeout(2100);
+  await page.waitForTimeout(600);
   await expect(tooltip).toBeHidden();
 });
 

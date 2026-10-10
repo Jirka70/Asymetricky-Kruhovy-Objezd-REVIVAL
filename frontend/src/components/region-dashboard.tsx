@@ -45,6 +45,7 @@ const DistributionChart = dynamic(() =>
   import("./analytics").then((m) => m.DistributionChart),
 );
 type Selection = { kind: "school" | "employer"; id: string } | null;
+type ScenarioChanges = [] | [Change];
 export default function RegionDashboard() {
   return <DataProvider>{(data) => <Dashboard data={data} />}</DataProvider>;
 }
@@ -53,7 +54,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     [form, setForm] = useState("den"),
     [threshold, setThreshold] = useState(45);
   const [mode, setMode] = useState<MapMode>("current"),
-    [changes, setChanges] = useState<Change[]>([]);
+    [changes, setChanges] = useState<ScenarioChanges>([]);
   const [candidate, setCandidate] = useState("600009271"),
     [notice, setNotice] = useState("");
   const selection = useSelectionData(baseData, field, form);
@@ -63,7 +64,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   const [undo, setUndo] = useState<{
     field: string;
     form: string;
-    changes: Change[];
+    changes: ScenarioChanges;
     mode: MapMode;
   } | null>(null);
   const fieldName = data.fields.find((f) => f.id === field)?.name ?? field;
@@ -123,23 +124,22 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     });
   }
   function removeChange(id: string) {
-    const remaining = changes.filter((c) => c.school !== id);
-    setChanges(remaining);
-    setMode(remaining.length ? "scenario" : "current");
+    if (changes[0]?.school !== id) return;
+    setChanges([]);
+    setMode("current");
     setNotice("Změna byla odstraněna ze scénáře.");
   }
   function addChange(action: Change["action"]) {
-    const other = changes.filter((c) => c.school !== candidate),
-      desired = action === "add";
-    const updated =
+    const desired = action === "add";
+    const updated: ScenarioChanges =
       ids.has(candidate) === desired
-        ? other
-        : [...other, { school: candidate, action }];
+        ? []
+        : [{ school: candidate, action }];
     setChanges(updated);
     setMode(updated.length ? "scenario" : "current");
     setPanel({ kind: "school", id: candidate });
     setNotice(
-      `${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Mapa a dopady jsou aktualizované.`,
+      `${changes.length && updated.length && changes[0].school !== candidate ? "Předchozí změna byla nahrazena. " : ""}${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Mapa a dopady jsou aktualizované.`,
     );
     focusSection("detail-heading");
   }
@@ -243,6 +243,9 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           Limit určuje podíl dětí ve statistikách.
         </span>
       </div>
+      <p className="workspace-caption">
+        Ve scénáři lze změnit nabídku jen na jedné škole. Další přidání nebo odebrání nahradí předchozí změnu.
+      </p>
       <p className="sr-only" role="status" aria-atomic="true">
         {notice}
       </p>

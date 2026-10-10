@@ -46,8 +46,9 @@ test("region loads a skeleton, uses API school details and reuses cached form re
   await expect(page.locator(".coverage-summary")).toContainText("2 školy");
   expect(schoolRequests).toHaveLength(1);
 
-  await page.getByText("Seznam míst", { exact: true }).click();
-  await page.getByRole("button", { name: "SPŠ Ostrov", exact: true }).click();
+  await expect(page.getByText("Seznam míst", { exact: true })).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Škola pro změnu nabídky" }).fill("SPŠ Ostrov");
+  await page.getByRole("option", { name: /SPŠ Ostrov/ }).click();
   await page.getByText("Informace o škole", { exact: true }).click();
   await expect(page.getByText("Adresa z API 123", { exact: true })).toBeVisible();
   await expect(page.locator(".technical-details")).toContainText("Kapacita: 77 · Přihlášky: 999");
@@ -94,8 +95,7 @@ test("employer failures do not hide schools or masquerade as no employers", asyn
   await expect(page.locator(".coverage-summary")).toContainText("2 školy");
   await page.unroute("**/api/backend/obory/*/zamestnavatele?*");
   await page.getByRole("button", { name: "Zkusit znovu" }).click();
-  await page.getByText("Seznam míst", { exact: true }).click();
-  await page.getByRole("button", { name: "Zaměstnavatel z API", exact: true }).click();
+  await page.getByRole("button", { name: /Zaměstnavatel z API ·.*zobrazit detail/ }).click();
   await expect(page.getByRole("heading", { name: "321 míst v příbuzných profesích" })).toBeVisible();
   await expect(page.getByText("Technici z API", { exact: true })).toBeVisible();
 });

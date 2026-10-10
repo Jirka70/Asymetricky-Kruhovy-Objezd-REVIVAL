@@ -9,7 +9,6 @@ import {
   ArrowUpIcon,
   GraduationCapIcon,
   BriefcaseIcon,
-  ListBulletsIcon,
   CheckIcon,
   XIcon,
 } from "@phosphor-icons/react";
@@ -28,12 +27,29 @@ import {
   type Travel,
 } from "@/lib/data";
 export type MapMode = "current" | "scenario" | "difference";
-let geometry: Promise<void> | undefined;
+type Boundary = { coords: number[][] };
+type MunicipalityGeometry = {
+  features: { geometry:
+    | { type: "Polygon"; coordinates: number[][][] }
+    | { type: "MultiPolygon"; coordinates: number[][][][] }
+  }[];
+};
+let geometry: Promise<Boundary[]> | undefined;
 function loadMaps() {
-  geometry ??= fetch("/data/zsj.geojson")
-    .then(async (response) => {
+  geometry ??= Promise.all(
+    ["zsj", "municipalities"].map(async (name) => {
+      const response = await fetch(`/data/${name}.geojson`);
       if (!response.ok) throw Error("Chybí mapová data");
-      echarts.registerMap("zsj", await response.json());
+      return response.json();
+    }),
+  )
+    .then(([zones, municipalityData]) => {
+      const municipalities = municipalityData as MunicipalityGeometry;
+      echarts.registerMap("zsj", zones);
+      return municipalities.features.flatMap(({ geometry }) => {
+        const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
+        return polygons.flatMap((rings) => rings.map((coords) => ({ coords })));
+      });
     })
     .catch((error) => {
       geometry = undefined;
@@ -85,11 +101,11 @@ export default function RegionMap({
   onModeChange?: (mode: MapMode) => void;
 }) {
   const [ready, setReady] = useState(false);
+  const [boundaries, setBoundaries] = useState<Boundary[]>([]);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const [schools, setSchools] = useState(true);
   const [employers, setEmployers] = useState(true);
-  const [listOpen, setListOpen] = useState(false);
   const chartRef = useRef<EChartsType | null>(null);
   const [mapChart, setMapChart] = useState<EChartsType | null>(null);
   const hoveredZone = useRef<string | null>(null);
@@ -130,8 +146,9 @@ export default function RegionMap({
   useEffect(() => {
     let active = true;
     loadMaps()
-      .then(() => {
+      .then((boundaries) => {
         if (active) {
+          setBoundaries(boundaries);
           setReady(true);
           setFailed(false);
         }
@@ -211,8 +228,8 @@ export default function RegionMap({
         name: zone.id,
         itemStyle: {
           areaColor: color,
-          borderColor: "#f8fafb",
-          borderWidth: 0.65,
+          borderColor: "#fff",
+          borderWidth: 0.3,
         },
         emphasis: {
           itemStyle: {
@@ -226,7 +243,7 @@ export default function RegionMap({
     return {
       tooltip: {
         trigger: "item",
-        showDelay: 2000,
+        showDelay: 500,
         hideDelay: 0,
         transitionDuration: 0,
         className: "zsj-tooltip",
@@ -281,11 +298,26 @@ export default function RegionMap({
         itemStyle: {
           areaColor: "#c8cdc5",
           borderColor: "#fff",
-          borderWidth: 0.65,
+          borderWidth: 0.1,
         },
         label: { show: false },
       },
       series: [
+        {
+          // Reuse the ZSJ projection: pan, zoom and resize stay in sync.
+          type: "lines",
+          name: "Hranice obcí",
+          coordinateSystem: "geo",
+          geoIndex: 0,
+          polyline: true,
+          data: boundaries,
+          silent: true,
+          tooltip: { show: false },
+          emphasis: { disabled: true },
+          lineStyle: { color: "#fff", width: 0.7, opacity: 1 },
+          progressive: 0,
+          z: 2,
+        },
         {
           type: "scatter",
           name: "Města",
@@ -311,7 +343,7 @@ export default function RegionMap({
         },
       ],
     };
-  }, [data, times, before, mode, mapSize, family]);
+  }, [data, times, before, mode, mapSize, family, boundaries]);
   const legend =
     mode === "difference"
       ? [
@@ -504,78 +536,6 @@ export default function RegionMap({
           </div>
         </div>
       </div>
-      <details
-        className="map-text-alternative"
-        open={listOpen}
-        onToggle={(e) => setListOpen(e.currentTarget.open)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setListOpen(false);
-            e.currentTarget.querySelector("summary")?.focus();
-          }
-        }}
-      >
-        <summary>
-          <ListBulletsIcon size={14} />
-          Seznam míst
-        </summary>
-        <div className="map-text-columns">
-          <section>
-            <h3>{family ? "Školy s vybraným oborem" : "Všechny školy"}</h3>
-            <ul aria-label="Seznam škol">
-              {data.schools
-                .filter((s) => !family || schoolIds.has(s.id))
-                .map((s) => (
-                  <li key={s.id}>
-                    <button
-                      className="button-link"
-                      onClick={() => {
-                        setListOpen(false);
-                        onSelectSchool?.(s.id);
-                      }}
-                    >
-                      {s.shortName}
-                    </button>
-                    <span>
-                      {s.city} ·{" "}
-                      {schoolIds.has(s.id)
-                        ? "nabízí obor"
-                        : "bez vybraného oboru"}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          </section>
-          <section>
-            <h3>Zaměstnavatelé</h3>
-            <ul aria-label="Seznam zaměstnavatelů">
-              {data.employers
-                .filter((e) => e.field === field)
-                .map((e) => (
-                  <li key={e.id}>
-                    <button
-                      className="button-link"
-                      onClick={() => {
-                        setListOpen(false);
-                        onSelectEmployer?.(e.id);
-                      }}
-                    >
-                      {e.name}
-                    </button>
-                    <span>
-                      {e.jobs}{" "}
-                      {e.jobs === 1 ? "místo" : e.jobs < 5 ? "místa" : "míst"} ·{" "}
-                      {e.city}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-            {!data.employers.some((e) => e.field === field) && (
-              <p>{employersNotice ?? "Pro tento obor nemáme pracoviště se známou polohou."}</p>
-            )}
-          </section>
-        </div>
-      </details>
       <div className="map-attribution">
         RÚIAN · uložený výpočet OTP · Číslo = počet institucí
       </div>
