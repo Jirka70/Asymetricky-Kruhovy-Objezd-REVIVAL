@@ -29,7 +29,7 @@ async fn migrations_and_api() {
     for migration in &migrations[..7] {
         connection.run_migration(migration.as_ref()).unwrap();
     }
-    assert_eq!(db::migrate(&mut connection).unwrap(), 2);
+    assert_eq!(db::migrate(&mut connection).unwrap(), 3);
     assert_eq!(db::migrate(&mut connection).unwrap(), 0);
     assert_eq!(
         zsj::table
@@ -108,6 +108,7 @@ async fn migrations_and_api() {
     student_school_data(&app, &mut connection, db::pool(&url, 2).unwrap()).await;
     zsj_api(&app, &mut connection).await;
     zsj_accessibility_api(&app, &mut connection).await;
+    simulation_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
     program_detail_api(&app, &mut connection).await;
 
@@ -116,12 +117,12 @@ async fn migrations_and_api() {
             .revert_all_migrations(db::MIGRATIONS)
             .unwrap()
             .len(),
-        9
+        10
     );
-    let remaining = diesel::sql_query("SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('ZSJ', 'DEMO_SKUPINA', 'DATA_DEMOGRAFIE_ZSJ', 'DOJEZDOVE_DOBY')")
+    let remaining = diesel::sql_query("SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('ZSJ', 'DEMO_SKUPINA', 'DATA_DEMOGRAFIE_ZSJ', 'DOJEZDOVE_DOBY', 'SIMULATION_OBCE')")
         .get_result::<Count>(&mut connection).unwrap();
     assert_eq!(remaining.count, 0);
-    assert_eq!(db::migrate(&mut connection).unwrap(), 9);
+    assert_eq!(db::migrate(&mut connection).unwrap(), 10);
     analytical_data(&mut connection);
     assert_eq!(
         zsj::table
@@ -278,14 +279,15 @@ async fn contract_response(
         .unwrap();
     assert_eq!(response.status(), status, "{uri}");
     let media = if status == StatusCode::OK
-        && matches!(path, "/skoly" | "/zsj" | "/obory/{kod}/zamestnavatele")
+        && (matches!(path, "/skoly" | "/zsj" | "/obory/{kod}/zamestnavatele")
+            || (path == "/simulace" && uri.contains("format=geojson")))
     {
         "application/geo+json"
     } else {
         "application/json"
     };
     assert_eq!(response.headers()["content-type"], media);
-    let body_limit = if matches!(path, "/zsj/seznam" | "/zsj") {
+    let body_limit = if matches!(path, "/zsj/seznam" | "/zsj" | "/simulace") {
         64_000_000
     } else {
         2_000_000
@@ -1790,4 +1792,152 @@ async fn program_detail_api(app: &axum::Router, connection: &mut PgConnection) {
             .unwrap()
             .contains(&json!("spatna_dostupnost"))
     );
+}
+
+async fn simulation_api(app: &axum::Router, connection: &mut PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::json;
+    #[derive(QueryableByName)]
+    struct Count {
+        #[diesel(sql_type=diesel::sql_types::BigInt)]
+        count: i64,
+    }
+    let count = diesel::sql_query(r#"SELECT count(*) FROM "SIMULATION_OBCE""#)
+        .get_result::<Count>(connection)
+        .unwrap();
+    assert_eq!(count.count, 134);
+    let count = diesel::sql_query(r#"SELECT count(DISTINCT kod_orp) FROM "SIMULATION_OBCE""#)
+        .get_result::<Count>(connection)
+        .unwrap();
+    assert_eq!(count.count, 7);
+    let base = "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=30";
+    let path = "/simulace";
+    let zsj_body =
+        contract_response(app, &format!("{base}&uroven=zsj"), path, StatusCode::OK).await;
+    assert_eq!(zsj_body["souhrn"]["jednotek_celkem"], 839);
+    assert_eq!(zsj_body["meta"]["skola_obor_uz_uci"], false);
+    assert!(zsj_body["souhrn"]["bilance_skol"].as_array().unwrap().len() > 1);
+    let baseline = zsj_body["souhrn"]["bilance_skol"].clone();
+    for (level, units) in [("zsj", 839), ("obec", 134), ("orp", 7)] {
+        let dictionary =
+            contract_response(app, &format!("{base}&uroven={level}"), path, StatusCode::OK).await;
+        assert_eq!(dictionary["souhrn"]["jednotek_celkem"], units);
+        assert_eq!(dictionary["souhrn"]["bilance_skol"], baseline);
+        let geo = contract_response(
+            app,
+            &format!("{base}&uroven={level}&format=geojson"),
+            path,
+            StatusCode::OK,
+        )
+        .await;
+        assert_eq!(geo["features"].as_array().unwrap().len(), units as usize);
+        assert_eq!(geo["souhrn"], dictionary["souhrn"]);
+        assert_eq!(geo["meta"], dictionary["meta"]);
+        for feature in geo["features"].as_array().unwrap() {
+            let properties = &feature["properties"];
+            assert_eq!(properties["uroven"], level);
+            let code = properties["kod"].as_str().unwrap();
+            if let Some(improvement) = dictionary["jednotky"].get(code) {
+                for (field, value) in improvement.as_object().unwrap() {
+                    assert_eq!(&properties[field], value, "{level}/{code}/{field}");
+                }
+            } else {
+                assert_eq!(properties["zlepseni_min"], 0.0);
+            }
+        }
+    }
+    contract_response(
+        app,
+        "/api/v1/simulace?redizo=600000000&obor=23-68-H%2F01&kapacita=30",
+        path,
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    contract_response(
+        app,
+        "/api/v1/simulace?redizo=600009271&obor=99-94-H%2F99&kapacita=30",
+        path,
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    connection
+        .batch_execute(
+            r#"INSERT INTO "OBORY" (kod,nazev) VALUES ('99-94-H/01','No simulation demand');"#,
+        )
+        .unwrap();
+    contract_response(
+        app,
+        "/api/v1/simulace?redizo=600009271&obor=99-94-H%2F01&kapacita=30",
+        path,
+        StatusCode::UNPROCESSABLE_ENTITY,
+    )
+    .await;
+    // All capacities below regional-average pressure should take the specified early exit.
+    let quiet = nabidka_oboru::table
+        .filter(nabidka_oboru::kod_oboru.eq("23-41-M/01"))
+        .filter(nabidka_oboru::forma_studia.eq("den"))
+        .order(nabidka_oboru::redizo)
+        .select(nabidka_oboru::redizo)
+        .first::<String>(connection)
+        .unwrap();
+    for format in ["slovnik", "geojson"] {
+        let uri = format!(
+            "/api/v1/simulace?redizo={quiet}&obor=23-41-M%2F01&kapacita=30&format={format}"
+        );
+        let body = contract_response(app, &uri, path, StatusCode::OK).await;
+        assert!(body["souhrn"].is_null());
+        assert_eq!(body["meta"]["duvod"], "kapacita_staci");
+        if format == "geojson" {
+            assert_eq!(body["features"], json!([]));
+        } else {
+            assert_eq!(body["jednotky"], json!({}));
+        }
+    }
+    let missing = dojezdove_doby::table.find(("000019", "600009271", "07:00-08:00"));
+    let time = missing
+        .select(DojezdovaDoba::as_select())
+        .first::<DojezdovaDoba>(connection)
+        .unwrap();
+    diesel::delete(missing).execute(connection).unwrap();
+    contract_response(
+        app,
+        &format!("{base}&uroven=zsj"),
+        path,
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&time.kod_zsj),
+            dojezdove_doby::redizo.eq(&time.redizo),
+            dojezdove_doby::slot_prijezdu.eq(&time.slot_prijezdu),
+            dojezdove_doby::doba_jizdy.eq(time.doba_jizdy),
+        ))
+        .execute(connection)
+        .unwrap();
+    let demo = data_demografie_zsj::table.find(("000019", 2021, "1300100014"));
+    let original = demo
+        .select(data_demografie_zsj::populace)
+        .first::<i32>(connection)
+        .unwrap();
+    diesel::delete(demo).execute(connection).unwrap();
+    contract_response(
+        app,
+        &format!("{base}&uroven=zsj"),
+        path,
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    diesel::insert_into(data_demografie_zsj::table)
+        .values((
+            data_demografie_zsj::kod_zsj.eq("000019"),
+            data_demografie_zsj::rok.eq(2021),
+            data_demografie_zsj::demo_skupina.eq("1300100014"),
+            data_demografie_zsj::populace.eq(original),
+        ))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(obory::table.find("99-94-H/01"))
+        .execute(connection)
+        .unwrap();
 }

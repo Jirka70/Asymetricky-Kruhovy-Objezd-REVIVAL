@@ -356,7 +356,7 @@ paths:
       summary: Co kdyby škola učila obor s danou kapacitou
       description: |
         Výchozí formát je slovník `jednotky` podle kódu plochy (ZSJ, obce nebo ORP podle `uroven`)
-        pro plochy, které simulovanou školu stihnou do `max_min`. Nic se neukládá.
+        pro plochy se striktně kratším dojezdem, i pokud jsou stále nad `max_min`. Nic se neukládá.
 
         - `cas_min` = min(`cas_min_puvodni`, `cas_ke_skole`), `zlepseni_min` = rozdíl.
         - `potencialni_uchazeci` = `deti` × `podil_zajmu` (podíl oboru na všech přihláškách v kraji).
@@ -365,7 +365,27 @@ paths:
 
         S `format=geojson` vrátí celou mapu „S novým oborem“ ve stejném tvaru jako `/zsj`
         (všechny plochy, nezměněné se `zlepseni_min: 0`).
-        Zatím jen pro stávající školy (`redizo`).
+        Zatím jen pro stávající školy (`redizo`). Počítají se denní nabídky podle core_job_spec/simulace_oboru.py.
+        Zájem = přihlášky na obor / všechny přihlášky na denní nabídky v kraji.
+        Děti jsou nezaokrouhlený odhad 10–14 let / 5. Rozhodnutí používají původní doby dojezdu.
+        NULL dojezd se v algoritmu bere jako nekonečno; chybějící řádek matice nebo demografie je chyba 500.
+        Shody nejbližších škol rozhoduje menší REDIZO. ZSJ slovník obsahuje jen striktní zlepšení;
+        přidání kapacity na existující školu přepočítá bilance i bez změn dojezdu.
+        Pokud škola obor již učí a přihlášky / kapacita <= 2.66, vrátí se prázdný výstup,
+        souhrn=null a meta.duvod=kapacita_staci (GeoJSON má prázdné features).
+        Existující obor bez denních nabídek vrací 422; neznámá škola nebo obor 404.
+        Souhrn přepočítá spád všech škol, odlehčení deficitních škol, přetažení od ostatních a nový dosah.
+        Využití = (odlehčení + nový dosah) / přidaná kapacita. Verdikt je dobre_misto při využití >= 0.5,
+        jinak spatne_misto při přetažení > odlehčení, jinak neutralni.
+        Největší deficit je nejzápornější původní bilance mimo simulovanou školu.
+        Obec/ORP: doby jsou průměry konečných časů vážené celou populací ZSJ ze SLDB 2021,
+        při nulové váze je čas null. Děti a poptávka se sčítají přes všechny ZSJ plochy.
+        Slovník obsahuje agregované plochy s alespoň jednou striktně zlepšenou ZSJ;
+        souhrn počítá plochy zvolené úrovně, bilance a verdikt vždy používají jednotlivé ZSJ.
+        Nový dosah agregované plochy znamená alespoň jednu nově dosaženou ZSJ.
+        Zlepšení je rozdíl vážených průměrů, null pokud chybí původní čas; není to průměr změn ZSJ.
+        GeoJSON geometrie obcí/ORP jsou sjednocení jejich ZSJ. Dojezdy se zobrazují na dvě desetinná místa,
+        děti na jednu; zájem a souhrn mají stejné zaokrouhlení jako referenční implementace.
       parameters:
         - name: redizo
           in: query
@@ -391,7 +411,6 @@ paths:
           in: query
           schema: { type: string, enum: [slovnik, geojson], default: slovnik }
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Výsledek simulace.
           content:
@@ -418,6 +437,8 @@ paths:
                         podil_zajmu: 0.026, skola_obor_uz_uci: false }
             application/geo+json:
               schema: { $ref: '#/components/schemas/SimulaceGeojson' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
@@ -989,13 +1010,13 @@ components:
       required: [nazev, cas_ke_skole, cas_min, zlepseni_min, pasmo, deti, potencialni_uchazeci, novy_dosah]
       properties:
         nazev: { type: string }
-        cas_ke_skole: { type: [integer, 'null'], description: Dojezd k simulované škole. }
-        cas_min_puvodni: { type: [integer, 'null'], description: Dnes k nejbližší škole s oborem; null = bez spojení. }
-        cas_min: { type: [integer, 'null'], description: Nový nejkratší čas. }
-        zlepseni_min: { type: integer }
+        cas_ke_skole: { type: [number, 'null'], description: Dojezd k simulované škole. }
+        cas_min_puvodni: { type: [number, 'null'], description: Dnes k nejbližší škole s oborem; null = bez spojení. }
+        cas_min: { type: [number, 'null'], description: Nový nejkratší čas. }
+        zlepseni_min: { type: [number, 'null'] }
         pasmo: { $ref: '#/components/schemas/Pasmo' }
         pasmo_puvodni: { $ref: '#/components/schemas/Pasmo' }
-        deti: { type: integer }
+        deti: { type: number }
         potencialni_uchazeci: { type: number }
         novy_dosah: { type: boolean }
 
@@ -1012,6 +1033,13 @@ components:
         blize_ke_skole: { type: number, description: Uchazeči z ploch, kde je simulovaná škola nejbližší. }
         kapacita: { type: integer }
         uchazecu_na_misto: { type: number }
+        bilance_skol: { type: array, items: { $ref: '#/components/schemas/SimulaceBilanceSkoly' } }
+        odlehceni: { type: number }
+        pretazeni: { type: number }
+        novi_v_dosahu: { type: number }
+        vyuziti: { type: number }
+        verdikt: { type: string, enum: [dobre_misto, spatne_misto, neutralni] }
+        nejvetsi_deficit: { anyOf: [{ type: 'null' }, { $ref: '#/components/schemas/SimulaceDeficit' }] }
 
     SimulaceMeta:
       allOf:
@@ -1023,6 +1051,9 @@ components:
             uroven: { type: string, enum: [orp, obec, zsj] }
             podil_zajmu: { type: number, example: 0.026 }
             skola_obor_uz_uci: { type: boolean }
+            prihlasky_na_misto_kraj: { type: [number, 'null'] }
+            index_pretlaku: { type: [number, 'null'] }
+            duvod: { type: string }
 
     Simulace:
       type: object
@@ -1033,7 +1064,7 @@ components:
           description: Slovník kód plochy → hodnoty.
           propertyNames: { $ref: '#/components/schemas/KodPlochy' }
           additionalProperties: { $ref: '#/components/schemas/SimulacePlocha' }
-        souhrn: { $ref: '#/components/schemas/SimulaceSouhrn' }
+        souhrn: { anyOf: [{ type: 'null' }, { $ref: '#/components/schemas/SimulaceSouhrn' }] }
         meta: { $ref: '#/components/schemas/SimulaceMeta' }
 
     SimulaceGeojson:
@@ -1050,7 +1081,32 @@ components:
               geometry: { $ref: '#/components/schemas/GeoPlocha' }
               properties:
                 allOf:
-                  - $ref: '#/components/schemas/PlochaDosahu'
+                  - type: object
+                    required: [kod, uroven, v_dosahu]
+                    properties:
+                      kod: { $ref: '#/components/schemas/KodPlochy' }
+                      uroven: { type: string, enum: [orp, obec, zsj] }
+                      v_dosahu: { type: boolean }
+                      deti_v_dosahu: { type: number }
+                      podil_deti_v_dosahu: { type: number }
+                      nejblizsi_redizo: { type: [string, 'null'] }
                   - $ref: '#/components/schemas/SimulacePlocha'
-        souhrn: { $ref: '#/components/schemas/SimulaceSouhrn' }
+        souhrn: { anyOf: [{ type: 'null' }, { $ref: '#/components/schemas/SimulaceSouhrn' }] }
         meta: { $ref: '#/components/schemas/SimulaceMeta' }
+
+    SimulaceBilanceSkoly:
+      type: object
+      required: [redizo, nazev, kapacita, spad_pred, spad_po]
+      properties:
+        redizo: { $ref: '#/components/schemas/Redizo' }
+        nazev: { type: string }
+        kapacita: { type: integer }
+        spad_pred: { type: number }
+        spad_po: { type: number }
+    SimulaceDeficit:
+      type: object
+      required: [redizo, nazev, chybi_mist]
+      properties:
+        redizo: { $ref: '#/components/schemas/Redizo' }
+        nazev: { type: string }
+        chybi_mist: { type: number }

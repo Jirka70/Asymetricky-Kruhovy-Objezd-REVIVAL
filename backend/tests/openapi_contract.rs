@@ -142,6 +142,7 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
                 | "/zsj/seznam"
                 | "/obory"
                 | "/obory/{kod}"
+                | "/simulace"
                 | "/student/skoly"
                 | "/obory/{kod}/zamestnavatele"
         ) {
@@ -943,6 +944,10 @@ async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
         ("/api/v1/zsj/seznam", "/zsj/seznam"),
         ("/api/v1/zsj?uroven=zsj", "/zsj"),
         ("/api/v1/obory", "/obory"),
+        (
+            "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=30",
+            "/simulace",
+        ),
         ("/api/v1/obory/65-51-H%2F01", "/obory/{kod}"),
         ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
         (

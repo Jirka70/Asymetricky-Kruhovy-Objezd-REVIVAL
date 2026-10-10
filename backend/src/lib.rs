@@ -9,5 +9,6 @@ pub mod programs;
 mod reachability;
 pub mod requests;
 pub mod schema;
+pub mod simulation;
 pub mod student;
 pub mod types;

@@ -336,9 +336,10 @@ pub async fn list_obory(
     crate::programs::list(pool, params).await.map(Json)
 }
 pub async fn get_simulace(
-    ContractQuery(_params): ContractQuery<requests::SimulaceQuery>,
+    State(pool): State<DbPool>,
+    ContractQuery(params): ContractQuery<requests::SimulaceQuery>,
 ) -> Result<SimulaceResponse, StubError> {
-    Err(StubError::unimplemented("getSimulace"))
+    crate::simulation::get(pool, params).await
 }
 pub async fn get_skola(
     State(pool): State<DbPool>,
@@ -472,4 +473,10 @@ pub fn router(pool: DbPool) -> Router {
         )
         .layer(axum::middleware::from_fn(crate::logging::log_request))
         .with_state(pool)
+}
+
+impl From<diesel::result::Error> for StubError {
+    fn from(error: diesel::result::Error) -> Self {
+        crate::catalog::database_error(error)
+    }
 }

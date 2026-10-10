@@ -713,17 +713,19 @@ pub struct SimulacePlocha {
     pub nazev: String,
     #[serde(deserialize_with = "deserialize_required_nullable")]
     #[schemars(required)]
-    pub cas_ke_skole: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cas_min_puvodni: Option<i64>,
+    pub cas_ke_skole: Option<f64>,
+    #[serde(default)]
+    pub cas_min_puvodni: Option<f64>,
     #[serde(deserialize_with = "deserialize_required_nullable")]
     #[schemars(required)]
-    pub cas_min: Option<i64>,
-    pub zlepseni_min: i64,
+    pub cas_min: Option<f64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub zlepseni_min: Option<f64>,
     pub pasmo: Pasmo,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pasmo_puvodni: Option<Pasmo>,
-    pub deti: i64,
+    pub deti: f64,
     pub potencialni_uchazeci: f64,
     pub novy_dosah: bool,
 }
@@ -746,6 +748,20 @@ pub struct SimulaceSouhrn {
     pub kapacita: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub uchazecu_na_misto: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bilance_skol: Option<Vec<SimulaceBilanceSkoly>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub odlehceni: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pretazeni: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub novi_v_dosahu: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vyuziti: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub verdikt: Option<SimulaceVerdikt>,
+    #[serde(default)]
+    pub nejvetsi_deficit: Option<SimulaceDeficit>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
@@ -772,12 +788,20 @@ pub struct SimulaceMeta {
     pub podil_zajmu: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub skola_obor_uz_uci: Option<bool>,
+    #[serde(default)]
+    pub prihlasky_na_misto_kraj: Option<f64>,
+    #[serde(default)]
+    pub index_pretlaku: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duvod: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Simulace {
     pub jednotky: BTreeMap<String, SimulacePlocha>,
-    pub souhrn: SimulaceSouhrn,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub souhrn: Option<SimulaceSouhrn>,
     pub meta: SimulaceMeta,
 }
 
@@ -810,22 +834,24 @@ pub struct SimulaceGeojsonFeaturesItemProperties {
     pub uroven: SimulaceGeojsonFeaturesItemPropertiesUroven,
     #[serde(deserialize_with = "deserialize_required_nullable")]
     #[schemars(required)]
-    pub cas_min: Option<i64>,
+    pub cas_min: Option<f64>,
     pub pasmo: Pasmo,
     pub v_dosahu: bool,
-    pub deti: i64,
+    pub deti: f64,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub deti_v_dosahu: Option<i64>,
+    pub deti_v_dosahu: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub podil_deti_v_dosahu: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nejblizsi_redizo: Option<String>,
     #[serde(deserialize_with = "deserialize_required_nullable")]
     #[schemars(required)]
-    pub cas_ke_skole: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub cas_min_puvodni: Option<i64>,
-    pub zlepseni_min: i64,
+    pub cas_ke_skole: Option<f64>,
+    #[serde(default)]
+    pub cas_min_puvodni: Option<f64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub zlepseni_min: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pasmo_puvodni: Option<Pasmo>,
     pub potencialni_uchazeci: f64,
@@ -846,7 +872,9 @@ pub struct SimulaceGeojsonFeaturesItem {
 pub struct SimulaceGeojson {
     pub r#type: SimulaceGeojsonType,
     pub features: Vec<SimulaceGeojsonFeaturesItem>,
-    pub souhrn: SimulaceSouhrn,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub souhrn: Option<SimulaceSouhrn>,
     pub meta: SimulaceMeta,
 }
 
@@ -905,4 +933,26 @@ pub struct OboryMeta {
     pub prumer_prihlasek_na_misto: f64,
     pub prijimaci_rizeni: MetaBilancePrijimaciRizeni,
     pub prahy: OboryPrahy,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct SimulaceBilanceSkoly {
+    pub redizo: Redizo,
+    pub nazev: String,
+    pub kapacita: i64,
+    pub spad_pred: f64,
+    pub spad_po: f64,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct SimulaceDeficit {
+    pub redizo: Redizo,
+    pub nazev: String,
+    pub chybi_mist: f64,
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SimulaceVerdikt {
+    DobreMisto,
+    SpatneMisto,
+    Neutralni,
 }
