@@ -1,14 +1,36 @@
-# <Název projektu>
+# Obor na dosah
 
-<Co projekt dělá a komu pomáhá. 2–3 věty.>
+Obor na dosah pomáhá žákům 9. tříd a jejich rodičům v Karlovarském kraji najít střední školy a obory, kam se z domova dostanou veřejnou dopravou, a ukazuje, kolik se o obor uchází zájemců a kteří zaměstnavatelé v regionu hledají jeho absolventy. Kraji a školám zároveň dává podklad pro plánování oborové nabídky: spojuje dojezdové časy, demografii základních sídelních jednotek, kapacity škol a poptávku na trhu práce.
 
 ## Použitá data
-- [Název datové sady](URL na datovou sadu), CC BY 4.0 <(upraveno), pokud jste data měnili>
+
+### 🎓 Vzdělávání
+- [DATA ZÁPAD – Záměr počtu přijímaných uchazečů středních škol v Karlovarském kraji pro školní rok 2026/2027](https://www.datazapad.cz/datasets/9332e5a45e0d4dd999bef99a6f51fd40), CC0 1.0 – seznam středních škol, adresy, souřadnice a weby
+- [CERMAT – Přihlášky do škol-oborů, 1. kolo přijímacích zkoušek 2026](https://data.cermat.cz/data-a-analyticke-vystupy-jednotna-prijimaci-zkouska/agregovana-data-jpz.html) ([XLSX](https://data.cermat.cz/files/files/JPZ/agregovana_data_skoly/PZ2026_kolo1_skolobory_prihlasky.xlsx)) – 140 nabídek, 81 oborů, 30 škol v Karlovarském kraji; kapacity a počty přihlášek
+
+### 💼 Trh práce
+- [MPSV – Volná místa za celou ČR](https://data.mpsv.cz/web/data/volna-mista-za-celou-cr) ([JSON](https://data.mpsv.cz/od/soubory/volna-mista/volna-mista.json)) – 744 nabídek v Karlovarském kraji
+- [Národní soustava povolání – API v1.2](https://nsp.cz/api/v1.2) – mapování oborů na profese
+- [ČÚZK RÚIAN – adresní místa (ArcGIS REST)](https://ags.cuzk.gov.cz/arcgis/rest/services/RUIAN/MapServer) – souřadnice pracovišť
+
+### 🏘️ Území a obyvatelstvo
+- [ČSÚ – Základní sídelní jednotky (RSO, Statistický geoportál)](https://geodata.csu.gov.cz/server/rest/services/Hosted/Open_data_RSO/FeatureServer/20) ([GeoJSON](https://geodata.csu.gov.cz/as/data/distribuce/Hosted/Open_data_RSO/FeatureServer/20/geojson.zip)) – polygony ZSJ, vybráno 839 ZSJ v Karlovarském kraji
+- [ČSÚ – Sčítání 2021: obyvatelé a byty za ZSJ](https://csu.gov.cz/produkty/vysledky-scitani-2021-otevrena-data)
+- [ČSÚ – Sčítání 2021: obyvatelstvo podle pětiletých věkových skupin a pohlaví](https://csu.gov.cz/docs/107508/669330fa-7201-a927-a7c8-16e45db63de0/sldb2021_vek5_pohlavi.csv?version=1.0)
+
+### 🚌 Doprava
+- [Jízdní řády vlaků – CZPTT → GTFS (JrUtil, 8. 10. 2026)](https://data.jr.ggu.cz/results/2026-10-08/CZPTT_GTFS.zip)
+- [Jízdní řády autobusů – CIS JŘ / JDF → GTFS (JrUtil, 8. 10. 2026)](https://data.jr.ggu.cz/results/2026-10-08/JDF_merged_GTFS.zip)
+- [OpenStreetMap – Karlovarský kraj (Geofabrik)](https://download.geofabrik.de/europe/czech-republic/karlovarsky-261008.osm.pbf) – © přispěvatelé OpenStreetMap, ODbL
+- [Hranice kraje – OpenStreetMap / Nominatim](https://nominatim.openstreetmap.org/) – © přispěvatelé OpenStreetMap, ODbL
+
+### 🧮 Vlastní výstup
+- **Matice dojezdů ZSJ → škola** – 839 ZSJ × 30 škol, příjezd 7:00–8:00, výpočet v [OpenTripPlanneru](https://www.opentripplanner.org/) nad daty z jízdních řádů a OSM
 
 Licenci najdete u každé datové sady v [Katalogu otevřených dat Karlovarského kraje](https://www.datazapad.cz/search?collection=dataset&layout=grid).
 
 ## Použití AI
-<Které nástroje AI jste použili a k čemu.>
+Koncept aplikace, výběr a propojení datových sad i metodiku výpočtů (dojezdové časy ze ZSJ ke školám v ranním časovém okně, odhad věkové struktury ZSJ z dat obcí, párování oborů s profesemi a poptávkou zaměstnavatelů) navrhl tým. AI asistenti pro programování (mj. Claude) nám pomáhali s implementací – psaním a laděním skriptů pro zpracování dat, backendu v Rustu a API – a s přípravou dokumentace včetně dohledání zdrojů dat. Výstupy AI jsme průběžně kontrolovali, testovali a ověřovali proti zdrojovým datům.
 
 ## Spuštění
 
