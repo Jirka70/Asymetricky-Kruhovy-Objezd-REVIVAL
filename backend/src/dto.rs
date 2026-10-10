@@ -302,6 +302,8 @@ pub struct SkolaDetail {
 pub enum SpojStav {
     #[serde(rename = "ok")]
     Ok,
+    #[serde(rename = "data_nedostupna")]
+    DataNedostupna,
     #[serde(rename = "bez_spojeni")]
     BezSpojeni,
 }

@@ -303,9 +303,11 @@ pub async fn list_skoly(
     crate::catalog::schools(pool, params).await.map(GeoJson)
 }
 pub async fn list_student_skoly(
-    ContractQuery(_params): ContractQuery<requests::StudentSkolyQuery>,
+    State(pool): State<DbPool>,
+    ContractQuery(params): ContractQuery<requests::StudentSkolyQuery>,
 ) -> Result<Json<dto::StudentSkoly>, StubError> {
-    Err(StubError::unimplemented("listStudentSkoly"))
+    let inputs = crate::student::load_school_data(pool, params).await?;
+    crate::student::build_response(inputs).map(Json)
 }
 pub async fn get_student_trasa(
     ContractQuery(_params): ContractQuery<requests::StudentTrasaQuery>,
@@ -380,28 +382,7 @@ pub async fn get_skola(
 
         let nabidky = offers
             .into_iter()
-            .map(|(offer, obor)| {
-                let forma = match offer.forma_studia.as_str() {
-                    "den" => dto::NabidkaForma::Den,
-                    "dal" => dto::NabidkaForma::Dal,
-                    _ => return Err(internal_error()),
-                };
-
-                Ok(dto::Nabidka {
-                    kod_oboru: obor.kod,
-                    nazev_oboru: obor.nazev,
-                    zamereni: offer.display_name,
-                    stupen: None,
-                    forma,
-                    delka_let: Some(i64::from(offer.delka_studia)),
-                    kapacita: i64::from(offer.pocet_prijimanych),
-                    prihlasky: i64::from(offer.loni_pocet_prihlasek),
-                    prihlasky_na_misto: (offer.pocet_prijimanych > 0).then(|| {
-                        f64::from(offer.loni_pocet_prihlasek) / f64::from(offer.pocet_prijimanych)
-                    }),
-                    index_pretlaku: None,
-                })
-            })
+            .map(|(offer, obor)| crate::catalog::offering(offer, obor))
             .collect::<Result<Vec<_>, StubError>>()?;
 
         // These fields are nullable in the DB but required by the API.

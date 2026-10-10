@@ -137,7 +137,12 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
         let path = fixture["path"].as_str().unwrap();
         if !matches!(
             path,
-            "/skoly" | "/skoly/{redizo}" | "/zsj/seznam" | "/obory" | "/obory/{kod}/zamestnavatele"
+            "/skoly"
+                | "/skoly/{redizo}"
+                | "/zsj/seznam"
+                | "/obory"
+                | "/student/skoly"
+                | "/obory/{kod}/zamestnavatele"
         ) {
             check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
         }
@@ -291,7 +296,7 @@ async fn invalid_parameters_return_schema_compliant_422() {
         "/api/v1/student/skoly?lat=49.9&lon=12.0&max_min=10",
         "/api/v1/student/skoly?lat=50.5&lon=13.4&max_min=180",
     ] {
-        check_error(uri, "/student/skoly", StatusCode::NOT_IMPLEMENTED, None).await;
+        check_error(uri, "/student/skoly", StatusCode::SERVICE_UNAVAILABLE, None).await;
     }
 }
 
@@ -930,6 +935,10 @@ fn simulation_area_codes_bands_and_required_nullable_times_match_new_contract() 
 async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
     for (uri, path) in [
         ("/api/v1/skoly", "/skoly"),
+        (
+            "/api/v1/student/skoly?lat=50.2312&lon=12.8711",
+            "/student/skoly",
+        ),
         ("/api/v1/zsj/seznam", "/zsj/seznam"),
         ("/api/v1/obory", "/obory"),
         ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
@@ -986,4 +995,34 @@ async fn program_catalog_ignores_travel_parameters_and_validates_catalog_filters
         Some("forma"),
     )
     .await;
+}
+
+#[tokio::test]
+async fn student_school_endpoint_validates_travel_parameters() {
+    for (uri, field) in [
+        (
+            "/api/v1/student/skoly?lat=50.2&lon=12.8&max_min=9",
+            "max_min",
+        ),
+        (
+            "/api/v1/student/skoly?lat=50.2&lon=12.8&max_min=181",
+            "max_min",
+        ),
+        (
+            "/api/v1/student/skoly?lat=50.2&lon=12.8&max_min=invalid",
+            "max_min",
+        ),
+        (
+            "/api/v1/student/skoly?lat=50.2&lon=12.8&scenar=other",
+            "scenar",
+        ),
+    ] {
+        check_error(
+            uri,
+            "/student/skoly",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Some(field),
+        )
+        .await;
+    }
 }

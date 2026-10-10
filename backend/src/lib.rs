@@ -7,4 +7,5 @@ pub mod models;
 pub mod programs;
 pub mod requests;
 pub mod schema;
+pub mod student;
 pub mod types;

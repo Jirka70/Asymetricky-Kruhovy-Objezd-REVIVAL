@@ -105,6 +105,7 @@ async fn migrations_and_api() {
     analytical_data(&mut connection);
 
     let app = contract::router(db::pool(&url, 2).unwrap());
+    student_school_data(&app, &mut connection, db::pool(&url, 2).unwrap()).await;
     zsj_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
 
@@ -296,6 +297,418 @@ async fn contract_response(
         .collect();
     assert!(errors.is_empty(), "{uri}: {}", errors.join("; "));
     body
+}
+
+async fn student_school_data(app: &axum::Router, connection: &mut PgConnection, pool: db::DbPool) {
+    use diesel::connection::SimpleConnection;
+    use obor_backend::{
+        requests::{Forma, KodOboru, Scenar, StudentSkolyQuery},
+        student::load_school_data,
+    };
+    use std::collections::BTreeSet;
+    let origin = zsj::table
+        .find("000019")
+        .select(Zsj::as_select())
+        .first::<Zsj>(connection)
+        .unwrap();
+    let params = StudentSkolyQuery {
+        lat: origin.lat,
+        lon: origin.lon,
+        obor: None,
+        forma: Forma::Den,
+        max_min: 10,
+        scenar: Scenar::Rano,
+    };
+    let inputs = load_school_data(pool.clone(), params.clone())
+        .await
+        .unwrap();
+    assert_eq!(inputs.origin.as_ref().unwrap().kod, "000019");
+    assert_eq!(inputs.params.max_min, 10);
+    assert_eq!(inputs.params.scenar, Scenar::Rano);
+    assert_eq!(inputs.arrival_slot, "07:00-08:00");
+    assert_eq!(inputs.schools.len(), 34);
+    assert_eq!(inputs.travel_times.len(), 34);
+    let expected = nabidka_oboru::table
+        .filter(nabidka_oboru::forma_studia.eq("den"))
+        .select(nabidka_oboru::id)
+        .load::<uuid::Uuid>(connection)
+        .unwrap();
+    assert_eq!(
+        inputs
+            .offerings
+            .iter()
+            .map(|(offer, _)| offer.id)
+            .collect::<BTreeSet<_>>(),
+        expected.into_iter().collect()
+    );
+    assert!(
+        inputs
+            .offerings
+            .iter()
+            .all(|(offer, program)| offer.kod_oboru == program.kod)
+    );
+    let duration = inputs
+        .travel_times
+        .iter()
+        .find(|time| time.redizo == "600022854")
+        .unwrap();
+    assert!((duration.doba_jizdy.unwrap() - 73.48).abs() < 0.001);
+    // Prefetching preserves long journeys and NULLs for the later reachability stage.
+    assert!(duration.doba_jizdy.unwrap() > f32::from(inputs.params.max_min));
+    assert!(
+        inputs
+            .travel_times
+            .iter()
+            .find(|time| time.redizo == "600008975")
+            .unwrap()
+            .doba_jizdy
+            .is_none()
+    );
+    assert!(
+        inputs
+            .travel_times
+            .iter()
+            .all(|time| time.kod_zsj == "000019" && time.slot_prijezdu == "07:00-08:00")
+    );
+    for (form, raw_form) in [(Forma::Den, "den"), (Forma::Dal, "dal")] {
+        let filtered = load_school_data(
+            pool.clone(),
+            StudentSkolyQuery {
+                obor: Some(KodOboru("65-51-H/01".into())),
+                forma: form,
+                ..params.clone()
+            },
+        )
+        .await
+        .unwrap();
+        let expected = nabidka_oboru::table
+            .filter(nabidka_oboru::kod_oboru.eq("65-51-H/01"))
+            .filter(nabidka_oboru::forma_studia.eq(raw_form))
+            .select(nabidka_oboru::redizo)
+            .load::<String>(connection)
+            .unwrap()
+            .into_iter()
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            filtered
+                .schools
+                .iter()
+                .map(|school| school.redizo.clone())
+                .collect::<BTreeSet<_>>(),
+            expected
+        );
+        assert_eq!(
+            filtered
+                .travel_times
+                .iter()
+                .map(|time| time.redizo.clone())
+                .collect::<BTreeSet<_>>(),
+            expected
+        );
+        assert!(filtered.offerings.iter().all(|(offer, _)| offer.forma_studia == raw_form && offer.kod_oboru == "65-51-H/01"));
+    }
+    let unknown = load_school_data(
+        pool.clone(),
+        StudentSkolyQuery {
+            obor: Some(KodOboru("99-99-H/99".into())),
+            ..params.clone()
+        },
+    )
+    .await
+    .unwrap();
+    assert!(unknown.schools.is_empty());
+    assert!(unknown.offerings.is_empty());
+    assert!(unknown.travel_times.is_empty());
+    let outside = load_school_data(
+        pool.clone(),
+        StudentSkolyQuery {
+            lat: 49.9,
+            lon: 12.0,
+            ..params.clone()
+        },
+    )
+    .await
+    .unwrap();
+    assert!(outside.origin.is_none());
+    assert!(outside.travel_times.is_empty());
+
+    // The first polygon's vertex lies on its boundary, not its interior.
+    #[derive(QueryableByName)]
+    struct BoundaryPoint {
+        #[diesel(sql_type = diesel::sql_types::Double)]
+        lat: f64,
+        #[diesel(sql_type = diesel::sql_types::Double)]
+        lon: f64,
+    }
+    let point = diesel::sql_query(
+        r#"SELECT ST_Y(ST_StartPoint(ST_ExteriorRing(boundary))) AS lat,
+        ST_X(ST_StartPoint(ST_ExteriorRing(boundary))) AS lon FROM "ZSJ" WHERE kod = '000019'"#,
+    )
+    .get_result::<BoundaryPoint>(connection)
+    .unwrap();
+    let boundary = load_school_data(
+        pool.clone(),
+        StudentSkolyQuery {
+            lat: point.lat,
+            lon: point.lon,
+            ..params.clone()
+        },
+    )
+    .await
+    .unwrap();
+    assert_eq!(boundary.origin.unwrap().kod, "000019");
+
+    // Another scenario's slot must not leak into the selected morning data.
+    connection.batch_execute(r#"INSERT INTO "DOJEZDOVE_DOBY" VALUES
+        ('000019', '600022854', '09:00-10:00', 1.0);
+        DELETE FROM "DOJEZDOVE_DOBY" WHERE kod_zsj='000019' AND redizo='600022854' AND slot_prijezdu='07:00-08:00';"#).unwrap();
+    let missing = load_school_data(pool.clone(), params.clone())
+        .await
+        .unwrap();
+    assert!(
+        missing
+            .schools
+            .iter()
+            .any(|school| school.redizo == "600022854")
+    );
+    assert!(
+        !missing
+            .travel_times
+            .iter()
+            .any(|time| time.redizo == "600022854")
+    );
+    assert_eq!(missing.travel_times.len(), 33);
+    let missing_uri = format!(
+        "/api/v1/student/skoly?lat={}&lon={}",
+        origin.lat, origin.lon
+    );
+    contract_response(
+        app,
+        &missing_uri,
+        "/student/skoly",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    connection
+        .batch_execute(
+            r#"DELETE FROM "DOJEZDOVE_DOBY" WHERE slot_prijezdu='09:00-10:00';
+        INSERT INTO "DOJEZDOVE_DOBY" VALUES ('000019', '600022854', '07:00-08:00', 73.48);"#,
+        )
+        .unwrap();
+    let uri = format!(
+        "/api/v1/student/skoly?lat={}&lon={}&max_min=10&scenar=rano",
+        origin.lat, origin.lon
+    );
+    for limit in [10, 120] {
+        let uri = format!(
+            "/api/v1/student/skoly?lat={}&lon={}&max_min={limit}&scenar=rano",
+            origin.lat, origin.lon
+        );
+        let response = contract_response(app, &uri, "/student/skoly", StatusCode::OK).await;
+        let expected: BTreeSet<_> = inputs
+            .travel_times
+            .iter()
+            .filter(|time| {
+                time.doba_jizdy
+                    .is_some_and(|duration| duration <= limit as f32)
+            })
+            .map(|time| time.redizo.as_str())
+            .collect();
+        let rows = response["data"].as_array().unwrap();
+        assert_eq!(
+            rows.iter()
+                .map(|row| row["redizo"].as_str().unwrap())
+                .collect::<BTreeSet<_>>(),
+            expected
+        );
+        assert_eq!(response["meta"]["zsj"], "000019");
+        assert_eq!(response["meta"]["scenar"], "rano");
+        assert_eq!(response["meta"]["max_min"], limit);
+        assert_eq!(response["meta"]["v_dosahu"], expected.len());
+        assert_eq!(response["meta"]["mimo_dosah"], 34 - expected.len());
+        for row in rows {
+            assert_eq!(row["v_dosahu"], true);
+            assert_eq!(row["spoj"]["stav"], "ok");
+            let time = inputs
+                .travel_times
+                .iter()
+                .find(|time| row["redizo"] == time.redizo)
+                .unwrap();
+            assert_eq!(
+                row["spoj"]["cas_min"],
+                time.doba_jizdy.unwrap().round() as i64
+            );
+            let expected_offers: BTreeSet<_> = inputs
+                .offerings
+                .iter()
+                .filter(|(offer, _)| row["redizo"] == offer.redizo)
+                .map(|(offer, _)| offer.id.to_string())
+                .collect();
+            assert_eq!(
+                row["nabidky"].as_array().unwrap().len(),
+                expected_offers.len()
+            );
+            for field in ["odjezd", "prijezd", "prestupy", "chuze_m", "linky"] {
+                assert!(row["spoj"].get(field).is_none());
+            }
+        }
+    }
+    let outside = contract_response(
+        app,
+        "/api/v1/student/skoly?lat=49.9&lon=12.0",
+        "/student/skoly",
+        StatusCode::UNPROCESSABLE_ENTITY,
+    )
+    .await;
+    assert_eq!(outside["error"]["kod"], "mimo_uzemi");
+    let empty_uri = format!(
+        "/api/v1/student/skoly?lat={}&lon={}&obor=99-99-H%2F99",
+        origin.lat, origin.lon
+    );
+    let empty = contract_response(app, &empty_uri, "/student/skoly", StatusCode::OK).await;
+    assert!(empty["data"].as_array().unwrap().is_empty());
+    assert_eq!(empty["meta"]["v_dosahu"], 0);
+    assert_eq!(empty["meta"]["mimo_dosah"], 0);
+    // Confirm database failures still surface through the completed handler.
+    connection
+        .batch_execute(r#"ALTER TABLE "DOJEZDOVE_DOBY" RENAME TO "TEST_DOJEZDOVE_DOBY";"#)
+        .unwrap();
+    contract_response(
+        app,
+        &uri,
+        "/student/skoly",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    connection
+        .batch_execute(r#"ALTER TABLE "TEST_DOJEZDOVE_DOBY" RENAME TO "DOJEZDOVE_DOBY";"#)
+        .unwrap();
+
+    // Controlled durations distinguish the true limit/sort from rounded display times.
+    connection.batch_execute(r#"
+        INSERT INTO "OBORY" (kod, nazev) VALUES ('99-98-H/01', 'Student response test');
+        INSERT INTO "NABIDKA_OBORU" (id, redizo, kod_oboru, forma_studia, delka_studia, pocet_prijimanych, loni_pocet_prihlasek) VALUES
+            ('98000000-0000-0000-0000-000000000001', '600022854', '99-98-H/01', 'den', 3, 5, 50),
+            ('98000000-0000-0000-0000-000000000002', '600022854', '99-98-H/01', 'den', 3, 0, 1),
+            ('98000000-0000-0000-0000-000000000003', '600008975', '99-98-H/01', 'den', 3, 10, 40),
+            ('98000000-0000-0000-0000-000000000004', '600009301', '99-98-H/01', 'den', 3, 10, 40),
+            ('98000000-0000-0000-0000-000000000005', '600019632', '99-98-H/01', 'den', 3, 10, 40),
+            ('98000000-0000-0000-0000-000000000006', '600009009', '99-98-H/01', 'den', 3, 10, 40),
+            ('98000000-0000-0000-0000-000000000007', '600008975', '99-98-H/01', 'dal', 3, 3, 9);
+        UPDATE "DOJEZDOVE_DOBY" SET doba_jizdy = CASE redizo
+            WHEN '600022854' THEN 60.0 WHEN '600008975' THEN 60.4
+            WHEN '600009301' THEN 60.1 WHEN '600009009' THEN 60.0 ELSE NULL END
+            WHERE kod_zsj='000019' AND slot_prijezdu='07:00-08:00'
+            AND redizo IN ('600022854', '600008975', '600009301', '600019632', '600009009');
+        UPDATE stredni_skoly SET nazev='Equal times' WHERE redizo IN ('600022854', '600009009');
+    "#).unwrap();
+    let base = format!(
+        "/api/v1/student/skoly?lat={}&lon={}&max_min=60&scenar=rano",
+        origin.lat, origin.lon
+    );
+    let response = contract_response(
+        app,
+        &format!("{base}&obor=99-98-H%2F01"),
+        "/student/skoly",
+        StatusCode::OK,
+    )
+    .await;
+    let rows = response["data"].as_array().unwrap();
+    assert_eq!(
+        rows.iter()
+            .map(|row| row["redizo"].as_str().unwrap())
+            .collect::<Vec<_>>(),
+        vec![
+            "600009009",
+            "600022854",
+            "600009301",
+            "600008975",
+            "600019632"
+        ]
+    );
+    assert_eq!(response["meta"]["v_dosahu"], 2);
+    assert_eq!(response["meta"]["mimo_dosah"], 3);
+    for (index, row) in rows.iter().enumerate() {
+        assert_eq!(row["v_dosahu"], index < 2);
+        assert!(
+            row["nabidky"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .all(|offer| offer["kod_oboru"] == "99-98-H/01" && offer["forma"] == "den")
+        );
+        if index < 4 {
+            assert_eq!(row["spoj"]["cas_min"], 60);
+        }
+    }
+    assert_eq!(rows[4]["spoj"]["stav"], "data_nedostupna");
+    assert!(rows[4]["spoj"].get("cas_min").is_none());
+    let offers = rows[1]["nabidky"].as_array().unwrap();
+    assert_eq!(offers.len(), 2);
+    let funded = offers.iter().find(|offer| offer["kapacita"] == 5).unwrap();
+    assert_eq!(funded["prihlasky_na_misto"], 10.0);
+    assert_eq!(funded["nazev_oboru"], "Student response test");
+    let zero = offers.iter().find(|offer| offer["kapacita"] == 0).unwrap();
+    assert!(zero.get("prihlasky_na_misto").is_none());
+    let unfiltered = contract_response(app, &base, "/student/skoly", StatusCode::OK).await;
+    let included: BTreeSet<_> = unfiltered["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|row| row["redizo"].as_str().unwrap())
+        .collect();
+    assert!(included.contains("600022854"));
+    assert!(included.contains("600009009"));
+    for excluded in ["600009301", "600008975", "600019632"] {
+        assert!(!included.contains(excluded));
+    }
+    let dal = contract_response(
+        app,
+        &format!("{base}&obor=99-98-H%2F01&forma=dal"),
+        "/student/skoly",
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(dal["data"].as_array().unwrap().len(), 1);
+    assert_eq!(dal["data"][0]["redizo"], "600008975");
+    assert_eq!(dal["data"][0]["v_dosahu"], false);
+    assert_eq!(dal["data"][0]["nabidky"][0]["forma"], "dal");
+    assert_eq!(dal["data"][0]["nabidky"][0]["kapacita"], 3);
+
+    // Missing school data must fail instead of becoming an invented name/location.
+    diesel::update(stredni_skoly::table.find("600022854"))
+        .set(stredni_skoly::nazev.eq(None::<String>))
+        .execute(connection)
+        .unwrap();
+    contract_response(
+        app,
+        &format!("{base}&obor=99-98-H%2F01"),
+        "/student/skoly",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    for school in &inputs.schools {
+        diesel::update(stredni_skoly::table.find(&school.redizo))
+            .set(stredni_skoly::nazev.eq(school.nazev.clone()))
+            .execute(connection)
+            .unwrap();
+    }
+    for time in &inputs.travel_times {
+        diesel::update(dojezdove_doby::table.find((
+            &time.kod_zsj,
+            &time.redizo,
+            &time.slot_prijezdu,
+        )))
+        .set(dojezdove_doby::doba_jizdy.eq(time.doba_jizdy))
+        .execute(connection)
+        .unwrap();
+    }
+    diesel::delete(nabidka_oboru::table.filter(nabidka_oboru::kod_oboru.eq("99-98-H/01")))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(obory::table.find("99-98-H/01"))
+        .execute(connection)
+        .unwrap();
 }
 
 async fn zsj_api(app: &axum::Router, connection: &mut PgConnection) {

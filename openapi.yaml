@@ -98,6 +98,15 @@ paths:
 
         Bez `obor` vrací jen školy v dosahu. S `obor` vrací všechny školy s tímto oborem,
         i mimo dosah (`v_dosahu: false`).
+
+        Scénář `rano` používá předpočítaný slot `07:00-08:00`. Limit se porovnává
+        s původní desetinnou dobou, zobrazené `cas_min` se zaokrouhluje na celé minuty.
+        Řazení používá původní dobu; chybějící doby jsou na konci, shody rozhoduje název a REDIZO.
+        Metadata počítají školy v dosahu a mimo dosah před filtrováním výsledků podle limitu.
+        NULL v předpočtu znamená nedostupná data (bez trasy nebo chyba výpočtu):
+        `spoj.stav` je `data_nedostupna`, `cas_min` se neuvádí a `v_dosahu` je false.
+        Odjezdy, příjezdy, přestupy, chůze a linky se neuvádějí, protože je předpočet neobsahuje.
+        Bod mimo všechny známé ZSJ vrací 422 (`mimo_uzemi`); chybějící řádek matice vrací 500.
       parameters:
         - $ref: '#/components/parameters/Lat'
         - $ref: '#/components/parameters/Lon'
@@ -106,7 +115,8 @@ paths:
         - $ref: '#/components/parameters/MaxMin'
         - $ref: '#/components/parameters/Scenar'
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
           description: Školy se spojem.
           content:
@@ -656,7 +666,7 @@ components:
       type: object
       required: [stav]
       properties:
-        stav: { type: string, enum: [ok, bez_spojeni] }
+        stav: { type: string, enum: [ok, bez_spojeni, data_nedostupna], description: data_nedostupna znamená neznámou dobu z předpočtu; nerozlišuje chybějící trasu od chyby výpočtu. }
         odjezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
         prijezd: { oneOf: [{ $ref: '#/components/schemas/Cas' }, { type: 'null' }] }
         cas_min: { type: [integer, 'null'], example: 36 }

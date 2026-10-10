@@ -357,3 +357,28 @@ fn vhodnost(value: i16) -> Result<Vhodnost, StubError> {
         _ => Err(internal_error()),
     }
 }
+
+/// Shared conversion for school details and the student school response.
+pub(crate) fn offering(
+    offer: models::NabidkaOboru,
+    program: models::Obor,
+) -> Result<dto::Nabidka, StubError> {
+    let forma = match offer.forma_studia.as_str() {
+        "den" => dto::NabidkaForma::Den,
+        "dal" => dto::NabidkaForma::Dal,
+        _ => return Err(internal_error()),
+    };
+    Ok(dto::Nabidka {
+        kod_oboru: program.kod,
+        nazev_oboru: program.nazev,
+        zamereni: offer.display_name,
+        stupen: None,
+        forma,
+        delka_let: Some(i64::from(offer.delka_studia)),
+        kapacita: i64::from(offer.pocet_prijimanych),
+        prihlasky: i64::from(offer.loni_pocet_prihlasek),
+        prihlasky_na_misto: (offer.pocet_prijimanych > 0)
+            .then(|| f64::from(offer.loni_pocet_prihlasek) / f64::from(offer.pocet_prijimanych)),
+        index_pretlaku: None,
+    })
+}
