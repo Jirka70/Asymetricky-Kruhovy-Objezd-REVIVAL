@@ -111,6 +111,7 @@ async fn migrations_and_api() {
     zsj_accessibility_api(&app, &mut connection).await;
     simulation_api(&app, &mut connection).await;
     batch_simulation_api(&app, &mut connection).await;
+    school_catchment_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
     program_detail_api(&app, &mut connection).await;
 
@@ -776,7 +777,8 @@ async fn catalog_api(app: &axum::Router, connection: &mut diesel::PgConnection) 
             feature["geometry"]["coordinates"],
             json!([body["lon"], body["lat"]])
         );
-        assert_eq!(body["spadovost"], json!({}));
+        assert!(body["spadovost"]["deti_v_dosahu"].is_i64());
+        assert!(body["spadovost"]["obce"].is_array());
     }
     contract_response(
         app,
@@ -1985,4 +1987,90 @@ async fn batch_simulation_api(app: &axum::Router, connection: &mut PgConnection)
         contract_response(app, old_uri, "/simulace", StatusCode::OK).await,
         original
     );
+}
+
+async fn school_catchment_api(app: &axum::Router, connection: &mut PgConnection) {
+    use serde_json::json;
+    #[derive(QueryableByName)]
+    struct Municipality {
+        #[diesel(sql_type=diesel::sql_types::Text)]
+        code: String,
+        #[diesel(sql_type=diesel::sql_types::Text)]
+        name: String,
+        #[diesel(sql_type=diesel::sql_types::BigInt)]
+        children: i64,
+        #[diesel(sql_type=diesel::sql_types::Float)]
+        minutes: f32,
+    }
+    let school = "600022854";
+    let mut previous = 0;
+    for limit in [10i32, 60, 120, 180] {
+        let expected=diesel::sql_query(r#"SELECT z.kod_obce AS code,o.nazev_obce AS name,sum((d.populace::bigint+2)/5)::bigint AS children,min(t.doba_jizdy) AS minutes
+            FROM "ZSJ" z JOIN "SIMULATION_OBCE" o USING(kod_obce) JOIN "DATA_DEMOGRAFIE_ZSJ" d ON d.kod_zsj=z.kod AND d.rok=2021 AND d.demo_skupina='1300100014'
+            JOIN "DOJEZDOVE_DOBY" t ON t.kod_zsj=z.kod WHERE t.redizo=$1 AND t.slot_prijezdu='07:00-08:00' AND t.doba_jizdy <= $2 GROUP BY z.kod_obce,o.nazev_obce ORDER BY z.kod_obce"#)
+            .bind::<diesel::sql_types::Text,_>(school).bind::<diesel::sql_types::Integer,_>(limit).load::<Municipality>(connection).unwrap();
+        let body = contract_response(
+            app,
+            &format!("/api/v1/skoly/{school}?max_min={limit}"),
+            "/skoly/{redizo}",
+            StatusCode::OK,
+        )
+        .await;
+        let total = expected.iter().map(|r| r.children).sum::<i64>();
+        assert_eq!(body["spadovost"]["deti_v_dosahu"], total);
+        assert!(total >= previous);
+        previous = total;
+        assert_eq!(body["spadovost"]["obce"],json!(expected.into_iter().map(|r|json!({"kod_obce":r.code,"nazev":r.name,"deti":r.children,"nejkratsi_cas_min":r.minutes.round() as i64})).collect::<Vec<_>>()));
+        assert_eq!(body["meta"], json!({"scenar":"rano","max_min":limit}));
+    }
+    assert!(previous > 0);
+    let original = dojezdove_doby::table
+        .filter(dojezdove_doby::redizo.eq(school))
+        .filter(dojezdove_doby::slot_prijezdu.eq("07:00-08:00"))
+        .select(DojezdovaDoba::as_select())
+        .load::<DojezdovaDoba>(connection)
+        .unwrap();
+    let rows = dojezdove_doby::table
+        .filter(dojezdove_doby::redizo.eq(school))
+        .filter(dojezdove_doby::slot_prijezdu.eq("07:00-08:00"));
+    diesel::update(rows)
+        .set(dojezdove_doby::doba_jizdy.eq(Some(60.001f32)))
+        .execute(connection)
+        .unwrap();
+    let uri = format!("/api/v1/skoly/{school}?max_min=60");
+    let empty = contract_response(app, &uri, "/skoly/{redizo}", StatusCode::OK).await;
+    assert_eq!(empty["spadovost"], json!({"deti_v_dosahu":0,"obce":[]}));
+    diesel::update(rows)
+        .set(dojezdove_doby::doba_jizdy.eq(None::<f32>))
+        .execute(connection)
+        .unwrap();
+    assert_eq!(
+        contract_response(app, &uri, "/skoly/{redizo}", StatusCode::OK).await["spadovost"],
+        empty["spadovost"]
+    );
+    let row = &original[0];
+    let key = dojezdove_doby::table.find((&row.kod_zsj, school, "07:00-08:00"));
+    diesel::delete(key).execute(connection).unwrap();
+    contract_response(
+        app,
+        &uri,
+        "/skoly/{redizo}",
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )
+    .await;
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&row.kod_zsj),
+            dojezdove_doby::redizo.eq(school),
+            dojezdove_doby::slot_prijezdu.eq("07:00-08:00"),
+            dojezdove_doby::doba_jizdy.eq(row.doba_jizdy),
+        ))
+        .execute(connection)
+        .unwrap();
+    for row in original {
+        diesel::update(dojezdove_doby::table.find((row.kod_zsj, school, "07:00-08:00")))
+            .set(dojezdove_doby::doba_jizdy.eq(row.doba_jizdy))
+            .execute(connection)
+            .unwrap();
+    }
 }

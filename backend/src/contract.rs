@@ -1,9 +1,8 @@
 //! OpenAPI handlers, query validation, and stubs for analytical operations.
 use crate::{
     db::DbPool,
-    dto, models,
+    dto,
     requests::{self, RequestQuery},
-    schema,
 };
 use axum::{
     Extension, Json, Router,
@@ -12,8 +11,6 @@ use axum::{
     response::{Html, IntoResponse, Response},
     routing::{get, post},
 };
-use bigdecimal::ToPrimitive;
-use diesel::prelude::*;
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::{collections::BTreeMap, sync::LazyLock};
@@ -194,14 +191,6 @@ pub(crate) fn api_error(status: StatusCode, kod: &str, zprava: &str) -> StubErro
     }
 }
 
-fn internal_error() -> StubError {
-    api_error(
-        StatusCode::INTERNAL_SERVER_ERROR,
-        "interni_chyba",
-        "Nepodařilo se načíst detail školy.",
-    )
-}
-
 fn validate_query(operation: &str, raw_query: Option<String>) -> Result<(), StubError> {
     let pairs: Vec<(String, String)> =
         serde_urlencoded::from_str(raw_query.as_deref().unwrap_or_default())
@@ -362,88 +351,14 @@ pub async fn get_simulace(
 pub async fn get_skola(
     State(pool): State<DbPool>,
     Path(redizo): Path<requests::Redizo>,
-    ContractQuery(_params): ContractQuery<requests::SkolaQuery>,
+    ContractQuery(params): ContractQuery<requests::SkolaQuery>,
 ) -> Result<Json<dto::SkolaDetail>, StubError> {
     validate_path("getSkola", "redizo", &redizo.0)?;
-
-    let detail = tokio::task::spawn_blocking(move || {
-        let mut conn = pool.get().map_err(|error| {
-            tracing::error!(%error, "Cannot obtain database connection");
-            api_error(
-                StatusCode::SERVICE_UNAVAILABLE,
-                "databaze_nedostupna",
-                "Databáze je dočasně nedostupná.",
-            )
-        })?;
-
-        let school = schema::stredni_skoly::table
-            .find(&redizo.0)
-            .select(models::Skola::as_select())
-            .first::<models::Skola>(&mut conn)
-            .optional()
-            .map_err(|error| {
-                tracing::error!(%error, "Cannot load school");
-                internal_error()
-            })?
-            .ok_or_else(|| {
-                api_error(
-                    StatusCode::NOT_FOUND,
-                    "skola_nenalezena",
-                    "Škola nebyla nalezena.",
-                )
-            })?;
-
-        let offers = schema::nabidka_oboru::table
-            .inner_join(schema::obory::table)
-            .filter(schema::nabidka_oboru::redizo.eq(&redizo.0))
-            .select((models::NabidkaOboru::as_select(), models::Obor::as_select()))
-            .load::<(models::NabidkaOboru, models::Obor)>(&mut conn)
-            .map_err(|error| {
-                tracing::error!(%error, "Cannot load school offerings");
-                internal_error()
-            })?;
-
-        let nabidky = offers
-            .into_iter()
-            .map(|(offer, obor)| crate::catalog::offering(offer, obor))
-            .collect::<Result<Vec<_>, StubError>>()?;
-
-        // These fields are nullable in the DB but required by the API.
-        let nazev = school.nazev.ok_or_else(internal_error)?;
-        let lat = school
-            .lat
-            .and_then(|value| value.to_f64())
-            .filter(|value| value.is_finite())
-            .ok_or_else(internal_error)?;
-        let lon = school
-            .lon
-            .and_then(|value| value.to_f64())
-            .filter(|value| value.is_finite())
-            .ok_or_else(internal_error)?;
-
-        Ok::<_, StubError>(dto::SkolaDetail {
-            redizo: school.redizo,
-            nazev,
-            adresa: school.adresa,
-            web: school.web,
-            lat,
-            lon,
-            nabidky,
-            spadovost: dto::SkolaDetailSpadovost {
-                deti_v_dosahu: None,
-                obce: None,
-            },
-            meta: None,
-        })
-    })
-    .await
-    .map_err(|error| {
-        tracing::error!(%error, "School query task failed");
-        internal_error()
-    })??;
-
-    Ok(Json(detail))
+    crate::school_detail::get(pool, redizo.0, params)
+        .await
+        .map(Json)
 }
+
 pub async fn get_obor(
     State(pool): State<DbPool>,
     Path(kod): Path<requests::KodOboru>,

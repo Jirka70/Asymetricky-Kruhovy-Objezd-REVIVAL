@@ -11,6 +11,7 @@ pub mod programs;
 mod reachability;
 pub mod requests;
 pub mod schema;
+mod school_detail;
 pub mod simulation;
 pub mod student;
 pub mod types;

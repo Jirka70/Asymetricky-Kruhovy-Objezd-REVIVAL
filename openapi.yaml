@@ -68,6 +68,15 @@ paths:
       tags: [Společné]
       operationId: getSkola
       summary: Detail školy, její nabídka a spádová oblast
+      description: |
+        Spád zahrnuje ZSJ s konečným dojezdem do této školy v limitu max_min,
+        nezávisle na tom, zda je jiná škola blíž. Scénář rano používá slot 07:00-08:00.
+        Děti jsou populace 10–14 let ze SLDB 2021 dělená pěti, zaokrouhlená v každé ZSJ.
+        Obce se řadí podle kódu; jejich děti jsou součet dosažitelných ZSJ a čas je
+        nejkratší dojezd z těchto ZSJ. Limit se porovnává před zaokrouhlením časů.
+        Bez dosažitelných ZSJ vrací deti_v_dosahu=0 a obce=[]. Uložené NULL časy
+        znamenají neznámý dojezd a do spádu se nezapočítávají; chybějící řádky matice
+        nebo demografie vrací 500. Detail i spád se čtou z jednoho konzistentního snímku.
       parameters:
         - name: redizo
           in: path
