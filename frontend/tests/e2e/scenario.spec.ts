@@ -16,6 +16,7 @@ test("scenario retains only one school offering change, including after undo", a
   await expect(page.locator(".changes-summary")).toContainText("1 změna v nabídce");
   await expect(page.locator(".changes-summary")).not.toContainText("SLŠ Žlutice");
   await expect(page.locator(".scenario-impact")).toContainText("2 → 1");
+  await expect(page.locator(".scenario-impact > div").first()).toContainText("0");
 
   await openSchool(page, "ISŠTE Sokolov");
   await page.getByRole("button", { name: "Odebrat obor ze simulované nabídky" }).click();

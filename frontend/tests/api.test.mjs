@@ -2,11 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { QueryObserver } from "@tanstack/react-query";
-import { createQueryClient, schoolsQuery, employersQuery, schoolQuery, programsQuery, ApiError } from "../src/lib/api.ts";
+import { createQueryClient, schoolsQuery, employersQuery, schoolQuery, programsQuery, simulationQuery, ApiError } from "../src/lib/api.ts";
 import { catalogData, selectionData } from "../src/lib/api-data.ts";
 import { proxyApi } from "../src/lib/server/api-proxy.ts";
 import { schoolIds, travelTimes } from "../src/lib/data.ts";
-import { schools, daily, distance, employers, points, responseFor } from "./fixtures/api.mjs";
+import { schools, daily, distance, employers, points, responseFor, simulation } from "./fixtures/api.mjs";
 
 const snapshot = JSON.parse(readFileSync(new URL("../public/data/snapshot.json", import.meta.url)));
 
@@ -129,8 +129,68 @@ test("proxy forwards backend errors, handles outages and excludes unfinished/liv
   const missing = await proxyApi(request, ["skoly", "600000000"], "http://backend", async () => Response.json({ error: { kod: "nenalezeno" } }, { status: 404 }));
   assert.equal(missing.status, 404);
   assert.equal((await missing.json()).error.kod, "nenalezeno");
-  for (const path of [["student", "trasa"], ["simulace"], ["zsj"], ["..", "docs"]]) {
+  for (const path of [["student", "trasa"], ["zsj", "unsupported"], ["..", "docs"]]) {
     const result = await proxyApi(request, path, "http://backend", () => { throw Error("must not fetch"); });
     assert.equal(result.status, 404);
   }
+});
+
+
+test("simulation queries cache all inputs independently and request complete ZSJ results", async (t) => {
+  const client = createQueryClient();
+  t.after(() => client.clear());
+  const urls = [];
+  t.mock.method(globalThis, "fetch", async (url) => {
+    urls.push(new URL(url, "http://frontend"));
+    return Response.json(simulation());
+  });
+  const input = {redizo: "600009271", obor: "18-20-M/01", kapacita: 30, max_min: 45};
+  await Promise.all([client.fetchQuery(simulationQuery(input)), client.fetchQuery(simulationQuery(input))]);
+  await client.fetchQuery(simulationQuery(input));
+  assert.equal(urls.length, 1);
+  for (const change of [{redizo: "600009084"}, {obor: "23-51-E/01"}, {kapacita: 60}, {max_min: 60}]) {
+    await client.fetchQuery(simulationQuery({...input, ...change}));
+  }
+  assert.equal(urls.length, 5);
+  assert.equal(urls[0].searchParams.get("obor"), input.obor);
+  assert.equal(urls[0].searchParams.get("format"), "geojson");
+  assert.equal(urls[0].searchParams.get("uroven"), "zsj");
+  assert.equal(urls[0].searchParams.get("scenar"), "rano");
+  assert.equal(simulationQuery({...input, redizo: ""}).enabled, false);
+  for (const kapacita of [0, 301, 1.5, NaN]) assert.equal(simulationQuery({...input, kapacita}).enabled, false);
+});
+
+test("simulation proxy caches parameterized GET for a day and preserves domain errors", async () => {
+  const request = new Request("http://frontend/api/backend/simulace?redizo=600009271&kapacita=30&obor=18-20-M%2F01&max_min=45");
+  let upstream;
+  const result = await proxyApi(request, ["simulace"], "http://backend", async (url, options) => {
+    upstream = url;
+    assert.equal(options.next.revalidate, 86400);
+    return Response.json({error: {kod: "bez_denni_nabidky"}}, {status: 422});
+  });
+  assert.equal(upstream.searchParams.get("kapacita"), "30");
+  assert.equal(upstream.pathname, "/api/v1/simulace");
+  assert.equal(result.status, 422);
+});
+
+
+test("cached data stays fresh for 86400 seconds and refreshes on the next request after expiry", async (t) => {
+  const client = createQueryClient();
+  t.after(() => client.clear());
+  const started = Date.now();
+  let now = started;
+  t.mock.method(Date, "now", () => now);
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    requests++;
+    return Response.json(schools);
+  });
+  const options = schoolsQuery("18-20-M/01", "den");
+  await client.fetchQuery(options);
+  now = started + 86400 * 1000 - 1;
+  await client.fetchQuery(options);
+  assert.equal(requests, 1);
+  now++;
+  await client.fetchQuery(options);
+  assert.equal(requests, 2);
 });

@@ -1,6 +1,11 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
+import { accessibilityQuery, simulationQuery, type SimulationResponse } from "@/lib/api";
+import ProgramDetail from "./program-detail";
+import { accessibilityData } from "@/lib/accessibility-data";
+import { simulationData } from "@/lib/simulation-data";
 import {
   PlusIcon,
   MinusIcon,
@@ -38,9 +43,7 @@ const RegionMap = dynamic(() => import("./region-map"), {
 const DemandPanel = dynamic(() =>
   import("./analytics").then((m) => m.DemandPanel),
 );
-const AdmissionPanel = dynamic(() =>
-  import("./analytics").then((m) => m.AdmissionPanel),
-);
+
 const DistributionChart = dynamic(() =>
   import("./analytics").then((m) => m.DistributionChart),
 );
@@ -57,6 +60,14 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     [changes, setChanges] = useState<ScenarioChanges>([]);
   const [candidate, setCandidate] = useState("600009271"),
     [notice, setNotice] = useState("");
+  const [capacity, setCapacity] = useState("30");
+  const validCapacity = Number.isInteger(Number(capacity)) && Number(capacity) >= 1 && Number(capacity) <= 300;
+  const addition = changes[0]?.action === "add";
+  const simulation = useQuery(simulationQuery({
+    redizo: addition && form === "den" ? changes[0]?.school ?? "" : "",
+    obor: field, kapacita: Number(capacity), max_min: threshold,
+  }));
+  const result = useMemo(() => simulation.data?.souhrn ? simulationData(simulation.data) : undefined, [simulation.data]);
   const selection = useSelectionData(baseData, field, form);
   const { data } = selection;
   const [panel, setPanel] = useState<Selection>(null);
@@ -65,6 +76,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     field: string;
     form: string;
     changes: ScenarioChanges;
+    capacity: string;
     mode: MapMode;
   } | null>(null);
   const fieldName = data.fields.find((f) => f.id === field)?.name ?? field;
@@ -73,25 +85,31 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     () => schoolIds(data, field, form, changes),
     [data, field, form, changes],
   );
-  const before = useMemo(() => travelTimes(data, ids), [data, ids]);
-  const after = useMemo(
-    () => travelTimes(data, scenarioIds),
-    [data, scenarioIds],
+  const accessibility = useQuery(accessibilityQuery(field, form, threshold));
+  const current = useMemo(() => accessibility.data ? accessibilityData(accessibility.data) : undefined, [accessibility.data]);
+  const removal = changes[0]?.action === "remove";
+  const removalBefore = useMemo(() => removal ? travelTimes(data, ids) : {}, [data, ids, removal]);
+  const removalAfter = useMemo(
+    () => removal ? travelTimes(data, scenarioIds) : {},
+    [data, scenarioIds, removal],
   );
-  const base = within(data.zsj, before, threshold),
-    next = within(data.zsj, after, threshold);
-  const better = data.zsj.filter(
+  const before = addition && result ? result.before : removal ? removalBefore : current?.times ?? {};
+  const after = addition ? result?.after ?? before : removal ? removalAfter : before;
+  const zones = addition && result ? result.zones : current?.zones ?? [];
+  const base = (addition && result) || removal ? within(zones, before, threshold) : current?.coverage ?? within([], {}, threshold),
+    next = within(zones, after, threshold);
+  const better = (addition ? simulation.data?.souhrn?.zlepsenych_jednotek : undefined) ?? zones.filter(
     (z) => difference(before[z.id], after[z.id]) < 0,
   ).length;
-  const worse = data.zsj.filter(
+  const worse = zones.filter(
     (z) => difference(before[z.id], after[z.id]) > 0,
   ).length;
-  const hasScenario = changes.length > 0,
+  const hasScenario = changes.length > 0 && (!addition || Boolean(result)),
     additionalChildren = next.accessible - base.accessible;
   function changeSelection(nextField: string, nextForm: string) {
     if (nextField === field && nextForm === form) return;
     if (changes.length) {
-      setUndo({ field, form, changes, mode });
+      setUndo({ field, form, changes, mode, capacity });
       setNotice(
         "Po změně oboru nebo formy začínáte nový scénář. Předchozí můžete vrátit.",
       );
@@ -130,6 +148,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     setNotice("Změna byla odstraněna ze scénáře.");
   }
   function addChange(action: Change["action"]) {
+    if (action === "add" && !ids.has(candidate) && (form !== "den" || !validCapacity)) return;
     const desired = action === "add";
     const updated: ScenarioChanges =
       ids.has(candidate) === desired
@@ -139,17 +158,18 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     setMode(updated.length ? "scenario" : "current");
     setPanel({ kind: "school", id: candidate });
     setNotice(
-      `${changes.length && updated.length && changes[0].school !== candidate ? "Předchozí změna byla nahrazena. " : ""}${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Mapa a dopady jsou aktualizované.`,
+      `${changes.length && updated.length && changes[0].school !== candidate ? "Předchozí změna byla nahrazena. " : ""}${action === "add" ? "Přidáno" : "Odebráno"}: ${fieldName}, ${data.schools.find((s) => s.id === candidate)?.shortName}. Scénář byl změněn.`,
     );
     focusSection("detail-heading");
   }
   function resetScenario() {
-    setUndo({ field, form, changes, mode });
+    setUndo({ field, form, changes, mode, capacity });
     setChanges([]);
     setMode("current");
     setNotice("Scénář byl zrušen. Můžete jej vrátit.");
   }
   function example() {
+    setCapacity("30");
     setField(DEFAULT_FIELD);
     setForm("den");
     setCandidate("600009271");
@@ -222,7 +242,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
         <div className="compact-scenario-actions">
           <button
             className="primary"
-            disabled={!selection.schools.data || scenarioIds.has(candidate)}
+            disabled={!selection.schools.data || scenarioIds.has(candidate) || (!ids.has(candidate) && (form !== "den" || !validCapacity))}
             onClick={() => addChange("add")}
           >
             <PlusIcon size={17} />
@@ -237,6 +257,26 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           </button>
         </div>
       </section>
+      <div className="simulation-controls">
+        <label className="field">
+          <span>Kapacita nového oboru</span>
+          <input type="number" min={1} max={300} step={1} value={capacity}
+            aria-invalid={!validCapacity} aria-describedby="simulation-hint"
+            onChange={(event) => setCapacity(event.target.value)} />
+        </label>
+        <span id="simulation-hint">1–300 míst v prvním ročníku. Přidání oboru je dostupné pouze pro denní studium.</span>
+        {changes.length > 0 && !hasScenario && (
+          <button onClick={resetScenario}>Zrušit scénář</button>
+        )}
+      </div>
+      {!validCapacity && <p role="alert">Zadejte celou kapacitu od 1 do 300 míst.</p>}
+      {addition && simulation.data?.souhrn === null && (
+        <p role="status" className="query-notice">
+          {simulation.data.meta.duvod === "kapacita_staci"
+            ? "Současná kapacita podle modelu stačí. Simulace neprovedla změnu."
+            : "API nevrátilo vyhodnocení scénáře."}
+        </p>
+      )}
       <div className="workspace-caption">
         <span>2026/27 · Po 12. 10. 2026 · příjezdy 7:00–8:00</span>
         <span id="threshold-hint">
@@ -258,6 +298,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
               setField(undo.field);
               setForm(undo.form);
               setChanges(undo.changes);
+              setCapacity(undo.capacity);
               setMode(undo.mode);
               setUndo(null);
               setPanel(null);
@@ -273,7 +314,9 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
         </div>
       )}
       <QueryStatus queries={selection.schools.data ? [selection.schools, selection.employers] : [selection.employers]} />
-      <QueryBoundary queries={[selection.schools]}>
+      {accessibility.data && <QueryStatus queries={[accessibility]} />}
+      {addition && validCapacity && simulation.data && <QueryStatus queries={[simulation]} />}
+      {(!addition || validCapacity) && <QueryBoundary queries={addition ? [selection.schools, accessibility, simulation] : [selection.schools, accessibility]}>
       <div
         className={`map-workspace region-workspace${panel ? " has-detail" : ""}`}
       >
@@ -286,9 +329,9 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           </h2>
           <RegionMap
             data={data}
-            times={mode === "current" ? before : after}
+            times={mode === "current" || !hasScenario ? before : after}
             before={before}
-            schoolIds={mode === "current" ? ids : scenarioIds}
+            schoolIds={mode === "current" || !hasScenario ? ids : scenarioIds}
             field={field}
             employersNotice={selection.employersNotice}
             onSelectSchool={(id) => openPlace("school", id)}
@@ -297,7 +340,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
               panel?.kind === "employer" ? panel.id : undefined
             }
             selectedSchoolId={school?.id}
-            mode={mode}
+            mode={hasScenario ? mode : "current"}
             onModeChange={setMode}
             hasScenario={hasScenario}
           />
@@ -359,7 +402,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     ) : (
                       <MinusIcon size={18} />
                     )}
-                    Ve scénáři: obor{" "}
+                    {hasScenario ? "Ve scénáři: obor" : "Požadavek: obor"}{" "}
                     {schoolChange.action === "add" ? "přidán" : "odebrán"}
                   </p>
                 )}
@@ -379,6 +422,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                   ) : (
                     <button
                       className={ids.has(school.id) ? "" : "primary"}
+                      disabled={!ids.has(school.id) && (form !== "den" || !validCapacity)}
                       onClick={() =>
                         addChange(ids.has(school.id) ? "remove" : "add")
                       }
@@ -397,6 +441,9 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                 {hasScenario && (
                   <section className="detail-section">
                     <h3>Dopad celého scénáře</h3>
+                    {addition && simulation.data?.souhrn && (
+                      <SimulationSummary summary={simulation.data.souhrn} />
+                    )}
                     <div className="scenario-impact">
                       <div>
                         <strong>{better}</strong>
@@ -460,7 +507,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             <p className="data-note">
               {number(base.accessible)}
               {hasScenario && ` → ${number(next.accessible)}`} z{" "}
-              {number(base.total)} dětí (10–14 let)
+              {number(base.total)} dětí v odhadovaném ročníku
               {!hasScenario && ` · ${ids.size} školy`}
             </p>
             <button
@@ -503,7 +550,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                   </button>
                 </div>
               ))}
-              <small>Modelová simulace</small>
+              <small>{addition ? "Modelová simulace z API" : "Lokální simulace odebrání · API ji zatím nepodporuje"}</small>
             </div>
           )}
         </section>
@@ -511,12 +558,12 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           <h2>Kolik dětí má školu v dosahu?</h2>
           <DistributionChart
             compact
-            zones={data.zsj}
+            zones={zones}
             before={before}
             after={hasScenario ? after : undefined}
           />
           <p className="data-note">
-            Odhad dětí 10–14 let · SLDB 2021. Podíly podle dětí, nikoli rozlohy.
+            Odhad jednoho ročníku: děti 10–14 let / 5 · SLDB 2021. Podíly podle dětí, nikoli rozlohy.
           </p>
         </section>
       </div>
@@ -526,9 +573,25 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           field={field}
           onSelect={(id) => changeSelection(id, form)}
         />
-        <AdmissionPanel data={data} ids={ids} />
+        <ProgramDetail field={field} limit={threshold} onSelectSchool={(id) => openPlace("school", id)} />
       </div>
-      </QueryBoundary>
+      </QueryBoundary>}
     </>
+  );
+}
+
+function SimulationSummary({ summary }: { summary: NonNullable<SimulationResponse["souhrn"]> }) {
+  const decimal = (value: number | undefined) => value == null ? "Neuvedeno" : new Intl.NumberFormat("cs-CZ", { maximumFractionDigits: 2 }).format(value);
+  const verdicts = { dobre_misto: "Dobré místo", spatne_misto: "Nevhodné místo", neutralni: "Neutrální" };
+  return (
+    <div className="simulation-result">
+      <p><strong>{summary.verdikt ? verdicts[summary.verdikt] : "Bez hodnocení"}</strong></p>
+      <p>Odhad potenciálních uchazečů: <strong>{decimal(summary.potencialni_uchazeci)}</strong></p>
+      <p>Odlehčení školám s nedostatkem míst: {decimal(summary.odlehceni)}</p>
+      <p>Přetažení od ostatních škol: {decimal(summary.pretazeni)}</p>
+      <p>Nově v dosahu: {decimal(summary.novi_v_dosahu)}</p>
+      <p>Využití přidané kapacity: {summary.vyuziti == null ? "Neuvedeno" : `${decimal(summary.vyuziti * 100)} %`}</p>
+      <p className="data-note">Modelový odhad uchazečů, nikoliv skutečné přihlášky nebo přijetí.</p>
+    </div>
   );
 }

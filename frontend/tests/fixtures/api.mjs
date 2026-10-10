@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+const zones = JSON.parse(readFileSync(new URL("../../public/data/snapshot.json", import.meta.url))).zsj;
 export const points = (features) => ({ type: "FeatureCollection", features });
 export const schoolFeature = (redizo, nazev, count = 1) => ({
   type: "Feature",
@@ -39,6 +41,10 @@ export const employers = {
 };
 export function responseFor(url) {
   const path = decodeURIComponent(url.pathname);
+  if (path === "/api/v1/zsj") return accessibility(url.searchParams);
+  if (path === "/api/v1/student/skoly") return studentSchools(url.searchParams);
+  if (/^\/api\/v1\/obory\/\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path)) return programDetail();
+  if (path === "/api/v1/simulace") return simulation(url.searchParams);
   if (path === "/api/v1/skoly") {
     const field = url.searchParams.get("obor");
     if (!field) return schools;
@@ -54,4 +60,48 @@ export function responseFor(url) {
     return { ...points([]), meta: { mapovani: false, existuje: null } };
   }
   return null;
+}
+
+export function simulation(params = new URLSearchParams()) {
+  return {
+    type: "FeatureCollection",
+    features: zones.map((zone) => ({
+      type: "Feature",
+      properties: {
+        kod: zone.id, nazev: zone.name, deti: 10,
+        cas_min_puvodni: null,
+        cas_min: zone.id === "001261" ? 12.5 : null,
+      },
+    })),
+    souhrn: {
+      zlepsenych_jednotek: 1, potencialni_uchazeci: 17.25,
+      odlehceni: 12.5, pretazeni: 3, novi_v_dosahu: 4.75,
+      vyuziti: 17.25 / Number(params.get("kapacita") ?? 30), verdikt: "dobre_misto",
+    },
+    meta: {},
+  };
+}
+
+export function accessibility(params = new URLSearchParams()) {
+  return {type: "FeatureCollection", features: zones.map((zone, index) => ({
+    properties: {kod: zone.id, nazev: zone.name, cas_min: params.get("forma") === "dal" ? undefined : index === 0 ? 45 : 80,
+      deti: 10, v_dosahu: false, deti_v_dosahu: 0, pasmo: "nad_60"},
+  })), meta: {}};
+}
+export function studentSchools(params = new URLSearchParams()) {
+  return {data: params.get("forma") === "dal" ? [] : schools.features.map((feature, i) => ({
+    redizo: feature.properties.redizo, nazev: feature.properties.nazev,
+    lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0],
+    v_dosahu: i === 0, spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180},
+    nabidky: [{kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 77, prihlasky: 999}],
+  })), meta: {max_min: Number(params.get("max_min") ?? 120), zsj: "063550"}};
+}
+export function programDetail() {
+  return {
+    obor: {kod: "18-20-M/01", nazev: "Detail IT z API", pocet_skol: 2, kapacita: 432, prihlasky: 876,
+      prihlasky_na_misto: 2.03, deti_v_dosahu: 123, deti_bez_oboru: 456, podil_deti_v_dosahu: 21.24},
+    nabidky: [{...detail.nabidky[0], redizo: detail.redizo, nazev_skoly: detail.nazev}],
+    kandidati: [{redizo: "600009271", nazev: "SLŠ Žlutice z API", nove_dosazene_deti: 321, ma_pribuzny_obor: true}],
+    trh_prace: null,
+  };
 }

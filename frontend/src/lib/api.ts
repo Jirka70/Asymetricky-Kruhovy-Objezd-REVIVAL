@@ -77,7 +77,7 @@ export function createQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 5 * 60 * 1000,
+        staleTime: 86400 * 1000,
         gcTime: typeof window === "undefined" ? Infinity : 24 * 60 * 60 * 1000,
         retry: (count, error) =>
           count < 1 && !(error instanceof ApiError && error.status < 500),
@@ -134,5 +134,99 @@ export function employersQuery(obor: string) {
         signal,
       ),
     enabled: Boolean(obor),
+  });
+}
+
+export type SimulationParams = {
+  redizo: string;
+  obor: string;
+  kapacita: number;
+  max_min: number;
+};
+export type SimulationResponse = {
+  type: "FeatureCollection";
+  features: {
+    properties: {
+      kod: string;
+      nazev: string;
+      cas_min_puvodni: number | null;
+      cas_min: number | null;
+      deti: number;
+    };
+  }[];
+  souhrn: {
+    zlepsenych_jednotek?: number;
+    potencialni_uchazeci?: number;
+    odlehceni?: number;
+    pretazeni?: number;
+    novi_v_dosahu?: number;
+    vyuziti?: number;
+    verdikt?: "dobre_misto" | "spatne_misto" | "neutralni";
+  } | null;
+  meta: { duvod?: string };
+};
+
+export function simulationQuery(input: SimulationParams) {
+  const params = new URLSearchParams({
+    redizo: input.redizo,
+    obor: input.obor,
+    kapacita: String(input.kapacita),
+    max_min: String(input.max_min),
+    uroven: "zsj",
+    format: "geojson",
+    scenar: "rano",
+  });
+  return queryOptions({
+    queryKey: ["simulace", { ...input, uroven: "zsj", format: "geojson", scenar: "rano" }],
+    queryFn: ({ signal }) => getJson<SimulationResponse>(`/api/backend/simulace?${params}`, signal),
+    enabled: Boolean(input.redizo && input.obor) && Number.isInteger(input.kapacita) && input.kapacita >= 1 && input.kapacita <= 300,
+  });
+}
+
+export type AccessibilityResponse = {
+  features: { properties: {
+    kod: string; nazev: string; cas_min?: number; deti: number;
+    v_dosahu: boolean; deti_v_dosahu?: number; pasmo: string;
+  } }[];
+};
+export type StudentSchool = {
+  redizo: string; nazev: string; lat: number; lon: number; v_dosahu: boolean;
+  spoj: { stav: string; cas_min?: number };
+  nabidky: SchoolResponse["nabidky"];
+};
+export type StudentSchoolsResponse = {
+  data: StudentSchool[];
+  meta: { zsj?: string; max_min: number; presnost?: string };
+};
+export type ProgramResponse = {
+  obor: { kod: string; nazev: string; pocet_skol: number; kapacita: number; prihlasky: number;
+    prihlasky_na_misto: number | null; deti_v_dosahu: number; deti_bez_oboru: number;
+    podil_deti_v_dosahu: number | null };
+  nabidky: (SchoolResponse["nabidky"][number] & { redizo?: string; nazev_skoly?: string; deti_v_dosahu_skoly?: number })[];
+  kandidati: { redizo: string; nazev: string; nove_dosazene_deti: number; ma_pribuzny_obor: boolean }[];
+  trh_prace: { volna_mista?: number; zamestnavatelu?: number } | null;
+};
+
+export function accessibilityQuery(obor: string, forma: string, max_min: number) {
+  const params = new URLSearchParams({ obor, forma, max_min: String(max_min), uroven: "zsj", scenar: "rano" });
+  return queryOptions({
+    queryKey: ["zsj", { obor, forma, max_min, uroven: "zsj", scenar: "rano" }],
+    queryFn: ({ signal }) => getJson<AccessibilityResponse>(`/api/backend/zsj?${params}`, signal),
+  });
+}
+export function programQuery(kod: string, max_min: number, kandidatu = 5) {
+  const params = new URLSearchParams({ max_min: String(max_min), kandidatu: String(kandidatu), scenar: "rano" });
+  return queryOptions({
+    queryKey: ["obor", { kod, max_min, kandidatu, scenar: "rano" }],
+    queryFn: ({ signal }) => getJson<ProgramResponse>(`/api/backend/obory/${encodeURIComponent(kod)}?${params}`, signal),
+    enabled: Boolean(kod),
+  });
+}
+export function studentSchoolsQuery(input: { lat: number; lon: number; obor: string; forma: string; max_min: number }) {
+  const params = new URLSearchParams(Object.entries({ ...input, scenar: "rano" }).map(([key, value]) => [key, String(value)]));
+  return queryOptions({
+    queryKey: ["student-skoly", { ...input, scenar: "rano" }],
+    queryFn: ({ signal }) => getJson<StudentSchoolsResponse>(`/api/backend/student/skoly?${params}`, signal),
+    enabled: Number.isFinite(input.lat) && Number.isFinite(input.lon),
   });
 }

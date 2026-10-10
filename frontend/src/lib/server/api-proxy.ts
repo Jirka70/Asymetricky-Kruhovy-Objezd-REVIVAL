@@ -1,7 +1,9 @@
-/** Cache only the public, implemented catalog reads, never future live routing. */
+/** Cache only the public, implemented reads, never future live routing. */
 function supportedPath(path: string[]) {
   return (
-    (path.length === 1 && ["skoly", "obory"].includes(path[0])) ||
+    (path.length === 1 && ["skoly", "obory", "simulace", "zsj"].includes(path[0])) ||
+    (path.length === 2 && path[0] === "student" && path[1] === "skoly") ||
+    (path.length === 2 && path[0] === "obory" && /^\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path[1])) ||
     (path.length === 2 && path[0] === "skoly" && /^\d{9}$/.test(path[1])) ||
     (path.length === 3 && path[0] === "obory" &&
       /^\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path[1]) && path[2] === "zamestnavatele")

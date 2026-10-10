@@ -1419,3 +1419,30 @@ button.journey-select:hover {
 @media (prefers-reduced-motion: reduce) {
   .skeleton-line, .skeleton-block { animation: none; }
 }
+
+
+.simulation-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: white;
+}
+.simulation-controls .field {
+  width: 210px;
+  max-width: 100%;
+}
+.simulation-controls > span {
+  flex: 1 1 260px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.simulation-result {
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+.simulation-result p {
+  margin: 8px 0;
+}

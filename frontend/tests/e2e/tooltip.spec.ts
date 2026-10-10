@@ -70,7 +70,10 @@ test("ZSJ tooltip distinguishes missing journeys and compares the scenario", asy
   const tooltip = page.locator(".zsj-tooltip");
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toContainText("Bez uloženého spojení");
+  await expect(page.getByRole("button", { name: "Přidat obor", exact: true })).toBeDisabled();
+  await page.getByRole("combobox", { name: "Forma studia" }).selectOption("den");
   await page.getByRole("button", { name: "Přidat obor", exact: true }).click();
+  await expect(page.locator(".simulation-result")).toBeVisible();
   await page.getByRole("button", { name: /Zavřít detail/ }).click();
   await hoverZone(page, "001261");
   await expect(tooltip).toBeVisible();

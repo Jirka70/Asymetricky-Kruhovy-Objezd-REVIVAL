@@ -69,7 +69,7 @@ test("API failure offers retry without quietly showing the snapshot", async ({ p
   await expect(page.locator(".map-frame")).toBeVisible();
 });
 
-test("family search uses API offers with local journeys; empty form can recover", async ({ page }) => {
+test("family search uses API travel times and offers; empty form can recover", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/rodiny");
