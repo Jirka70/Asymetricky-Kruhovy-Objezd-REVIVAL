@@ -1114,6 +1114,7 @@ async fn batch_simulation_validates_json_body_before_accessing_database() {
     for (field, value) in [
         ("max_min", json!(9)),
         ("max_min", json!(181)),
+        ("max_min", json!(120.5)),
         ("scenar", json!("odpoledne")),
         ("uroven", json!("invalid")),
         ("format", json!("xml")),
@@ -1126,7 +1127,10 @@ async fn batch_simulation_validates_json_body_before_accessing_database() {
     for (value, status) in invalids
         .into_iter()
         .map(|v| (v, StatusCode::UNPROCESSABLE_ENTITY))
-        .chain([(valid, StatusCode::SERVICE_UNAVAILABLE)])
+        .chain([
+            (valid, StatusCode::SERVICE_UNAVAILABLE),
+            (json!({"obor":"23-68-H/01","max_min":120.0,"zmeny":[{"redizo":"600009271","zmena_kapacity":30.0}]}), StatusCode::SERVICE_UNAVAILABLE),
+        ])
     {
         let response = app
             .clone()
@@ -1162,4 +1166,37 @@ async fn batch_simulation_validates_json_body_before_accessing_database() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+}
+
+#[test]
+fn batch_json_integer_fields_accept_decimal_and_exponent_notation_without_truncation() {
+    use obor_backend::requests::BatchSimulaceRequest;
+    for raw in [
+        r#"{"obor":"23-68-H/01","max_min":120.0,"zmeny":[{"redizo":"600009271","zmena_kapacity":30.0},{"redizo":"600009084","zmena_kapacity":-30.0}]}"#,
+        r#"{"obor":"23-68-H/01","max_min":1.2e2,"zmeny":[{"redizo":"600009271","zmena_kapacity":3e1},{"redizo":"600009084","zmena_kapacity":-3e1}]}"#,
+    ] {
+        let value: Value = serde_json::from_str(raw).unwrap();
+        assert_valid(
+            &SPEC["components"]["schemas"]["BatchSimulaceRequest"],
+            &value,
+        );
+        let typed: BatchSimulaceRequest = serde_json::from_value(value).unwrap();
+        assert_eq!(typed.max_min, 120);
+        assert_eq!(typed.zmeny[0].zmena_kapacity, 30);
+        assert_eq!(typed.zmeny[1].zmena_kapacity, -30);
+    }
+    for value in [
+        json!(30.5),
+        json!(-30.5),
+        json!("30"),
+        json!(true),
+        json!(1e40),
+    ] {
+        assert!(
+            serde_json::from_value::<BatchSimulaceRequest>(
+                json!({"obor":"23-68-H/01","zmeny":[{"redizo":"600009271","zmena_kapacity":value}]})
+            )
+            .is_err()
+        );
+    }
 }

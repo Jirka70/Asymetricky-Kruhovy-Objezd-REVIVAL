@@ -270,7 +270,7 @@ operation!(SimulaceQuery, "getSimulace");
 pub struct BatchSimulaceRequest {
     pub obor: KodOboru,
     pub zmeny: Vec<ZmenaKapacity>,
-    #[serde(default = "default_max_min")]
+    #[serde(default = "default_max_min", deserialize_with = "json_integer")]
     pub max_min: u16,
     #[serde(default)]
     pub scenar: Scenar,
@@ -283,5 +283,30 @@ pub struct BatchSimulaceRequest {
 #[serde(deny_unknown_fields)]
 pub struct ZmenaKapacity {
     pub redizo: Redizo,
+    #[serde(deserialize_with = "json_integer")]
     pub zmena_kapacity: i64,
+}
+
+// JSON Schema integers include numbers with no fractional component (e.g. 30.0).
+fn json_integer<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: TryFrom<i64>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    let integer = value
+        .as_i64()
+        .or_else(|| {
+            value
+                .as_f64()
+                .filter(|number| {
+                    number.fract() == 0.0
+                        && *number >= i64::MIN as f64
+                        && *number < -(i64::MIN as f64)
+                })
+                .map(|number| number as i64)
+        })
+        .ok_or_else(|| serde::de::Error::custom("Expected an integer-valued JSON number"))?;
+    T::try_from(integer)
+        .map_err(|_| serde::de::Error::custom("Integer is outside the supported range"))
 }
