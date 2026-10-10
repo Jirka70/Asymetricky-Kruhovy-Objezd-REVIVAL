@@ -10,6 +10,7 @@ pub struct Zsj {
     pub nazev: String,
     pub lat: f64,
     pub lon: f64,
+    pub kod_obce: Option<String>,
 }
 
 #[derive(Debug, Queryable, Selectable, Serialize)]
@@ -87,4 +88,32 @@ pub struct OborProfese {
     pub cz_isco3: String,
     pub kod_oboru: String,
     pub vhodnost: i16,
+}
+
+#[derive(Debug, Queryable, Selectable, Serialize)]
+#[diesel(table_name = demo_skupina)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct DemoSkupina {
+    pub id: String,
+    pub vek_od_do: String,
+}
+
+#[derive(Debug, Queryable, Selectable, Serialize)]
+#[diesel(table_name = data_demografie_zsj)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct DemografieZsj {
+    pub kod_zsj: String,
+    pub rok: i32,
+    pub demo_skupina: String,
+    pub populace: i32,
+}
+
+#[derive(Debug, Queryable, Selectable, Serialize)]
+#[diesel(table_name = dojezdove_doby)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct DojezdovaDoba {
+    pub kod_zsj: String,
+    pub redizo: String,
+    pub slot_prijezdu: String,
+    pub doba_jizdy: Option<f32>,
 }

@@ -1,0 +1,4 @@
+DROP TABLE public."DATA_DEMOGRAFIE_ZSJ";
+DROP TABLE public."DEMO_SKUPINA";
+DROP INDEX IF EXISTS public.zsj_kod_obce_idx;
+ALTER TABLE public."ZSJ" DROP COLUMN kod_obce;

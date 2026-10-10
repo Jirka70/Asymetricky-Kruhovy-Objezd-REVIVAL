@@ -15,6 +15,7 @@ diesel::table! {
         lat -> Float8,
         lon -> Float8,
         boundary -> Geometry,
+        kod_obce -> Nullable<Text>,
     }
 }
 
@@ -102,6 +103,39 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    #[sql_name = "DEMO_SKUPINA"]
+    demo_skupina (id) {
+        id -> Text,
+        vek_od_do -> Text,
+    }
+}
+
+diesel::table! {
+    #[sql_name = "DATA_DEMOGRAFIE_ZSJ"]
+    data_demografie_zsj (kod_zsj, rok, demo_skupina) {
+        kod_zsj -> Text,
+        rok -> Int4,
+        demo_skupina -> Text,
+        populace -> Int4,
+    }
+}
+
+diesel::table! {
+    #[sql_name = "DOJEZDOVE_DOBY"]
+    dojezdove_doby (kod_zsj, redizo, slot_prijezdu) {
+        kod_zsj -> Text,
+        redizo -> Text,
+        slot_prijezdu -> Text,
+        doba_jizdy -> Nullable<Float4>,
+    }
+}
+
+diesel::joinable!(data_demografie_zsj -> zsj (kod_zsj));
+diesel::joinable!(data_demografie_zsj -> demo_skupina (demo_skupina));
+diesel::joinable!(dojezdove_doby -> zsj (kod_zsj));
+diesel::joinable!(dojezdove_doby -> stredni_skoly (redizo));
+
 diesel::joinable!(nabidka_oboru -> obory (kod_oboru));
 diesel::joinable!(poptavka_profesi -> zamestnavatele (zamestnavatel_id));
 diesel::joinable!(poptavka_profesi -> profesni_skupiny (cz_isco3));
@@ -115,5 +149,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     zamestnavatele,
     profesni_skupiny,
     poptavka_profesi,
-    obor_profese
+    obor_profese,
+    demo_skupina,
+    data_demografie_zsj,
+    dojezdove_doby
 );
