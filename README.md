@@ -34,6 +34,28 @@ Koncept aplikace, výběr a propojení datových sad i metodiku výpočtů (doje
 
 ## Spuštění
 
+### Frontend (Next.js)
+
+Webová aplikace je ve složce `frontend/`. Používá Next.js App Router,
+TypeScript, vlastní CSS a Apache ECharts. Doporučený Node.js 22.18+.
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Otevřete adresu vypsanou v terminálu, standardně http://localhost:3000.
+Jiný port lze zvolit příkazem `npm run dev -- --port 3001`.
+Kontroly: `npm run lint`, `npm test` a `npm run build`.
+
+Stránky `/kraj` a `/rodiny` obsahují interaktivní kartogram, simulaci nabídky
+oborů, grafy a hledání uložených dojezdů. Používají lokální export existujících
+dat; běh frontendu nevyžaduje databázi ani OpenTripPlanner a nestahuje nová data.
+Podíly přijatých a jednotlivé úseky cest jsou výslovně označené modelové ukázky,
+protože v podkladech chybí. Podrobnosti a postup obnovy exportu jsou ve
+[frontend/README.md](frontend/README.md).
+
 ### Lokální databáze PostgreSQL + PostGIS
 
 Vyžaduje běžící Docker Desktop (nebo Docker Engine s Compose). `compose.yaml`
