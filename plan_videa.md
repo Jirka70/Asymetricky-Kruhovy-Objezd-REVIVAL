@@ -1,3 +1,0 @@
-# Pro rodiny
-
-# Pro kraj
