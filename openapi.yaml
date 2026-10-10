@@ -272,6 +272,20 @@ paths:
       tags: [Pro kraj]
       operationId: getObor
       summary: Detail oboru – nabídky, kandidátní školy a trh práce
+      description: |
+        Nabídky a kapacity zahrnují všechny formy studia. Školy se počítají podle různých REDIZO.
+        Dojezd používá ranní matici 07:00–08:00 a původní minuty <= max_min.
+        Děti jsou skupina 10–14 let z roku 2021 / 5, zaokrouhlená po ZSJ stejně jako u /zsj.
+        Celkový dosah je sjednocení ZSJ všech škol s oborem; dosah každé nabídky je dosah její školy.
+        Kandidáti obor neučí v žádné formě; nový dosah počítá děti bez známého stávajícího dosahu,
+        které kandidátní školu do limitu stihnou. Shody rozhoduje název školy a REDIZO.
+        Příbuzný obor má stejné první dvě číslice KKOV. Obec se zatím nevrací.
+        NULL dojezdy se nepovažují za známý dosah, nejde o potvrzení absence spojení.
+        Chybějící řádky matice nebo demografické vstupy vracejí 500.
+        Poměry s nulovým jmenovatelem jsou null; při nulovém počtu dětí je podíl dosahu 0 %.
+        Signály používají katalogové prahy; spatna_dostupnost znamená podíl dosahu < 50 %
+        při kladném celkovém počtu dětí. Trh práce zahrnuje vhodnost 1/2 a vylučuje terciární vzdělání;
+        bez mapování je trh_prace i počty trhu práce null, s mapováním bez poptávky jsou počty 0.
       parameters:
         - name: kod
           in: path
@@ -286,12 +300,13 @@ paths:
           description: Kolik kandidátních škol vrátit.
           schema: { type: integer, minimum: 1, maximum: 34, default: 5 }
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
         '200':
           description: Detail oboru.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DetailOboru' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '404': { $ref: '#/components/responses/Nenalezeno' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 

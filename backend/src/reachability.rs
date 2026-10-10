@@ -78,11 +78,7 @@ pub(crate) async fn zsj(
         let mut features = Vec::with_capacity(areas.len());
         for (area, geometry) in areas {
             let people = *population.get(&area.kod).ok_or_else(internal_error)?;
-            if people < 0 {
-                return Err(internal_error());
-            }
-            // Estimate one school-entry cohort; round each ZSJ to the nearest child.
-            let children = (i64::from(people) + 2) / 5;
+            let children = cohort(people)?;
             let rows = times.remove(&area.kod).unwrap_or_default();
             if rows.len() != school_ids.len() {
                 return Err(internal_error());
@@ -166,4 +162,12 @@ pub(crate) async fn zsj(
         })
     })
     .await
+}
+
+/// Shared school-entry estimate for maps and program detail.
+pub(crate) fn cohort(population: i32) -> Result<i64, StubError> {
+    if population < 0 {
+        return Err(internal_error());
+    }
+    Ok((i64::from(population) + 2) / 5)
 }

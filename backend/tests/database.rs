@@ -109,6 +109,7 @@ async fn migrations_and_api() {
     zsj_api(&app, &mut connection).await;
     zsj_accessibility_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
+    program_detail_api(&app, &mut connection).await;
 
     assert_eq!(
         connection
@@ -1543,4 +1544,250 @@ async fn zsj_accessibility_api(app: &axum::Router, connection: &mut PgConnection
     diesel::delete(obory::table.find("99-97-H/01"))
         .execute(connection)
         .unwrap();
+}
+
+async fn program_detail_api(app: &axum::Router, connection: &mut PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::json;
+    let path = "/obory/{kod}";
+    contract_response(
+        app,
+        "/api/v1/obory/99-96-H%2F99",
+        path,
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    let seeded = contract_response(
+        app,
+        "/api/v1/obory/65-51-H%2F01?kandidatu=34",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    let seeded_offers = nabidka_oboru::table
+        .filter(nabidka_oboru::kod_oboru.eq("65-51-H/01"))
+        .select(NabidkaOboru::as_select())
+        .load::<NabidkaOboru>(connection)
+        .unwrap();
+    assert_eq!(
+        seeded["nabidky"].as_array().unwrap().len(),
+        seeded_offers.len()
+    );
+    assert_eq!(
+        seeded["obor"]["kapacita"],
+        seeded_offers
+            .iter()
+            .map(|o| i64::from(o.pocet_prijimanych))
+            .sum::<i64>()
+    );
+    assert_eq!(
+        seeded["obor"]["pocet_skol"],
+        seeded_offers
+            .iter()
+            .map(|o| &o.redizo)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+    );
+    // Independent SQL confirms union coverage rather than summing overlapping schools.
+    #[derive(QueryableByName)]
+    struct Coverage {
+        #[diesel(sql_type = diesel::sql_types::BigInt)]
+        count: i64,
+    }
+    let covered = diesel::sql_query(
+        r#"SELECT COALESCE(sum((d.populace::bigint+2)/5),0)::bigint AS count
+        FROM "DATA_DEMOGRAFIE_ZSJ" d WHERE d.rok=2021 AND d.demo_skupina='1300100014'
+        AND EXISTS(SELECT 1 FROM "DOJEZDOVE_DOBY" t JOIN "NABIDKA_OBORU" o ON o.redizo=t.redizo
+            WHERE t.kod_zsj=d.kod_zsj AND t.slot_prijezdu='07:00-08:00'
+            AND t.doba_jizdy<=120 AND o.kod_oboru='65-51-H/01')"#,
+    )
+    .get_result::<Coverage>(connection)
+    .unwrap();
+    assert_eq!(seeded["obor"]["deti_v_dosahu"], covered.count);
+    // Controlled fixtures isolate overlap, form inclusion, fractional cutoffs, NULLs and zero cohorts.
+    connection.batch_execute(r#"INSERT INTO "OBORY" (kod,nazev) VALUES
+        ('99-96-H/01','Detail test'),('99-96-H/02','No offerings'),('99-95-H/01','Related test');
+        INSERT INTO "NABIDKA_OBORU" (id,redizo,kod_oboru,forma_studia,delka_studia,pocet_prijimanych,loni_pocet_prihlasek) VALUES
+        ('96000000-0000-0000-0000-000000000001','600008975','99-96-H/01','den',3,5,50),
+        ('96000000-0000-0000-0000-000000000002','600008975','99-96-H/01','den',3,7,70),
+        ('96000000-0000-0000-0000-000000000003','600008975','99-96-H/01','dal',3,3,1),
+        ('96000000-0000-0000-0000-000000000004','600022854','99-96-H/01','den',3,0,0),
+        ('96000000-0000-0000-0000-000000000005','600009301','99-95-H/01','den',3,3,1);
+        UPDATE "DATA_DEMOGRAFIE_ZSJ" SET populace=0 WHERE rok=2021 AND demo_skupina='1300100014';
+        UPDATE "DOJEZDOVE_DOBY" SET doba_jizdy=NULL WHERE slot_prijezdu='07:00-08:00';
+        UPDATE stredni_skoly SET nazev='Equal candidate' WHERE redizo IN ('600009301','600019632');"#).unwrap();
+    let codes = zsj::table
+        .order(zsj::kod)
+        .limit(5)
+        .select(zsj::kod)
+        .load::<String>(connection)
+        .unwrap();
+    let schools = ["600008975", "600022854", "600009301", "600019632"];
+    let durations = [
+        [Some(30.0), Some(30.0), Some(0.0), Some(0.0)],
+        [Some(60.4), None, Some(60.0), Some(60.0)],
+        [Some(70.0), Some(60.0), Some(0.0), Some(0.0)],
+        [None, None, Some(60.4), Some(60.0)],
+        [Some(0.0), None, None, None],
+    ];
+    for (index, code) in codes.iter().enumerate() {
+        diesel::update(data_demografie_zsj::table.find((code, 2021, "1300100014")))
+            .set(data_demografie_zsj::populace.eq([50, 100, 150, 200, 0][index]))
+            .execute(connection)
+            .unwrap();
+        for (school, time) in schools.iter().zip(durations[index]) {
+            diesel::update(dojezdove_doby::table.find((code, *school, "07:00-08:00")))
+                .set(dojezdove_doby::doba_jizdy.eq(time))
+                .execute(connection)
+                .unwrap();
+        }
+    }
+    // An alternate slot does not fill NULLs in the morning matrix.
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&codes[3]),
+            dojezdove_doby::redizo.eq(schools[0]),
+            dojezdove_doby::slot_prijezdu.eq("09:00-10:00"),
+            dojezdove_doby::doba_jizdy.eq(0.0),
+        ))
+        .execute(connection)
+        .unwrap();
+    let base = "/api/v1/obory/99-96-H%2F01?max_min=60";
+    let body = contract_response(app, base, path, StatusCode::OK).await;
+    let balance = &body["obor"];
+    assert_eq!(balance["pocet_skol"], 2);
+    assert_eq!(balance["kapacita"], 15);
+    assert_eq!(balance["prihlasky"], 121);
+    assert_eq!(balance["prihlasky_na_misto"], json!(121.0 / 15.0));
+    assert_eq!(balance["deti_v_dosahu"], 40);
+    assert_eq!(balance["deti_bez_oboru"], 60);
+    assert_eq!(balance["podil_deti_v_dosahu"], 40.0);
+    assert_eq!(balance["mist_na_100_deti"], 37.5);
+    assert_eq!(balance["signaly"], json!(["pretlak", "spatna_dostupnost"]));
+    assert_eq!(balance["volna_mista"], serde_json::Value::Null);
+    assert_eq!(balance["zamestnavatelu"], serde_json::Value::Null);
+    assert_eq!(body["trh_prace"], serde_json::Value::Null);
+    assert_eq!(body["meta"], json!({"max_min":60,"scenar":"rano"}));
+    let offers = body["nabidky"].as_array().unwrap();
+    assert_eq!(offers.len(), 4);
+    assert!(offers.iter().any(|o| o["forma"] == "dal"));
+    for offer in offers {
+        assert_eq!(
+            offer["deti_v_dosahu_skoly"],
+            if offer["redizo"] == schools[0] {
+                10
+            } else {
+                40
+            }
+        );
+    }
+    let candidates = body["kandidati"].as_array().unwrap();
+    assert_eq!(candidates.len(), 5);
+    assert_eq!(candidates[0]["redizo"], schools[3]);
+    assert_eq!(candidates[0]["nove_dosazene_deti"], 60);
+    assert_eq!(candidates[1]["redizo"], schools[2]);
+    assert_eq!(candidates[1]["nove_dosazene_deti"], 20);
+    assert_eq!(candidates[1]["ma_pribuzny_obor"], true);
+    assert_eq!(candidates[0]["ma_pribuzny_obor"], false);
+    assert!(
+        candidates
+            .iter()
+            .all(|c| c["redizo"] != schools[0] && c["redizo"] != schools[1])
+    );
+    let wider = contract_response(
+        app,
+        "/api/v1/obory/99-96-H%2F01?max_min=61&kandidatu=1",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(wider["obor"]["deti_v_dosahu"], 60);
+    assert_eq!(wider["kandidati"].as_array().unwrap().len(), 1);
+    assert_eq!(wider["kandidati"][0]["redizo"], schools[2]);
+    assert_eq!(wider["kandidati"][0]["nove_dosazene_deti"], 40);
+    connection
+        .batch_execute(
+            r#"INSERT INTO "OBOR_PROFESE" (cz_isco3,kod_oboru,vhodnost) VALUES
+        ('991','99-96-H/01',1),('992','99-96-H/01',2),('993','99-96-H/02',1);"#,
+        )
+        .unwrap();
+    let mapped = contract_response(app, base, path, StatusCode::OK).await;
+    assert_eq!(mapped["obor"]["volna_mista"], 32);
+    assert_eq!(mapped["obor"]["zamestnavatelu"], 1);
+    assert_eq!(mapped["obor"]["volna_mista_na_misto"], json!(32.0 / 15.0));
+    assert!(
+        mapped["obor"]["signaly"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("poptavka_trhu"))
+    );
+    assert_eq!(mapped["trh_prace"]["profese"][0]["pocet"], 21);
+    assert_eq!(mapped["trh_prace"]["profese"][1]["pocet"], 11);
+    assert_eq!(mapped["trh_prace"]["profese"][0]["vhodnost"], 1);
+    assert_eq!(mapped["trh_prace"]["profese"][1]["vhodnost"], 2);
+    let empty = contract_response(
+        app,
+        "/api/v1/obory/99-96-H%2F02?max_min=60&kandidatu=34",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(empty["obor"]["pocet_skol"], 0);
+    assert_eq!(empty["obor"]["deti_v_dosahu"], 0);
+    assert_eq!(empty["obor"]["deti_bez_oboru"], 100);
+    assert_eq!(empty["obor"]["prihlasky_na_misto"], serde_json::Value::Null);
+    assert_eq!(empty["obor"]["mist_na_100_deti"], serde_json::Value::Null);
+    assert_eq!(empty["obor"]["volna_mista"], 0);
+    assert_eq!(empty["trh_prace"]["profese"][0]["pocet"], 0);
+    assert_eq!(empty["kandidati"].as_array().unwrap().len(), 34);
+    // Missing rows are errors; NULL durations above remain valid unknown data.
+    let row = dojezdove_doby::table.find((&codes[0], schools[2], "07:00-08:00"));
+    diesel::delete(row).execute(connection).unwrap();
+    contract_response(app, base, path, StatusCode::INTERNAL_SERVER_ERROR).await;
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&codes[0]),
+            dojezdove_doby::redizo.eq(schools[2]),
+            dojezdove_doby::slot_prijezdu.eq("07:00-08:00"),
+            dojezdove_doby::doba_jizdy.eq(0.0),
+        ))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(data_demografie_zsj::table.find((&codes[0], 2021, "1300100014")))
+        .execute(connection)
+        .unwrap();
+    contract_response(app, base, path, StatusCode::INTERNAL_SERVER_ERROR).await;
+    contract_response(
+        app,
+        "/api/v1/obory/99-96-H%2F99",
+        path,
+        StatusCode::NOT_FOUND,
+    )
+    .await;
+    diesel::insert_into(data_demografie_zsj::table)
+        .values((
+            data_demografie_zsj::kod_zsj.eq(&codes[0]),
+            data_demografie_zsj::rok.eq(2021),
+            data_demografie_zsj::demo_skupina.eq("1300100014"),
+            data_demografie_zsj::populace.eq(0),
+        ))
+        .execute(connection)
+        .unwrap();
+    diesel::update(
+        data_demografie_zsj::table
+            .filter(data_demografie_zsj::rok.eq(2021))
+            .filter(data_demografie_zsj::demo_skupina.eq("1300100014")),
+    )
+    .set(data_demografie_zsj::populace.eq(0))
+    .execute(connection)
+    .unwrap();
+    let zero = contract_response(app, base, path, StatusCode::OK).await;
+    assert_eq!(zero["obor"]["podil_deti_v_dosahu"], 0.0);
+    assert_eq!(zero["obor"]["mist_na_100_deti"], serde_json::Value::Null);
+    assert!(
+        !zero["obor"]["signaly"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("spatna_dostupnost"))
+    );
 }

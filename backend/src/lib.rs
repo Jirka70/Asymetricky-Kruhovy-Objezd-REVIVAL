@@ -4,6 +4,7 @@ pub mod db;
 pub mod dto;
 mod logging;
 pub mod models;
+mod program_detail;
 pub mod programs;
 mod reachability;
 pub mod requests;

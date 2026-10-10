@@ -12,10 +12,10 @@ use std::{
 };
 
 // Admissions baseline and signal thresholds from the public API contract.
-const REGIONAL_APPLICATIONS_PER_PLACE: f64 = 2.66;
-const PRESSURE_THRESHOLD: f64 = 1.5;
-const LOW_INTEREST_THRESHOLD: f64 = 0.5;
-const JOB_DEMAND_THRESHOLD: f64 = 2.0;
+pub(crate) const REGIONAL_APPLICATIONS_PER_PLACE: f64 = 2.66;
+pub(crate) const PRESSURE_THRESHOLD: f64 = 1.5;
+pub(crate) const LOW_INTEREST_THRESHOLD: f64 = 0.5;
+pub(crate) const JOB_DEMAND_THRESHOLD: f64 = 2.0;
 
 pub(crate) async fn list(
     pool: DbPool,
@@ -221,7 +221,7 @@ struct JobTotals {
     companies: BTreeSet<String>,
     count: i64,
 }
-fn ratio(numerator: i64, denominator: i64) -> Option<f64> {
+pub(crate) fn ratio(numerator: i64, denominator: i64) -> Option<f64> {
     (denominator > 0).then(|| numerator as f64 / denominator as f64)
 }
 // Missing data stays last for both ascending and descending order.

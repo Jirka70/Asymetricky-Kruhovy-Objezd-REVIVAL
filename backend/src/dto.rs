@@ -525,21 +525,21 @@ pub struct BilanceOboru {
     pub pocet_skol: i64,
     pub kapacita: i64,
     pub prihlasky: i64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub prihlasky_na_misto: Option<f64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub index_pretlaku: Option<f64>,
     pub deti_v_dosahu: i64,
     pub deti_bez_oboru: i64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub podil_deti_v_dosahu: Option<f64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub mist_na_100_deti: Option<f64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub zamestnavatelu: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub volna_mista: Option<i64>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub volna_mista_na_misto: Option<f64>,
     pub signaly: Vec<Signal>,
 }
@@ -614,7 +614,7 @@ pub struct DetailOboru {
     pub obor: BilanceOboru,
     pub nabidky: Vec<DetailOboruNabidkyItem>,
     pub kandidati: Vec<DetailOboruKandidatiItem>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub trh_prace: Option<DetailOboruTrhPrace>,
     pub meta: MetaDosah,
 }

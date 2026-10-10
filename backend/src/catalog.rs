@@ -350,7 +350,7 @@ struct Workplace {
     count: i64,
     professions: BTreeMap<String, dto::ZamestnavateleOboruFeaturesItemPropertiesProfeseItem>,
 }
-fn vhodnost(value: i16) -> Result<Vhodnost, StubError> {
+pub(crate) fn vhodnost(value: i16) -> Result<Vhodnost, StubError> {
     match value {
         1 => Ok(Vhodnost::Nejvhodnejsi),
         2 => Ok(Vhodnost::Vhodne),

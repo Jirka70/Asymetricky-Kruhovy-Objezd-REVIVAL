@@ -426,11 +426,14 @@ pub async fn get_skola(
     Ok(Json(detail))
 }
 pub async fn get_obor(
+    State(pool): State<DbPool>,
     Path(kod): Path<requests::KodOboru>,
-    ContractQuery(_params): ContractQuery<requests::OborQuery>,
+    ContractQuery(params): ContractQuery<requests::OborQuery>,
 ) -> Result<Json<dto::DetailOboru>, StubError> {
     validate_path("getObor", "kod", &kod.0)?;
-    Err(StubError::unimplemented("getObor"))
+    crate::program_detail::get(pool, kod.0, params)
+        .await
+        .map(Json)
 }
 
 pub async fn list_obor_zamestnavatele(
