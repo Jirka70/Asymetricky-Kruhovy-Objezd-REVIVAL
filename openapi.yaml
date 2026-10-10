@@ -36,7 +36,7 @@ servers:
     description: Lokální vývoj (Rust / Axum)
 tags:
   - name: Společné
-    description: Školy, používají obě části.
+    description: Školy a základní sídelní jednotky, používají obě části.
   - name: Pro rodiny
     description: Školy v dosahu z bodu a spojení do školy.
   - name: Pro kraj
@@ -146,6 +146,27 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Chyba' }
+
+  /zsj/seznam:
+    get:
+      tags: [Společné]
+      operationId: listZsj
+      summary: Seznam všech ZSJ s jejich polygony
+      description: |
+        Vrací všechny řádky tabulky `ZSJ` seřazené podle `kod`, bez filtrů a stránkování.
+        `boundary` je uložený polygon převedený na GeoJSON geometrii ve WGS 84
+        (EPSG:4326), se souřadnicemi v pořadí [lon, lat].
+        `lat` a `lon` označují reprezentační bod uvnitř polygonu.
+      responses:
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
+        '200':
+          description: Pole všech ZSJ; prázdná tabulka vrací prázdné pole.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ZsjZaznam' }
 
   /zsj:
     get:
@@ -535,6 +556,26 @@ components:
         prihlasky: { type: integer, example: 131 }
         prihlasky_na_misto: { type: [number, 'null'], example: 4.37 }
         index_pretlaku: { type: [number, 'null'], example: 1.64 }
+
+    ZsjZaznam:
+      type: object
+      required: [kod, nazev, lat, lon, boundary, kod_obce]
+      properties:
+        kod: { $ref: '#/components/schemas/KodZsj' }
+        nazev: { type: string, example: Abertamy }
+        lat: { type: number, description: Zeměpisná šířka reprezentačního bodu (WGS 84). }
+        lon: { type: number, description: Zeměpisná délka reprezentačního bodu (WGS 84). }
+        boundary:
+          allOf:
+            - $ref: '#/components/schemas/GeoPlocha'
+            - type: object
+              properties:
+                type: { type: string, const: Polygon }
+          description: Polygon z tabulky `ZSJ` jako GeoJSON geometrie.
+        kod_obce:
+          oneOf:
+            - $ref: '#/components/schemas/KodObce'
+            - type: 'null'
 
     GeoPoint:
       type: object
