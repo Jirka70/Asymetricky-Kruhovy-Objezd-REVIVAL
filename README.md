@@ -202,4 +202,6 @@ not overwritten. `--limit-zsj 2` allows a small smoke test.
 
 ### Rust backend
 
+Frontend vývojáři mohou spustit API a jeho databázi z kořene repozitáře pomocí `docker compose up -d backend` (s nakonfigurovaným kořenovým `.env`). Migrace se aplikují automaticky; Swagger UI je na `http://localhost:8000/docs`.
+
 Backend s Axum, Diesel ORM a PostgreSQL/PostGIS je v `backend/`. Spuštění, migrace ze SQL skriptů a API jsou popsané v [backend/README.md](backend/README.md).

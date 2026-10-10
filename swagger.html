@@ -1,10 +1,45 @@
 <!doctype html>
-<html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Obor na dosah API</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css">
-<style>body{margin:0;background:#fff} .swagger-ui .topbar{display:none}</style>
-</head><body><div id="ui"></div>
+<style>
+body{margin:0;background:#fff}
+.swagger-ui .topbar{display:none}
+#local-file{margin:24px;font:16px/1.5 sans-serif}
+#file-error{color:#b00020}
+</style>
+</head>
+<body>
+<section id="local-file" hidden>
+<p>Prohlížeč nemůže automaticky načíst YAML z disku. Vyberte soubor <code>openapi.yaml</code> ze složky projektu, nebo otevřete <a href="http://localhost:8000/docs">dokumentaci běžícího backendu</a>.</p>
+<label for="spec-file">Specifikace OpenAPI:</label>
+<input id="spec-file" type="file" accept=".yaml,.yml,.json">
+<p id="file-error" role="alert"></p>
+</section>
+<div id="ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
 <script>
-SwaggerUIBundle({url: '/openapi.yaml', dom_id: '#ui', deepLinking: true});
-</script></body></html>
+const options = {dom_id: '#ui', deepLinking: true};
+if (window.location.protocol === 'file:') {
+  document.getElementById('local-file').hidden = false;
+  const ui = SwaggerUIBundle(options);
+  document.getElementById('spec-file').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const error = document.getElementById('file-error');
+    error.textContent = '';
+    try {
+      ui.specActions.updateSpec(await file.text());
+    } catch (cause) {
+      error.textContent = 'Soubor se nepodařilo načíst: ' + cause.message;
+    }
+  });
+} else {
+  SwaggerUIBundle({...options, url: './openapi.yaml'});
+}
+</script>
+</body>
+</html>

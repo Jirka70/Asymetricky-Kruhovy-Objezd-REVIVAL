@@ -20,6 +20,27 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # libpq reads credentials from PG* variables, including special characters.
+      DATABASE_URL: "host=db port=5432"
+      PGDATABASE: ${POSTGRES_DB:-obor_na_dosah}
+      PGUSER: ${POSTGRES_USER:-obor}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      BIND_ADDRESS: "0.0.0.0:8000"
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-8}
+      RUST_LOG: ${RUST_LOG:-obor_backend=info}
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
+    init: true
+    stop_grace_period: 15s
   db:
     image: postgis/postgis:18-3.6
     platform: linux/amd64

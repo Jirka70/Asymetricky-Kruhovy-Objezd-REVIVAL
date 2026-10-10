@@ -1,0 +1,16 @@
+# Only send the files required to build the backend image.
+# This excludes credentials, datasets, OTP graphs, and local build artifacts.
+**
+!backend/
+!backend/Cargo.toml
+!backend/Cargo.lock
+!backend/build.rs
+!backend/Dockerfile
+!backend/docker-entrypoint.sh
+!backend/src/
+!backend/src/**
+!backend/migrations/
+!backend/migrations/**
+!openapi.yaml
+!swagger.html
+!.dockerignore

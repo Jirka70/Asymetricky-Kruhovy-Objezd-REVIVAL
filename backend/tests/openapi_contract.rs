@@ -404,7 +404,7 @@ async fn served_documentation_uses_single_specification() {
     assert_eq!(response.status(), StatusCode::OK);
     let body = to_bytes(response.into_body(), 100_000).await.unwrap();
     let html = std::str::from_utf8(&body).unwrap();
-    assert!(html.contains("url: '/openapi.yaml'"));
+    assert!(html.contains("url: './openapi.yaml'"));
     assert!(
         !html.contains("const spec ="),
         "Do not embed a second copy of the specification"

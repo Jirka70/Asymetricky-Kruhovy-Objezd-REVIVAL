@@ -2,7 +2,28 @@
 
 Axum HTTP application using Diesel 2.3, PostgreSQL/PostGIS, and an r2d2 connection pool. Synchronous ORM queries run on Tokio blocking threads. Default address: `127.0.0.1:8000` (OTP continues to use port 8080).
 
-## Run
+## Run with Docker Compose
+
+From the repository root, copy `.env.example` to `.env` if you have not configured it yet, then run:
+
+```sh
+docker compose up -d backend
+```
+
+Compose builds the Rust application, starts PostgreSQL, waits for database health, and applies pending embedded migrations before serving the API. Rust and native build dependencies are provided by the image. Database data persists in the existing `postgres_data` volume. The container uses the root `.env` credentials; `backend/.env` is only for local Cargo runs and is not copied into the image. Passwords with URL-special characters work through libpq's separate credential environment variables.
+
+Swagger UI: `http://localhost:8000/docs`. Set `BACKEND_PORT` in the root `.env` to use another host port; the container always listens on 8000. If a different database already occupies 5432, set `POSTGRES_PORT` to a free host port (for example, 5433). Containers connect to `db:5432` regardless of that host port. Only the backend and its database dependency start with this command; OTP is not needed for the implemented database reads.
+
+```sh
+docker compose logs -f backend
+docker compose exec backend obor-backend migrate-status
+# Rebuild after changing Rust code, migrations, OpenAPI, or Swagger:
+docker compose up -d --build backend
+```
+
+The existing six analytical endpoints still return 501. Automatic migrations apply only to container startup; local Cargo runs retain the explicit migration step below.
+
+## Run locally with Cargo
 
 Requires Rust 1.86+ and a PostgreSQL database that supports PostGIS. Native libpq and OpenSSL are bundled at build time, so a C compiler, CMake, make and Perl must be available; a separate libpq installation or Diesel CLI is not needed.
 
@@ -66,7 +87,7 @@ Invalid parameters return **422** in the same error format. Parameters are valid
 
 `src/contract.rs` contains typed handler signatures and JSON/GeoJSON response wrappers. `src/dto.rs` contains public API structs independent of Diesel models. Implement each handler by naming its `ContractQuery(_params)` argument `ContractQuery(params)` and replacing its final unimplemented error with database/OTP logic returning the declared DTO; do not return the database model directly. Both simulation response formats have separate DTOs.
 
-Swagger UI: `http://localhost:8000/docs`. The specification is served at `/openapi.yaml`; Swagger loads that URL instead of embedding a duplicate. Both files are embedded into the compiled backend and edits trigger rebuilding.
+Swagger UI: `http://localhost:8000/docs`. The specification is served at `/openapi.yaml`; Swagger loads that URL instead of embedding a duplicate. Both files are embedded into the compiled backend and edits trigger rebuilding. When serving `swagger.html` as a static file, keep `openapi.yaml` in the same directory. When opening the HTML directly from disk, select `openapi.yaml` using the file picker; browsers block automatic local-file requests. Swagger UI assets still require an internet connection.
 
 ```sh
 curl -i http://localhost:8000/api/v1/skoly
