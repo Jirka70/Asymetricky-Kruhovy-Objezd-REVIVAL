@@ -167,3 +167,5 @@ Průchod aplikací a opravy jsou popsány v [ux-audit.md](ux-audit.md). Rodinné
 hledání má přednost před volitelnými grafy; dlouhé seznamy lze prohledávat,
 prázdné výsledky nabízí konkrétní nápravu a krajský scénář lze po resetu či
 změně oboru jednou vrátit. Návrat nepřetrvává reload stránky.
+
+Volba „Bez limitu“ v obou selektorech posílá `max_min=0`. Backend přijme každý známý konečný dojezd, zachová ranní příjezdové okno a nepočítá chybějící spojení jako dostupná. Stejný limit používají mapy, detaily oboru i simulace. Vyžaduje backend s podporou této hodnoty.

@@ -1238,3 +1238,42 @@ async fn zsj_list_repeated_query_parameters_return_documented_json_422() {
         .await;
     }
 }
+
+#[tokio::test]
+async fn unlimited_duration_is_accepted_by_query_contracts() {
+    use obor_backend::requests::{
+        OborQuery, SimulaceQuery, SkolaQuery, StudentSkolyQuery, ZsjQuery,
+    };
+    assert_eq!(
+        extract_query::<ZsjQuery>("/api/v1/zsj?uroven=zsj&max_min=0")
+            .await
+            .max_min,
+        0
+    );
+    assert_eq!(
+        extract_query::<StudentSkolyQuery>("/api/v1/student/skoly?lat=50.2&lon=12.8&max_min=0")
+            .await
+            .max_min,
+        0
+    );
+    assert_eq!(
+        extract_query::<SkolaQuery>("/api/v1/skoly/600009084?max_min=0")
+            .await
+            .max_min,
+        0
+    );
+    assert_eq!(
+        extract_query::<OborQuery>("/api/v1/obory/23-68-H%2F01?max_min=0")
+            .await
+            .max_min,
+        0
+    );
+    assert_eq!(
+        extract_query::<SimulaceQuery>(
+            "/api/v1/simulace?redizo=600009271&obor=23-68-H%2F01&kapacita=30&max_min=0"
+        )
+        .await
+        .max_min,
+        0
+    );
+}

@@ -70,7 +70,7 @@ pub(crate) fn round(value: f64, digits: i32) -> f64 {
 fn band(time: Option<f64>, limit: u16) -> dto::Pasmo {
     match time {
         None => dto::Pasmo::BezSpojeni,
-        Some(t) if t > f64::from(limit) => dto::Pasmo::MimoDosah,
+        Some(t) if t > requests::travel_limit(limit) => dto::Pasmo::MimoDosah,
         Some(t) if t <= 30.0 => dto::Pasmo::Do30,
         Some(t) if t <= 45.0 => dto::Pasmo::Od30Do45,
         Some(t) if t <= 60.0 => dto::Pasmo::Od45Do60,
@@ -78,7 +78,7 @@ fn band(time: Option<f64>, limit: u16) -> dto::Pasmo {
     }
 }
 pub(crate) fn in_limit(time: Option<f64>, limit: f64) -> bool {
-    time.is_some_and(|t| t <= limit)
+    time.is_some_and(|t| t.is_finite() && t <= limit)
 }
 fn level(level: requests::Uroven) -> dto::SimulaceMetaUroven {
     match level {
@@ -204,12 +204,12 @@ pub fn calculate(input: Input, params: &requests::SimulaceQuery) -> Result<Calcu
         let before_time = before.as_ref().map(|v| v.0);
         let after_time = after.as_ref().map(|v| v.0);
         if let Some((t, s)) = &before {
-            if *t <= f64::from(params.max_min) {
+            if *t <= requests::travel_limit(params.max_min) {
                 *before_catchment.entry(s.clone()).or_default() += demand;
             }
         }
         if let Some((t, s)) = &after {
-            if *t <= f64::from(params.max_min) {
+            if *t <= requests::travel_limit(params.max_min) {
                 *after_catchment.entry(s.clone()).or_default() += demand;
             }
         }
@@ -219,8 +219,8 @@ pub fn calculate(input: Input, params: &requests::SimulaceQuery) -> Result<Calcu
             lost_reach: false,
             changed: t.is_some_and(|t| before_time.is_none_or(|b| t < b)),
             improved: t.is_some_and(|t| before_time.is_none_or(|b| t < b)),
-            new_reach: !in_limit(before_time, f64::from(params.max_min))
-                && in_limit(after_time, f64::from(params.max_min)),
+            new_reach: !in_limit(before_time, requests::travel_limit(params.max_min))
+                && in_limit(after_time, requests::travel_limit(params.max_min)),
             area,
             before: before_time,
             after: after_time,
@@ -243,11 +243,11 @@ pub fn calculate(input: Input, params: &requests::SimulaceQuery) -> Result<Calcu
     let mut new_demand = 0.0;
     for (row, previous) in rows.iter().zip(before_assignments) {
         if row.school_after.as_deref() != Some(params.redizo.0.as_str())
-            || !in_limit(row.after, f64::from(params.max_min))
+            || !in_limit(row.after, requests::travel_limit(params.max_min))
         {
             continue;
         }
-        if !in_limit(row.before, f64::from(params.max_min)) {
+        if !in_limit(row.before, requests::travel_limit(params.max_min)) {
             new_demand += row.demand;
         } else if previous.as_deref() != Some(params.redizo.0.as_str()) {
             if previous.as_ref().is_some_and(|s| balance[s] < 0.0) {
@@ -388,7 +388,7 @@ pub(crate) fn aggregate(
             let children = rows.iter().map(|r| r.area.children).sum::<f64>();
             let children_reached = rows
                 .iter()
-                .filter(|r| in_limit(r.after, f64::from(max_min)))
+                .filter(|r| in_limit(r.after, requests::travel_limit(max_min)))
                 .map(|r| r.area.children)
                 .sum::<f64>();
             Ok(OutputArea {
@@ -455,9 +455,12 @@ impl Calculation {
                         limit_min: l,
                         pred: areas
                             .iter()
-                            .filter(|a| in_limit(a.before, l as f64))
+                            .filter(|a| in_limit(a.before, requests::travel_limit(l as u16)))
                             .count() as i64,
-                        po: areas.iter().filter(|a| in_limit(a.after, l as f64)).count() as i64,
+                        po: areas
+                            .iter()
+                            .filter(|a| in_limit(a.after, requests::travel_limit(l as u16)))
+                            .count() as i64,
                     })
                     .collect(),
             );
@@ -501,7 +504,7 @@ impl Calculation {
                                 },
                                 cas_min: p.cas_min,
                                 pasmo: p.pasmo,
-                                v_dosahu: in_limit(a.after, f64::from(params.max_min)),
+                                v_dosahu: in_limit(a.after, requests::travel_limit(params.max_min)),
                                 deti: p.deti,
                                 deti_v_dosahu: Some(round(a.children_reached, 1)),
                                 podil_deti_v_dosahu: Some(if p.deti > 0.0 {
@@ -710,4 +713,20 @@ pub(crate) fn load_geometries(
         );
     }
     Ok(geometries)
+}
+
+#[cfg(test)]
+mod unlimited_tests {
+    use super::*;
+    #[test]
+    fn unlimited_accepts_long_finite_journeys_but_not_unknown_times() {
+        let limit = requests::travel_limit(0);
+        assert!(in_limit(Some(70000.0), limit));
+        assert!(!in_limit(None, limit));
+        assert!(!in_limit(Some(f64::INFINITY), limit));
+        assert!(!in_limit(Some(f64::NAN), limit));
+        assert_eq!(band(Some(240.0), 0), dto::Pasmo::Nad60);
+        assert_eq!(band(Some(240.0), 180), dto::Pasmo::MimoDosah);
+        assert_eq!(band(None, 0), dto::Pasmo::BezSpojeni);
+    }
 }

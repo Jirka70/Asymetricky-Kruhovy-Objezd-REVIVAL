@@ -229,6 +229,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                 Do {t} min
               </option>
             ))}
+            <option value={0}>Bez limitu</option>
           </select>
         </label>
         <SearchSelect
@@ -501,12 +502,11 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     {Math.round(base.percent ?? 0)} % →{" "}
                     {Math.round(next.percent ?? 0)} %
                   </span>
-                  <small>dětí má školu do {threshold} minut</small>
+                  <small>dětí má školu {threshold === 0 ? "bez časového limitu" : `do ${threshold} minut`}</small>
                 </>
               ) : (
                 <>
-                  {Math.round(base.percent ?? 0)} % dětí má školu do {threshold}{" "}
-                  minut
+                  {Math.round(base.percent ?? 0)} % dětí má školu {threshold === 0 ? "bez časového limitu" : `do ${threshold} minut`}
                 </>
               )}
             </h2>

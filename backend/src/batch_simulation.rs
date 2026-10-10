@@ -35,7 +35,7 @@ fn prepare(input: &Input, request: &requests::BatchSimulaceRequest) -> Result<Pr
     if request.zmeny.is_empty() || request.zmeny.len() > 100 {
         return Err(StubError::invalid("zmeny"));
     }
-    if !(10..=180).contains(&request.max_min) {
+    if request.max_min != 0 && !(10..=180).contains(&request.max_min) {
         return Err(StubError::invalid("max_min"));
     }
     if !input.program_exists {
@@ -170,8 +170,8 @@ pub fn calculate(
         let after = nearest(&prepared.after);
         let before_time = before.as_ref().map(|v| v.0);
         let after_time = after.as_ref().map(|v| v.0);
-        let before_reachable = in_limit(before_time, f64::from(request.max_min));
-        let after_reachable = in_limit(after_time, f64::from(request.max_min));
+        let before_reachable = in_limit(before_time, requests::travel_limit(request.max_min));
+        let after_reachable = in_limit(after_time, requests::travel_limit(request.max_min));
         let before_school = before.as_ref().map(|v| v.1.clone());
         let after_school = after.as_ref().map(|v| v.1.clone());
         let demand = area.children * prepared.interest;
@@ -373,11 +373,11 @@ impl Calculation {
                 limit_min: limit,
                 pred: areas
                     .iter()
-                    .filter(|a| in_limit(a.before, limit as f64))
+                    .filter(|a| in_limit(a.before, requests::travel_limit(limit as u16)))
                     .count() as i64,
                 po: areas
                     .iter()
-                    .filter(|a| in_limit(a.after, limit as f64))
+                    .filter(|a| in_limit(a.after, requests::travel_limit(limit as u16)))
                     .count() as i64,
             })
             .collect();
@@ -404,7 +404,10 @@ impl Calculation {
                             properties: dto::BatchSimulaceProperties {
                                 kod: a.code.clone(),
                                 uroven: self.meta.uroven.clone(),
-                                v_dosahu: in_limit(a.after, f64::from(request.max_min)),
+                                v_dosahu: in_limit(
+                                    a.after,
+                                    requests::travel_limit(request.max_min),
+                                ),
                                 deti_v_dosahu: round(a.children_reached, 1),
                                 podil_deti_v_dosahu: if a.value.deti > 0.0 {
                                     round(100.0 * a.children_reached / a.value.deti, 2)

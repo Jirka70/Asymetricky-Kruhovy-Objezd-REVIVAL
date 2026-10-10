@@ -139,3 +139,9 @@ test("employer details retain exact bigint identities and profession-level suita
   assert.equal(witte.professions.find(p => p.code === "351").jobs, 2);
   assert.equal(witte.professions.find(p => p.code === "311").suitability, 2);
 });
+
+test("unlimited coverage accepts all known times without making unknown journeys reachable", () => {
+  const zones = [{id: "a", children: 10}, {id: "b", children: 20}, {id: "c", children: 30}];
+  assert.equal(within(zones, {a: 240, b: null}, 0).accessible, 10);
+  assert.equal(within(zones, {a: 240, b: null}, 180).accessible, 0);
+});

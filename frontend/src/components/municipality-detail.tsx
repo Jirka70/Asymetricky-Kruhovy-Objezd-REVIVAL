@@ -61,7 +61,7 @@ export default function MunicipalityDetail({
       <div className="municipality-grid">
         <LocalMap id={id} zones={zones} times={after ?? before} />
         <div className="local-metric">
-          <span>Do {threshold} minut se dostane</span>
+          <span>{threshold === 0 ? "Bez časového limitu" : `Do ${threshold} minut`} se dostane</span>
           <strong>
             {base.percent === null ? "—" : Math.round(base.percent)}
             <small> %</small>

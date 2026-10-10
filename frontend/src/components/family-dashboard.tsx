@@ -71,7 +71,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
       <div className="compact-search-fields">
         <SearchSelect label="Odkud" icon={<MapPinIcon size={15} />} value={origin} onChange={setOrigin} options={zoneOptions} placeholder="Např. Toužim nebo Rybáře" />
         <SearchSelect label="Obor" icon={<GraduationCapIcon size={16} />} value={field} onChange={setField} options={data.fields.map((f) => ({value: f.id, label: `${f.name} · ${f.id}`}))} />
-        <label className="field"><span>Maximální dojezd</span><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>{[30,45,60,90,120].map((value) => <option key={value} value={value}>Do {value} min</option>)}</select></label>
+        <label className="field"><span>Maximální dojezd</span><select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>{[30,45,60,90,120].map((value) => <option key={value} value={value}>Do {value} min</option>)}<option value={0}>Bez limitu</option></select></label>
         <label className="field compact-form"><span>Forma studia</span><select value={form} onChange={(e) => setForm(e.target.value)}><option value="den">Denní</option><option value="dal">Dálková</option></select></label>
         <button className="primary compact-submit" type="submit"><MagnifyingGlassIcon size={18} />Najít školy</button>
       </div>
@@ -96,16 +96,16 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             <h2 id="detail-heading" tabIndex={-1}>{school?.shortName ?? student?.nazev ?? panel.id}</h2>
             <p>{selectedField} · {search.form === "den" ? "Denní" : "Dálkové"} studium</p>
             <SchoolAdmissions redizo={panel.id} field={search.field} form={search.form} />
-            {student ? <StudentSchoolCard result={student} school={school} showAdmissions={false} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
+            {student ? <StudentSchoolCard result={student} unlimited={search.limit === 0} school={school} showAdmissions={false} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
             {zone && <StudentRoute key={`${zone.id}:${panel.id}`} lat={zone.lat} lon={zone.lon} redizo={panel.id} />}
             <section className="detail-section"><h3>O škole</h3><SchoolInformation redizo={panel.id} field={search.field} form={search.form} showAdmissions={false} /></section>
           </div> : employer ? <EmployerDetail employer={employer} fieldName={selectedField} /> : <>
             <div className="journey-list-heading">
               <h2 id="results-heading" tabIndex={-1}>Nalezené školy ({students.data?.data.length ?? 0})</h2>
-              <p>Do {search.limit} minut · {location?.name} · {zone?.name}</p>
+              <p>{search.limit === 0 ? "Bez časového limitu" : `Do ${search.limit} minut`} · {location?.name} · {zone?.name}</p>
               {students.data?.meta.den && <p className="data-note">Den spojení: {students.data.meta.den.split("-").reverse().join(". ")}</p>}
             </div>
-            {students.data?.data.length ? <div className="journey-results">{students.data.data.map((result) => <StudentSchoolCard key={result.redizo} result={result} school={data.schools.find((s) => s.id === result.redizo)} onSelect={() => openPlace("school", result.redizo)} />)}</div> : <div className="empty-state">
+            {students.data?.data.length ? <div className="journey-results">{students.data.data.map((result) => <StudentSchoolCard key={result.redizo} result={result} unlimited={search.limit === 0} school={data.schools.find((s) => s.id === result.redizo)} onSelect={() => openPlace("school", result.redizo)} />)}</div> : <div className="empty-state">
               <strong>Tento obor v této formě nemá v nabídce žádná škola.</strong>
               <p>Zkuste jiný obor nebo formu studia.</p>
               {hasAlternateForm && <button onClick={() => {setForm(otherForm); applySearch({...search, form: otherForm});}}>Zkusit {otherForm === "den" ? "denní" : "dálkové"} studium</button>}

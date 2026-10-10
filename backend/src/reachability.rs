@@ -94,9 +94,12 @@ pub(crate) async fn zsj(
                 .filter_map(|row| row.doba_jizdy.map(|minutes| (minutes, row.redizo.as_str())))
                 .min_by(|a, b| a.0.total_cmp(&b.0).then_with(|| a.1.cmp(b.1)));
             let duration = nearest.map(|(minutes, _)| minutes);
-            let reachable = duration.is_some_and(|minutes| minutes <= f32::from(params.max_min));
+            let reachable = duration
+                .is_some_and(|minutes| minutes <= (requests::travel_limit(params.max_min) as f32));
             for (limit, count) in &mut counts {
-                if duration.is_some_and(|minutes| minutes <= *limit as f32) {
+                if duration
+                    .is_some_and(|minutes| minutes <= requests::travel_limit(*limit as u16) as f32)
+                {
                     *count += 1;
                 }
             }

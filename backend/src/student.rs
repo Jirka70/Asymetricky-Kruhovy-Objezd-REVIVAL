@@ -129,7 +129,8 @@ pub fn build_response(
     for school in inputs.schools {
         let route = routes.get(&school.redizo).ok_or_else(internal_error)?;
         let duration = route.itineraries.first().map(|i| i.duration_seconds / 60.0);
-        let reachable = duration.is_some_and(|minutes| minutes <= f64::from(inputs.params.max_min));
+        let reachable = duration
+            .is_some_and(|minutes| minutes <= requests::travel_limit(inputs.params.max_min));
         if reachable {
             reachable_count += 1;
         } else {
