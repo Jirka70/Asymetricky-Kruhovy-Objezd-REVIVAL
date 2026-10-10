@@ -134,7 +134,7 @@ export function removal(input = {max_min: 45, zmeny: [{redizo: "600009084", zmen
     souhrn: {zlepsenych_jednotek: 0, zhorsenych_jednotek: 1,
       deti_v_dosahu_pred: 10, deti_v_dosahu_po: lost ? 0 : 10,
       ztracene_deti: lost ? 10 : 0, nove_dosazene_deti: 0,
-      kapacita_pred: 154, kapacita_po: 154 + input.zmeny[0].zmena_kapacity,
+      kapacita_pred: 154, kapacita_po: 154 + input.zmeny.reduce((sum, change) => sum + change.zmena_kapacity, 0),
     }, meta: {},
   };
 }
