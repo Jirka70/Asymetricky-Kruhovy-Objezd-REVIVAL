@@ -1,0 +1,12 @@
+# Include only inputs needed by the production build.
+**
+!package.json
+!package-lock.json
+!next.config.ts
+!tsconfig.json
+!src/
+!src/**
+!public/
+!public/**
+!Dockerfile
+!.dockerignore

@@ -1,6 +1,5 @@
 "use client";
 import {
-  ArrowUpRightIcon,
   BriefcaseIcon,
   GraduationCapIcon,
   InfoIcon,
@@ -17,6 +16,7 @@ import {
 } from "@/lib/data";
 import { exampleLegs, type Journey } from "@/lib/journeys";
 import InlineJourney from "./inline-journey";
+import SchoolInformation from "./school-information";
 
 export function JourneySummary({
   journey,
@@ -141,9 +141,6 @@ export function SchoolDetail({
 }) {
   const school = data.schools.find((s) => s.id === schoolId);
   if (!school) return null;
-  const offer = data.offerings.find(
-    (o) => o.school === schoolId && o.field === field && o.form === form,
-  );
   return (
     <div className="place-detail-content">
       <div className="place-title">
@@ -181,28 +178,7 @@ export function SchoolDetail({
       )}
       <section className="detail-section">
         <h3>O škole</h3>
-        <p>{school.name}</p>
-        <p>{school.address}</p>
-        {offer && !journey && (
-          <p>
-            Kapacita: {offer.capacity ?? "neuvedena"} · Přihlášky:{" "}
-            {offer.applications ?? "neuvedeny"}
-          </p>
-        )}
-        {school.web && (
-          <a
-            className="text-link"
-            href={
-              school.web.startsWith("http")
-                ? school.web
-                : `https://${school.web}`
-            }
-            target="_blank"
-            rel="noreferrer"
-          >
-            Web školy <ArrowUpRightIcon size={15} />
-          </a>
-        )}
+        <SchoolInformation redizo={schoolId} field={field} form={form} />
       </section>
       <p className="detail-note">
         <InfoIcon size={14} />
@@ -235,9 +211,9 @@ export function EmployerDetail({
   employer: Employer;
   fieldName: string;
 }) {
-  const imported = new Intl.DateTimeFormat("cs-CZ", {
+  const imported = employer.importedat ? new Intl.DateTimeFormat("cs-CZ", {
     timeZone: "Europe/Prague",
-  }).format(new Date(employer.importedat));
+  }).format(new Date(employer.importedat)) : "Neuvedeno";
   return (
     <div className="place-detail-content employer-detail">
       <div className="place-title">
@@ -262,7 +238,7 @@ export function EmployerDetail({
             <div>
               <strong>{p.name}</strong>
               <small>
-                CZ-ISCO {p.code} · {EDUCATION[p.education] ?? p.education}
+                CZ-ISCO {p.code}{p.education ? ` · ${EDUCATION[p.education] ?? p.education}` : ""}
               </small>
             </div>
             <span

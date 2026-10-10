@@ -31,7 +31,7 @@ export type Employer = {
   city: string;
   municipality: string;
   addresspoint: string | null;
-  importedat: string;
+  importedat: string | null;
   lat: number;
   lon: number;
   field: string;
@@ -39,7 +39,7 @@ export type Employer = {
   professions: {
     code: string;
     name: string;
-    education: string;
+    education: string | null;
     jobs: number;
     suitability: 1 | 2;
   }[];
@@ -53,7 +53,7 @@ export type Snapshot = {
     nameDerived: boolean;
   }[];
   schools: School[];
-  fields: { id: string; name: string }[];
+  fields: { id: string; name: string; forms?: string[] }[];
   offerings: Offering[];
   demand: { field: string; jobs: number; employers: number }[];
   employers: Employer[];

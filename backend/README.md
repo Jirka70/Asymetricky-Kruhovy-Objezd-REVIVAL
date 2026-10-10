@@ -4,6 +4,23 @@ Axum HTTP application using Diesel 2.3, PostgreSQL/PostGIS, and an r2d2 connecti
 
 ## Run with Docker Compose
 
+To start the complete application (frontend, backend and database) from the
+repository root with the root `.env` configured:
+
+```sh
+docker compose up -d --build --wait
+```
+
+Frontend defaults to http://localhost:3000; API documentation is at
+http://localhost:8000/docs. `FRONTEND_PORT`, `BACKEND_PORT` and `POSTGRES_PORT`
+in the root `.env` override the host ports. OTP is optional under the `otp`
+profile and is not started by the default command. The frontend reads schools,
+programs, school details and employers through its Next.js proxy with a 24-hour
+upstream cache. Geography, demographics and stored journeys still use the
+bundled snapshot.
+
+To run only the backend and database:
+
 From the repository root, copy `.env.example` to `.env` if you have not configured it yet, then run:
 
 ```sh

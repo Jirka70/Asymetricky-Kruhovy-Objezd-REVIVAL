@@ -10,12 +10,12 @@ export default function Methodology() {
       </p>
       <div className="methodology-content">
         <section>
-          <h2>Jeden uložený datový snímek</h2>
+          <h2>Katalogy škol a uložené dojezdy</h2>
           <p>
-            Aplikace používá existující data projektu. Nestahuje nové pracovní
-            nabídky, jízdní řády ani nevolá OTP. Změna filtrů a scénářů probíhá
-            nad lokálním exportem. Nabídka obsahuje 34 škol a 81 oborů v
-            Karlovarském kraji.
+            Školy, nabídku oborů, kapacity, přihlášky a pracovní poptávku načítáme
+            z datové služby projektu. Dojezdy, geometrie a demografie pocházejí
+            z uloženého snímku. Simulace používá aktuální nabídku škol a tyto
+            uložené dojezdy. Aplikace nevyhledává nové spoje v OTP.
           </p>
         </section>
         <section>
@@ -80,11 +80,12 @@ export default function Methodology() {
         <section>
           <h2>Pracovní místa</h2>
           <p>
-            Lokální snímek zahrnuje 1 889 pracovních míst a 390 zaměstnavatelů.
-            Propojení oborů s profesními skupinami CZ-ISCO je orientační. Stejná
+            Zobrazujeme pracovní místa v profesích navázaných na vybraný obor.
+            Vynecháváme nabídky vyžadující vyšší odborné nebo vysokoškolské
+            vzdělání. Propojení oborů s profesními skupinami CZ-ISCO je orientační. Stejná
             nabídka může být relevantní pro více oborů, proto sloupce nesčítáme.
             Poptávka není zárukou uplatnění absolventa. V mapě zobrazujeme pouze
-            pracoviště se souřadnicemi; u 28 pracovišť souřadnice chybí.
+            pracoviště se souřadnicemi. Grafy zahrnují i místa bez známé polohy.
           </p>
           <p>
             Zdroje: tabulky ZAMESTNAVATELE, POPTAVKA_PROFESI a OBOR_PROFESE v

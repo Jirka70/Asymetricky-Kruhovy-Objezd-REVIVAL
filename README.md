@@ -34,10 +34,50 @@ Koncept aplikace, výběr a propojení datových sad i metodiku výpočtů (doje
 
 ## Spuštění
 
+### Celá aplikace: frontend + backend + databáze
+
+Z kořene repozitáře, po nastavení `.env` podle `.env.example`:
+
+```bash
+docker compose up -d --build --wait
+```
+
+Příkaz sestaví a spustí `frontend`, `backend` a `db` a počká na jejich kontroly
+dostupnosti. Backend počká na databázi a před startem API aplikuje migrace.
+Výchozí adresy jsou frontend http://localhost:3000 a API dokumentace
+http://localhost:8000/docs. Porty lze změnit v `.env` pomocí `FRONTEND_PORT`,
+`BACKEND_PORT` a `POSTGRES_PORT` (výchozí databázový port je 5432).
+Pokud už běží lokální vývojový server nebo jiná databáze, použijte například
+`FRONTEND_PORT=3001` a `POSTGRES_PORT=5433`.
+
+```bash
+docker compose ps
+docker compose logs -f frontend backend
+docker compose stop
+```
+
+Frontend načítá školy, obory a zaměstnavatele z REST API. Geometrie, demografie
+a předpočítané dojezdy zůstávají v lokálním snímku. OTP je volitelný profil `otp`; spustí se výslovně
+přes `docker compose up -d otp` nebo spolu s aplikací přes
+`docker compose --profile otp up -d`. Běžné spuštění jej nepotřebuje.
+
 ### Frontend (Next.js)
 
+Produkční frontend v Dockeru spustíte z kořene projektu (s kořenovým `.env`
+stejně jako u ostatních Compose služeb):
+
+```bash
+docker compose up -d --build frontend
+```
+
+Aplikace běží na http://localhost:3000. Port lze změnit pomocí `FRONTEND_PORT`
+v `.env`. Pokud na portu běží vývojový server, nejprve jej ukončete, nebo použijte
+například `FRONTEND_PORT=3001 docker compose up -d --build frontend`.
+Příkaz spustí také backend a databázi, potřebné pro načítání katalogů.
+Logy: `docker compose logs -f frontend`; zastavení: `docker compose stop frontend`.
+
 Webová aplikace je ve složce `frontend/`. Používá Next.js App Router,
-TypeScript, vlastní CSS a Apache ECharts. Doporučený Node.js 22.18+.
+TypeScript, TanStack Query, vlastní CSS a Apache ECharts. Doporučený Node.js 22.18+.
 
 ```bash
 cd frontend
@@ -47,11 +87,14 @@ npm run dev
 
 Otevřete adresu vypsanou v terminálu, standardně http://localhost:3000.
 Jiný port lze zvolit příkazem `npm run dev -- --port 3001`.
+Backend má výchozí adresu `http://127.0.0.1:8000`; jinou nastavte pomocí
+`BACKEND_URL` v `frontend/.env.local`. Spusťte jej příkazem `docker compose up -d backend`.
 Kontroly: `npm run lint`, `npm test` a `npm run build`.
 
 Stránky `/kraj` a `/rodiny` obsahují interaktivní kartogram, simulaci nabídky
-oborů, grafy a hledání uložených dojezdů. Používají lokální export existujících
-dat; běh frontendu nevyžaduje databázi ani OpenTripPlanner a nestahuje nová data.
+oborů, grafy a hledání uložených dojezdů. Katalogy a statistiky načítají z API
+přes serverovou cache s obnovou po 24 hodinách; dojezdy počítají z lokálního
+exportu. OpenTripPlanner při běhu nepotřebují.
 Podíly přijatých a jednotlivé úseky cest jsou výslovně označené modelové ukázky,
 protože v podkladech chybí. Podrobnosti a postup obnovy exportu jsou ve
 [frontend/README.md](frontend/README.md).

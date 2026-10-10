@@ -56,6 +56,7 @@ export default function RegionMap({
   before,
   schoolIds,
   field,
+  employersNotice,
   onSelectSchool,
   selectedSchoolId,
   selectedEmployerId,
@@ -71,6 +72,7 @@ export default function RegionMap({
   before?: Travel;
   schoolIds: Set<string>;
   field: string;
+  employersNotice?: string;
   onSelectSchool?: (id: string) => void;
   selectedSchoolId?: string;
   selectedEmployerId?: string;
@@ -295,6 +297,7 @@ export default function RegionMap({
         />
         <BriefcaseIcon size={16} />
         Zaměstnavatelé
+        {employersNotice && <span title={employersNotice}>· {employersNotice}</span>}
       </label>
     </div>
   );
@@ -526,7 +529,7 @@ export default function RegionMap({
                 ))}
             </ul>
             {!data.employers.some((e) => e.field === field) && (
-              <p>Pro tento obor nemáme pracoviště se známou polohou.</p>
+              <p>{employersNotice ?? "Pro tento obor nemáme pracoviště se známou polohou."}</p>
             )}
           </section>
         </div>

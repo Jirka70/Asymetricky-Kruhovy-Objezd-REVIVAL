@@ -11,12 +11,14 @@ import {
   CheckCircleIcon,
   WarningCircleIcon,
   GraduationCapIcon,
-  ArrowUpRightIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { DataProvider } from "./data-provider";
 import SearchSelect from "./search-select";
 import { EmployerDetail } from "./place-details";
+import SchoolInformation from "./school-information";
+import { QueryBoundary, QueryStatus, DataSkeleton } from "./query-state";
+import { useSelectionData } from "@/lib/use-selection-data";
 import { focusSection } from "@/lib/focus";
 import {
   DEFAULT_FIELD,
@@ -31,7 +33,7 @@ import {
 import type { MapMode } from "./region-map";
 const RegionMap = dynamic(() => import("./region-map"), {
   ssr: false,
-  loading: () => <div className="map-stage">Načítání mapy…</div>,
+  loading: () => <DataSkeleton label="Načítání mapy…" />,
 });
 const DemandPanel = dynamic(() =>
   import("./analytics").then((m) => m.DemandPanel),
@@ -46,7 +48,7 @@ type Selection = { kind: "school" | "employer"; id: string } | null;
 export default function RegionDashboard() {
   return <DataProvider>{(data) => <Dashboard data={data} />}</DataProvider>;
 }
-function Dashboard({ data }: { data: Snapshot }) {
+function Dashboard({ data: baseData }: { data: Snapshot }) {
   const [field, setField] = useState(DEFAULT_FIELD),
     [form, setForm] = useState("den"),
     [threshold, setThreshold] = useState(45);
@@ -54,6 +56,8 @@ function Dashboard({ data }: { data: Snapshot }) {
     [changes, setChanges] = useState<Change[]>([]);
   const [candidate, setCandidate] = useState("600009271"),
     [notice, setNotice] = useState("");
+  const selection = useSelectionData(baseData, field, form);
+  const { data } = selection;
   const [panel, setPanel] = useState<Selection>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [undo, setUndo] = useState<{
@@ -218,14 +222,14 @@ function Dashboard({ data }: { data: Snapshot }) {
         <div className="compact-scenario-actions">
           <button
             className="primary"
-            disabled={scenarioIds.has(candidate)}
+            disabled={!selection.schools.data || scenarioIds.has(candidate)}
             onClick={() => addChange("add")}
           >
             <PlusIcon size={17} />
             Přidat obor
           </button>
           <button
-            disabled={!scenarioIds.has(candidate)}
+            disabled={!selection.schools.data || !scenarioIds.has(candidate)}
             onClick={() => addChange("remove")}
           >
             <MinusIcon size={17} />
@@ -265,6 +269,8 @@ function Dashboard({ data }: { data: Snapshot }) {
           </button>
         </div>
       )}
+      <QueryStatus queries={selection.schools.data ? [selection.schools, selection.employers] : [selection.employers]} />
+      <QueryBoundary queries={[selection.schools]}>
       <div
         className={`map-workspace region-workspace${panel ? " has-detail" : ""}`}
       >
@@ -281,6 +287,7 @@ function Dashboard({ data }: { data: Snapshot }) {
             before={before}
             schoolIds={mode === "current" ? ids : scenarioIds}
             field={field}
+            employersNotice={selection.employersNotice}
             onSelectSchool={(id) => openPlace("school", id)}
             onSelectEmployer={(id) => openPlace("employer", id)}
             selectedEmployerId={
@@ -407,23 +414,7 @@ function Dashboard({ data }: { data: Snapshot }) {
                 )}
                 <details className="technical-details">
                   <summary>Informace o škole</summary>
-                  <p>{school.name}</p>
-                  <p>{school.address}</p>
-                  {school.web && (
-                    <a
-                      className="text-link"
-                      href={
-                        school.web.startsWith("http")
-                          ? school.web
-                          : `https://${school.web}`
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Web školy
-                      <ArrowUpRightIcon size={14} />
-                    </a>
-                  )}
+                  <SchoolInformation redizo={school.id} field={field} form={form} />
                 </details>
               </div>
             )}
@@ -534,6 +525,7 @@ function Dashboard({ data }: { data: Snapshot }) {
         />
         <AdmissionPanel data={data} ids={ids} />
       </div>
+      </QueryBoundary>
     </>
   );
 }

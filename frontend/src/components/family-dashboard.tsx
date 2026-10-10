@@ -15,6 +15,8 @@ import SearchSelect from "./search-select";
 import { JourneySummary, SchoolDetail, EmployerDetail } from "./place-details";
 import { focusSection } from "@/lib/focus";
 import { DataProvider } from "./data-provider";
+import { QueryBoundary, QueryStatus, DataSkeleton } from "./query-state";
+import { useSelectionData } from "@/lib/use-selection-data";
 import {
   DEFAULT_FIELD,
   schoolIds,
@@ -24,7 +26,7 @@ import {
 import { findJourneys } from "@/lib/journeys";
 const RegionMap = dynamic(() => import("./region-map"), {
   ssr: false,
-  loading: () => <div className="map-stage">Načítání mapy…</div>,
+  loading: () => <DataSkeleton label="Načítání mapy…" />,
 });
 const DemandPanel = dynamic(() =>
   import("./analytics").then((m) => m.DemandPanel),
@@ -37,7 +39,7 @@ type Selection = { kind: "school" | "employer"; id: string } | null;
 export default function FamilyDashboard() {
   return <DataProvider>{(data) => <Dashboard data={data} />}</DataProvider>;
 }
-function Dashboard({ data }: { data: Snapshot }) {
+function Dashboard({ data: baseData }: { data: Snapshot }) {
   const [field, setField] = useState(DEFAULT_FIELD),
     [origin, setOrigin] = useState("063550"),
     [form, setForm] = useState("den");
@@ -51,6 +53,8 @@ function Dashboard({ data }: { data: Snapshot }) {
     mode: "arrival" as "arrival" | "departure",
   });
   const [selected, setSelected] = useState("600170527");
+  const selection = useSelectionData(baseData, search.field, search.form);
+  const { data } = selection;
   const [panel, setPanel] = useState<Selection>(null);
   const [notice, setNotice] = useState("");
   const [discoveryOpen, setDiscoveryOpen] = useState(false),
@@ -92,7 +96,7 @@ function Dashboard({ data }: { data: Snapshot }) {
     label: `${f.name} · ${f.id}`,
   }));
   const otherForm = search.form === "den" ? "dal" : "den";
-  const alternateSchools = schoolIds(data, search.field, otherForm);
+  const hasAlternateForm = data.fields.find((f) => f.id === search.field)?.forms?.includes(otherForm);
   const fullWindow = findJourneys(data, search.origin, ids, "arrival", "08:00");
   function recommend(id: string) {
     setField(id);
@@ -106,14 +110,7 @@ function Dashboard({ data }: { data: Snapshot }) {
     setSearch(next);
     setPanel(null);
     setTimelineOpen(false);
-    const count = findJourneys(
-      data,
-      next.origin,
-      schoolIds(data, next.field, next.form),
-      next.mode,
-      next.time,
-    ).length;
-    setNotice(`Hledání dokončeno. Počet škol s uloženou cestou: ${count}.`);
+    setNotice("Zadání hledání bylo aktualizováno.");
     focusSection("results-heading");
   }
   function submit(e: React.FormEvent) {
@@ -262,6 +259,8 @@ function Dashboard({ data }: { data: Snapshot }) {
           </div>
         )}
       </div>
+      <QueryStatus queries={selection.schools.data ? [selection.schools, selection.employers] : [selection.employers]} />
+      <QueryBoundary queries={[selection.schools]}>
       <div className="map-workspace family-workspace">
         <section
           className="workspace-map"
@@ -272,6 +271,7 @@ function Dashboard({ data }: { data: Snapshot }) {
             times={times}
             schoolIds={ids}
             field={search.field}
+            employersNotice={selection.employersNotice}
             onSelectSchool={(id) => openPlace("school", id)}
             onSelectEmployer={(id) => openPlace("employer", id)}
             selectedEmployerId={
@@ -385,7 +385,7 @@ function Dashboard({ data }: { data: Snapshot }) {
                       : "Zkuste jiný čas nebo místo. Skutečné spojení může existovat i mimo náš snímek."}
                   </p>
                   <div className="empty-actions">
-                    {ids.size === 0 && alternateSchools.size > 0 && (
+                    {ids.size === 0 && hasAlternateForm && (
                       <button onClick={() => recover("form")}>
                         Zkusit {otherForm === "den" ? "denní" : "dálkové"}{" "}
                         studium
@@ -418,6 +418,7 @@ function Dashboard({ data }: { data: Snapshot }) {
           )}
         </aside>
       </div>
+      </QueryBoundary>
     </>
   );
 }

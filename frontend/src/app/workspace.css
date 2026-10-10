@@ -1395,3 +1395,27 @@ button.journey-select:hover {
     min-height: 40px;
   }
 }
+/* Query loading states retain space for the map and respect reduced motion. */
+.data-skeleton {
+  min-height: 500px;
+  padding: 24px;
+  border: 1px solid #d6ded9;
+  border-radius: 4px;
+  background: #f6f8f6;
+}
+.data-skeleton.is-compact { min-height: 130px; padding: 12px 0; border: 0; }
+.skeleton-line, .skeleton-block {
+  background: #e2e8e3;
+  border-radius: 4px;
+  animation: data-pulse 1.6s ease-in-out infinite alternate;
+}
+.skeleton-line { height: 18px; width: 55%; margin-bottom: 14px; }
+.skeleton-line.short { width: 32%; }
+.skeleton-block { height: 350px; margin-top: 28px; }
+.is-compact .skeleton-block { height: 30px; margin-top: 14px; }
+.query-notice { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px; margin: 12px 0; background: #fff3e6; border: 1px solid #d6b58a; }
+.query-updating { margin: 8px 0; color: #5c6b62; font-size: 13px; }
+@keyframes data-pulse { from { opacity: 1; } to { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line, .skeleton-block { animation: none; }
+}

@@ -1,55 +1,30 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { snapshotQuery, schoolsQuery, programsQuery } from "@/lib/api";
+import { catalogData } from "@/lib/api-data";
 import type { Snapshot } from "@/lib/data";
-let cached: Promise<Snapshot> | undefined;
-function load() {
-  cached ??= fetch("/data/snapshot.json")
-    .then((r) => {
-      if (!r.ok) throw new Error("Data nejsou dostupná");
-      return r.json() as Promise<Snapshot>;
-    })
-    .catch((e) => {
-      cached = undefined;
-      throw e;
-    });
-  return cached;
-}
+import { QueryBoundary, QueryStatus } from "./query-state";
 export function DataProvider({
   children,
 }: {
   children: (data: Snapshot) => ReactNode;
 }) {
-  const [data, setData] = useState<Snapshot | null>(null);
-  const [error, setError] = useState(false);
-  const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let active = true;
-    load()
-      .then((d) => {
-        if (active) {
-          setData(d);
-          setError(false);
-        }
-      })
-      .catch(() => {
-        if (active) setError(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, [retry]);
-  if (error)
-    return (
-      <div className="load-state" role="alert">
-        <h2>Datový snímek se nepodařilo načíst.</h2>
-        <button onClick={() => setRetry(retry + 1)}>Zkusit znovu</button>
-      </div>
-    );
-  if (!data)
-    return (
-      <div className="load-state" role="status">
-        Načítání dat Karlovarského kraje…
-      </div>
-    );
-  return children(data);
+  // Independent reads start together. Both forms preserve distance-only programs.
+  const snapshot = useQuery(snapshotQuery);
+  const schools = useQuery(schoolsQuery());
+  const daily = useQuery(programsQuery("den"));
+  const distance = useQuery(programsQuery("dal"));
+  const data = useMemo(() =>
+    snapshot.data && schools.data && daily.data && distance.data
+      ? catalogData(snapshot.data, schools.data, daily.data, distance.data)
+      : undefined,
+  [snapshot.data, schools.data, daily.data, distance.data]);
+  const queries = [snapshot, schools, daily, distance];
+  return (
+    <QueryBoundary queries={queries}>
+      <QueryStatus queries={queries} />
+      {data && children(data)}
+    </QueryBoundary>
+  );
 }

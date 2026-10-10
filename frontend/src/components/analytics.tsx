@@ -115,7 +115,7 @@ export function DemandPanel({
   onSelect?: (id: string) => void;
 }) {
   const ranked = data.demand
-    .filter((d) => data.offerings.some((o) => o.field === d.field))
+    .filter((d) => data.fields.some((f) => f.id === d.field))
     .slice(0, 4);
   const option: EChartsOption = {
     grid: { left: 145, right: 36, top: 8, bottom: 25 },
@@ -173,7 +173,7 @@ export function DemandPanel({
       <p className="section-subtitle">
         Podívejte se, kolik míst zaměstnavatelé nabízejí v příbuzných profesích.
       </p>
-      <Chart
+      {ranked.length > 0 ? <Chart
         option={option}
         height={164}
         label={ranked
@@ -185,8 +185,8 @@ export function DemandPanel({
         onClick={
           onSelect ? (e) => onSelect(ranked[e.dataIndex].field) : undefined
         }
-      />
-      {onSelect && (
+      /> : <p className="empty-state">Pro nabízené obory nemáme údaje o pracovní poptávce.</p>}
+      {onSelect && ranked.length > 0 && (
         <button
           className="button-link"
           onClick={() => onSelect(ranked[0].field)}

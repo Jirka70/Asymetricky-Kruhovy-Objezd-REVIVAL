@@ -3,6 +3,7 @@ import "./globals.css";
 import "./compact.css";
 import "./workspace.css";
 import { Header, Footer } from "@/components/shell";
+import QueryProvider from "@/components/query-provider";
 
 export const metadata: Metadata = {
   title: "Obor na dosah",
@@ -14,7 +15,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="cs" data-scroll-behavior="smooth">
       <body>
         <Header />
-        {children}
+        <QueryProvider>{children}</QueryProvider>
         <Footer />
       </body>
     </html>
