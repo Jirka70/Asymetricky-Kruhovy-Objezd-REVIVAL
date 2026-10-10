@@ -762,7 +762,7 @@ async fn new_enum_and_employer_parameters_validate_and_apply_defaults() {
     assert_eq!(map.uroven, Uroven::Obec);
     assert_eq!(map.forma, Forma::Den);
     assert_eq!(map.max_min, 120);
-    for level in ["orp", "obec", "zsj"] {
+    for level in ["orp", "obec"] {
         check_error(
             &format!("/api/v1/zsj?uroven={level}&max_min=180"),
             "/zsj",
@@ -940,6 +940,7 @@ async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
             "/student/skoly",
         ),
         ("/api/v1/zsj/seznam", "/zsj/seznam"),
+        ("/api/v1/zsj?uroven=zsj", "/zsj"),
         ("/api/v1/obory", "/obory"),
         ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
         (

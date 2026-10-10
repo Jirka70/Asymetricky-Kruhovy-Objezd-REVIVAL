@@ -21,7 +21,7 @@ info:
     | `deti` | Odhad jednoho ročníku nastupujícího na SŠ v roce 2026: věková skupina 10–14 let ze SLDB 2021 v ZSJ, děleno 5. |
     | `cas_min` | Nejkratší spoj ze ZSJ k nejbližší škole s oborem (bez oboru k jakékoli SŠ), včetně chůze a přestupů. U obcí a ORP průměr ZSJ vážený počtem obyvatel. |
     | V dosahu | `cas_min` ≤ `max_min` (výchozí 120). |
-    | `pasmo` | `do30`, `30_45`, `45_60`, `nad60` (60 až `max_min`), `mimo_dosah`, `bez_spojeni`. |
+    | `pasmo` | `do30`, `30_45`, `45_60`, `nad60` (60 až `max_min`), `mimo_dosah`, `bez_spojeni`, `data_nedostupna`. |
     | Děti bez oboru | Součet `deti` v ZSJ, kde obor v dosahu není. |
     | `prihlasky_na_misto` | Přihlášky / kapacita (přijímací řízení 2026, 1. kolo). |
     | `index_pretlaku` | `prihlasky_na_misto` / průměr kraje (2,66). 1,0 = průměr. |
@@ -194,7 +194,16 @@ paths:
         | `zsj` | 839 základních sídelních jednotek |
 
         U `orp` a `obec` je `cas_min` průměr ZSJ vážený počtem obyvatel (ZSJ bez spojení se nepočítají).
-        `meta.v_limitu` počítá plochy do 30, 45, 60 a `max_min` minut.
+        Aktuálně je implementováno pouze `uroven=zsj`; `obec` (i výchozí) a `orp` vracejí 501.
+        `scenar=rano` používá matici s příjezdem 07:00–08:00. S `obor` se filtruje i `forma`;
+        bez `obor` se počítají všechny SŠ. Shody dojezdu rozhoduje REDIZO.
+        Limity a pásma používají původní minuty; `cas_min` se zaokrouhluje až pro zobrazení.
+        `deti` je skupina 10–14 let z roku 2021 / 5, zaokrouhlená na celé děti po ZSJ.
+        `deti_v_dosahu` je celý tento odhad nebo 0; podíl je 100 nebo 0 %, při nulovém odhadu 0 %.
+        Bez odpovídající školy je pásmo `bez_spojeni`; bez známé doby k vybraným školám
+        `data_nedostupna`. V obou případech chybí `cas_min` i `nejblizsi_redizo` a `v_dosahu=false`.
+        Chybějící řádky matice nebo demografické vstupy vracejí 500.
+        `meta.v_limitu` počítá plochy do 30, 45, 60 a `max_min` minut; limity jsou seřazené a bez duplicit.
       parameters:
         - $ref: '#/components/parameters/OborFiltr'
         - $ref: '#/components/parameters/Forma'
@@ -208,6 +217,8 @@ paths:
           content:
             application/geo+json:
               schema: { $ref: '#/components/schemas/MapaDosahu' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
   /obory:
@@ -492,7 +503,7 @@ components:
       enum: [pretlak, nizky_zajem, spatna_dostupnost, poptavka_trhu]
     Pasmo:
       type: string
-      enum: [do30, '30_45', '45_60', nad60, mimo_dosah, bez_spojeni]
+      enum: [do30, '30_45', '45_60', nad60, mimo_dosah, bez_spojeni, data_nedostupna]
     Cas:
       type: string
       pattern: '^\d{2}:\d{2}$'
@@ -759,7 +770,7 @@ components:
         kod: { $ref: '#/components/schemas/KodPlochy' }
         nazev: { type: string, example: Karlovy Vary }
         uroven: { type: string, enum: [orp, obec, zsj] }
-        cas_min: { type: [integer, 'null'], example: 24, description: null = bez spojení. }
+        cas_min: { type: [integer, 'null'], example: 24, description: Chybí nebo null při neznámém dojezdu. }
         pasmo: { $ref: '#/components/schemas/Pasmo' }
         v_dosahu: { type: boolean }
         deti: { type: integer, example: 412 }

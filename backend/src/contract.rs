@@ -321,9 +321,13 @@ pub async fn list_zsj(
     crate::catalog::zsj(pool).await.map(Json)
 }
 pub async fn get_zsj(
-    ContractQuery(_params): ContractQuery<requests::ZsjQuery>,
+    State(pool): State<DbPool>,
+    ContractQuery(params): ContractQuery<requests::ZsjQuery>,
 ) -> Result<GeoJson<dto::MapaDosahu>, StubError> {
-    Err(StubError::unimplemented("getZsj"))
+    if params.uroven != requests::Uroven::Zsj {
+        return Err(StubError::unimplemented("getZsj"));
+    }
+    crate::reachability::zsj(pool, params).await.map(GeoJson)
 }
 pub async fn list_obory(
     State(pool): State<DbPool>,

@@ -107,6 +107,7 @@ async fn migrations_and_api() {
     let app = contract::router(db::pool(&url, 2).unwrap());
     student_school_data(&app, &mut connection, db::pool(&url, 2).unwrap()).await;
     zsj_api(&app, &mut connection).await;
+    zsj_accessibility_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
 
     assert_eq!(
@@ -275,14 +276,15 @@ async fn contract_response(
         .await
         .unwrap();
     assert_eq!(response.status(), status, "{uri}");
-    let media =
-        if status == StatusCode::OK && matches!(path, "/skoly" | "/obory/{kod}/zamestnavatele") {
-            "application/geo+json"
-        } else {
-            "application/json"
-        };
+    let media = if status == StatusCode::OK
+        && matches!(path, "/skoly" | "/zsj" | "/obory/{kod}/zamestnavatele")
+    {
+        "application/geo+json"
+    } else {
+        "application/json"
+    };
     assert_eq!(response.headers()["content-type"], media);
-    let body_limit = if path == "/zsj/seznam" {
+    let body_limit = if matches!(path, "/zsj/seznam" | "/zsj") {
         64_000_000
     } else {
         2_000_000
@@ -1302,4 +1304,243 @@ impl Drop for TestDatabase {
             Err(error) => eprintln!("Could not clean up test container {}: {error}", self.name),
         }
     }
+}
+
+async fn zsj_accessibility_api(app: &axum::Router, connection: &mut PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::json;
+    let path = "/zsj";
+    let body = contract_response(app, "/api/v1/zsj?uroven=zsj", path, StatusCode::OK).await;
+    let features = body["features"].as_array().unwrap();
+    assert_eq!(features.len(), 839);
+    assert_eq!(body["meta"]["jednotek_celkem"], 839);
+    assert_eq!(body["meta"]["scenar"], "rano");
+    assert_eq!(body["meta"]["max_min"], 120);
+    assert_eq!(body["meta"]["uroven"], "zsj");
+    #[derive(QueryableByName)]
+    struct Expected {
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        kod: String,
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        geometry: String,
+        #[diesel(sql_type = diesel::sql_types::Integer)]
+        populace: i32,
+        #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Float>)]
+        minutes: Option<f32>,
+        #[diesel(sql_type = diesel::sql_types::Nullable<diesel::sql_types::Text>)]
+        redizo: Option<String>,
+    }
+    let expected = diesel::sql_query(r#"SELECT z.kod, ST_AsGeoJSON(z.boundary, 15, 0) AS geometry,
+        d.populace, nearest.doba_jizdy AS minutes, nearest.redizo::text AS redizo FROM "ZSJ" z
+        JOIN "DATA_DEMOGRAFIE_ZSJ" d ON d.kod_zsj=z.kod AND d.rok=2021 AND d.demo_skupina='1300100014'
+        LEFT JOIN LATERAL (SELECT t.doba_jizdy, t.redizo FROM "DOJEZDOVE_DOBY" t
+            JOIN stredni_skoly s ON s.redizo=t.redizo
+            WHERE t.kod_zsj=z.kod AND t.slot_prijezdu='07:00-08:00' AND t.doba_jizdy IS NOT NULL
+            ORDER BY t.doba_jizdy, t.redizo LIMIT 1) nearest ON true ORDER BY z.kod"#)
+        .load::<Expected>(connection).unwrap();
+    for (feature, expected) in features.iter().zip(&expected) {
+        let properties = &feature["properties"];
+        assert_eq!(properties["kod"], expected.kod);
+        assert_eq!(
+            feature["geometry"],
+            serde_json::from_str::<serde_json::Value>(&expected.geometry).unwrap()
+        );
+        assert_eq!(properties["deti"], (i64::from(expected.populace) + 2) / 5);
+        assert_eq!(
+            properties["v_dosahu"],
+            expected.minutes.is_some_and(|v| v <= 120.0)
+        );
+        assert_eq!(
+            properties.get("cas_min"),
+            expected.minutes.map(|v| json!(v.round() as i64)).as_ref()
+        );
+        assert_eq!(
+            properties.get("nejblizsi_redizo"),
+            expected.redizo.as_ref().map(|v| json!(v)).as_ref()
+        );
+    }
+    for item in body["meta"]["v_limitu"].as_array().unwrap() {
+        let limit = item["limit_min"].as_i64().unwrap() as f32;
+        assert_eq!(
+            item["jednotek"],
+            expected
+                .iter()
+                .filter(|e| e.minutes.is_some_and(|v| v <= limit))
+                .count()
+        );
+    }
+    let codes: Vec<String> = zsj::table
+        .order(zsj::kod)
+        .limit(9)
+        .select(zsj::kod)
+        .load(connection)
+        .unwrap();
+    let originals = dojezdove_doby::table
+        .filter(dojezdove_doby::kod_zsj.eq_any(&codes))
+        .filter(dojezdove_doby::slot_prijezdu.eq("07:00-08:00"))
+        .select(DojezdovaDoba::as_select())
+        .load::<DojezdovaDoba>(connection)
+        .unwrap();
+    let demo = data_demografie_zsj::table
+        .find((&codes[0], 2021, "1300100014"))
+        .select(DemografieZsj::as_select())
+        .first::<DemografieZsj>(connection)
+        .unwrap();
+    connection.batch_execute(r#"INSERT INTO "OBORY" (kod,nazev) VALUES ('99-97-H/01','Reachability test');
+        INSERT INTO "NABIDKA_OBORU" (id,redizo,kod_oboru,forma_studia,delka_studia,pocet_prijimanych,loni_pocet_prihlasek) VALUES
+        ('97000000-0000-0000-0000-000000000001','600008975','99-97-H/01','den',3,5,10),
+        ('97000000-0000-0000-0000-000000000002','600008975','99-97-H/01','den',3,5,10),
+        ('97000000-0000-0000-0000-000000000003','600022854','99-97-H/01','den',3,5,10),
+        ('97000000-0000-0000-0000-000000000004','600022854','99-97-H/01','dal',3,5,10);"#).unwrap();
+    for (code, minutes) in codes.iter().zip([
+        Some(0.0),
+        Some(30.0),
+        Some(30.1),
+        Some(45.0),
+        Some(45.1),
+        Some(60.0),
+        Some(60.4),
+        Some(121.0),
+        None,
+    ]) {
+        diesel::update(
+            dojezdove_doby::table
+                .filter(dojezdove_doby::kod_zsj.eq(code))
+                .filter(dojezdove_doby::slot_prijezdu.eq("07:00-08:00")),
+        )
+        .set(dojezdove_doby::doba_jizdy.eq(1.0))
+        .execute(connection)
+        .unwrap();
+        diesel::update(
+            dojezdove_doby::table
+                .filter(dojezdove_doby::kod_zsj.eq(code))
+                .filter(dojezdove_doby::slot_prijezdu.eq("07:00-08:00"))
+                .filter(dojezdove_doby::redizo.eq_any(["600008975", "600022854"])),
+        )
+        .set(dojezdove_doby::doba_jizdy.eq(minutes))
+        .execute(connection)
+        .unwrap();
+    }
+    diesel::update(data_demografie_zsj::table.find((&codes[0], 2021, "1300100014")))
+        .set(data_demografie_zsj::populace.eq(13))
+        .execute(connection)
+        .unwrap();
+    // Wrong arrival-slot data must not turn an unknown morning duration into a route.
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&codes[8]),
+            dojezdove_doby::redizo.eq("600008975"),
+            dojezdove_doby::slot_prijezdu.eq("09:00-10:00"),
+            dojezdove_doby::doba_jizdy.eq(1.0),
+        ))
+        .execute(connection)
+        .unwrap();
+    let base = "/api/v1/zsj?uroven=zsj&obor=99-97-H%2F01";
+    let body = contract_response(app, base, path, StatusCode::OK).await;
+    for (index, band) in [
+        "do30",
+        "do30",
+        "30_45",
+        "30_45",
+        "45_60",
+        "45_60",
+        "nad60",
+        "mimo_dosah",
+        "data_nedostupna",
+    ]
+    .iter()
+    .enumerate()
+    {
+        let row = &body["features"][index]["properties"];
+        assert_eq!(row["kod"], codes[index]);
+        assert_eq!(row["pasmo"], *band);
+        assert_eq!(row["v_dosahu"], index < 7);
+        if index < 8 {
+            assert_eq!(row["nejblizsi_redizo"], "600008975");
+        }
+    }
+    assert_eq!(body["features"][0]["properties"]["deti"], 3);
+    assert_eq!(body["features"][0]["properties"]["deti_v_dosahu"], 3);
+    assert_eq!(
+        body["features"][0]["properties"]["podil_deti_v_dosahu"],
+        100.0
+    );
+    let unknown = &body["features"][8]["properties"];
+    assert!(unknown.get("cas_min").is_none());
+    assert!(unknown.get("nejblizsi_redizo").is_none());
+    assert_eq!(unknown["deti_v_dosahu"], 0);
+    let limited = contract_response(app, &format!("{base}&max_min=60"), path, StatusCode::OK).await;
+    assert_eq!(limited["features"][6]["properties"]["cas_min"], 60);
+    assert_eq!(limited["features"][6]["properties"]["pasmo"], "mimo_dosah");
+    assert_eq!(limited["features"][6]["properties"]["v_dosahu"], false);
+    assert_eq!(limited["meta"]["v_limitu"].as_array().unwrap().len(), 3);
+    let short = contract_response(app, &format!("{base}&max_min=20"), path, StatusCode::OK).await;
+    assert_eq!(short["features"][1]["properties"]["pasmo"], "mimo_dosah");
+    let distance = contract_response(app, &format!("{base}&forma=dal"), path, StatusCode::OK).await;
+    assert_eq!(
+        distance["features"][0]["properties"]["nejblizsi_redizo"],
+        "600022854"
+    );
+    let empty = contract_response(
+        app,
+        "/api/v1/zsj?uroven=zsj&obor=99-96-H%2F01",
+        path,
+        StatusCode::OK,
+    )
+    .await;
+    assert!(
+        empty["features"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|f| f["properties"]["pasmo"] == "bez_spojeni"
+                && f["properties"]["v_dosahu"] == false)
+    );
+    assert!(
+        empty["meta"]["v_limitu"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|v| v["jednotek"] == 0)
+    );
+    let missing = dojezdove_doby::table.find((&codes[0], "600008975", "07:00-08:00"));
+    diesel::delete(missing).execute(connection).unwrap();
+    contract_response(app, base, path, StatusCode::INTERNAL_SERVER_ERROR).await;
+    diesel::insert_into(dojezdove_doby::table)
+        .values((
+            dojezdove_doby::kod_zsj.eq(&codes[0]),
+            dojezdove_doby::redizo.eq("600008975"),
+            dojezdove_doby::slot_prijezdu.eq("07:00-08:00"),
+            dojezdove_doby::doba_jizdy.eq(0.0),
+        ))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(data_demografie_zsj::table.find((&codes[0], 2021, "1300100014")))
+        .execute(connection)
+        .unwrap();
+    contract_response(app, base, path, StatusCode::INTERNAL_SERVER_ERROR).await;
+    diesel::insert_into(data_demografie_zsj::table)
+        .values((
+            data_demografie_zsj::kod_zsj.eq(&demo.kod_zsj),
+            data_demografie_zsj::rok.eq(demo.rok),
+            data_demografie_zsj::demo_skupina.eq(&demo.demo_skupina),
+            data_demografie_zsj::populace.eq(demo.populace),
+        ))
+        .execute(connection)
+        .unwrap();
+    for row in originals {
+        diesel::update(dojezdove_doby::table.find((&row.kod_zsj, &row.redizo, &row.slot_prijezdu)))
+            .set(dojezdove_doby::doba_jizdy.eq(row.doba_jizdy))
+            .execute(connection)
+            .unwrap();
+    }
+    diesel::delete(dojezdove_doby::table.filter(dojezdove_doby::slot_prijezdu.eq("09:00-10:00")))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(nabidka_oboru::table.filter(nabidka_oboru::kod_oboru.eq("99-97-H/01")))
+        .execute(connection)
+        .unwrap();
+    diesel::delete(obory::table.find("99-97-H/01"))
+        .execute(connection)
+        .unwrap();
 }

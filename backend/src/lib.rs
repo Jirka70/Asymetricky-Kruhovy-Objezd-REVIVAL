@@ -5,6 +5,7 @@ pub mod dto;
 mod logging;
 pub mod models;
 pub mod programs;
+mod reachability;
 pub mod requests;
 pub mod schema;
 pub mod student;

@@ -63,6 +63,8 @@ pub enum Pasmo {
     MimoDosah,
     #[serde(rename = "bez_spojeni")]
     BezSpojeni,
+    #[serde(rename = "data_nedostupna")]
+    DataNedostupna,
 }
 
 pub type Cas = String;
