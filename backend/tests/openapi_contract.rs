@@ -1221,3 +1221,20 @@ async fn invalid_utf8_path_identifiers_return_documented_json_422() {
         }
     }
 }
+
+#[tokio::test]
+async fn zsj_list_repeated_query_parameters_return_documented_json_422() {
+    for (query, field) in [
+        ("x=1&x=2", "x"),
+        ("max_min=10&max_min=20", "max_min"),
+        ("%78=1&x=2", "x"),
+    ] {
+        check_error(
+            &format!("/api/v1/zsj/seznam?{query}"),
+            "/zsj/seznam",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Some(field),
+        )
+        .await;
+    }
+}

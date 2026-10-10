@@ -184,7 +184,9 @@ paths:
         `boundary` je uložený polygon převedený na GeoJSON geometrii ve WGS 84
         (EPSG:4326), se souřadnicemi v pořadí [lon, lat].
         `lat` a `lon` označují reprezentační bod uvnitř polygonu.
+        Opakované query parametry vracejí 422 s JSON chybou a názvem parametru v `pole`.
       responses:
+        '422': { $ref: '#/components/responses/NeplatnyParametr' }
         '500': { $ref: '#/components/responses/InterniChyba' }
         '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
