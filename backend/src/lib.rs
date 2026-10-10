@@ -2,6 +2,7 @@ mod catalog;
 pub mod contract;
 pub mod db;
 pub mod dto;
+mod logging;
 pub mod models;
 pub mod programs;
 pub mod requests;

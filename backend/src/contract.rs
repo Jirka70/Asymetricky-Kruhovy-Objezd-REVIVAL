@@ -482,5 +482,6 @@ pub fn router(pool: DbPool) -> Router {
             "/docs",
             get(|| async { Html(include_str!("../../swagger.html")) }),
         )
+        .layer(axum::middleware::from_fn(crate::logging::log_request))
         .with_state(pool)
 }

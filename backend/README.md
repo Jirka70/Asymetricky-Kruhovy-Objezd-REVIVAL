@@ -45,6 +45,24 @@ cargo run -- serve
 
 `serve` is the default command. It refuses to start with pending migrations. Migrations are an explicit step and are embedded into the binary; `build.rs` ensures SQL edits trigger recompilation. After updating to include migrations 8–9, run `cargo run -- migrate` before local serving, or rebuild the Compose backend to apply them at container startup. Never log or commit `.env`. `DB_POOL_SIZE` defaults to 8; `BIND_ADDRESS` defaults to `127.0.0.1:8000`.
 
+## Request logging
+
+Every request logs `Request received` on arrival and `Response ready` after the handler
+produces a response. Both INFO events include the same process-local `request_id`,
+HTTP `method`, and `path`; the response event also includes `status` and `elapsed_ms`.
+Timing covers request processing, including database waits and JSON serialization,
+up to response readiness. Paths are logged without query strings. This also covers
+documentation routes, validation errors, and 404/405 responses.
+
+Logging is enabled by the default `RUST_LOG=obor_backend=info`. View it with
+`docker compose logs -f backend`, or in the terminal running `cargo run -- serve`.
+Example event fields (the normal formatter also includes timestamps and targets):
+
+```text
+INFO Request received request_id=1 method=GET path=/api/v1/zsj/seznam
+INFO Response ready request_id=1 method=GET path=/api/v1/zsj/seznam status=200 elapsed_ms=42.7
+```
+
 ## Migrations
 
 | Order | Source | Tables |
