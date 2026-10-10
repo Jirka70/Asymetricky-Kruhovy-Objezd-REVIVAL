@@ -7,6 +7,7 @@ const percent = new Intl.NumberFormat("cs-CZ", { style: "percent", maximumFracti
 export default function AdmissionStats({ offers }: { offers: SchoolResponse["nabidky"] }) {
   const stats = admissionStats(offers);
   return <section className="admission-stats" aria-label="Statistiky přijetí">
+    <h3>Míra přijetí</h3>
     <p className="detail-note">Přijímací řízení 2026 · 1. kolo</p>
     {stats ? <>
       <dl className="admission-numbers">
@@ -14,7 +15,7 @@ export default function AdmissionStats({ offers }: { offers: SchoolResponse["nab
         <div><dt>Přijatí</dt><dd>{stats.accepted === null ? "Neuvedeno" : number.format(stats.accepted)}</dd></div>
         <div><dt>Podíl přijatých</dt><dd>{stats.rate === null ? "Nelze určit" : percent.format(stats.rate)}</dd></div>
       </dl>
-      <p className="detail-note">Za vybraný obor a formu studia. Podíl přijatých z přihlášek.</p>
+      <p className="detail-note">Za vybraný obor a formu studia. Přijatí ÷ přihlášky × 100.</p>
     </> : <p className="detail-note">Pro tento obor a formu nemáme údaje o přijímání.</p>}
   </section>;
 }

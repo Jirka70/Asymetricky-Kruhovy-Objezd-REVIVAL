@@ -20,7 +20,7 @@ import {
 import { DataProvider } from "./data-provider";
 import SearchSelect from "./search-select";
 import { EmployerDetail } from "./place-details";
-import SchoolInformation from "./school-information";
+import SchoolInformation, { SchoolAdmissions } from "./school-information";
 import { QueryBoundary, QueryStatus, DataSkeleton } from "./query-state";
 import { useSelectionData } from "@/lib/use-selection-data";
 import { focusSection } from "@/lib/focus";
@@ -377,6 +377,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     {field} · {form === "den" ? "Denní" : "Dálkové"} studium
                   </small>
                 </p>
+                <SchoolAdmissions redizo={school.id} field={field} form={form} />
                 <p
                   className={`offering-status ${ids.has(school.id) ? "offered" : "absent"}`}
                 >
@@ -477,7 +478,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                 )}
                 <section className="technical-details">
                   <h3>Informace o škole</h3>
-                  <SchoolInformation redizo={school.id} field={field} form={form} />
+                  <SchoolInformation redizo={school.id} field={field} form={form} showAdmissions={false} />
                 </section>
               </div>
             )}

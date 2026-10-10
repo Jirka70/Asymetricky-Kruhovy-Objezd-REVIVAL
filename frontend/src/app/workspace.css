@@ -1495,3 +1495,8 @@ button.journey-select:hover {
 .route-legs li { margin-bottom: 12px; padding-left: 4px; }
 .route-legs span, .route-legs small { display: block; margin-top: 3px; overflow-wrap: anywhere; }
 .route-legs small { color: #606870; }
+
+.school-admissions { margin: 16px 0; padding: 12px; border: 1px solid #d6dce0; border-radius: 4px; background: #f5f9f7; }
+.school-admissions .admission-stats { margin: 0; }
+.admission-stats h3 { font-size: 14px; margin: 0 0 6px; }
+.school-admissions .admission-numbers > div:last-child dd { font-size: 24px; color: #236650; }

@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { ArrowLeftIcon, MagnifyingGlassIcon, MapPinIcon, GraduationCapIcon, CaretDownIcon, ChartBarIcon } from "@phosphor-icons/react";
 import SearchSelect from "./search-select";
 import { EmployerDetail } from "./place-details";
-import SchoolInformation from "./school-information";
+import SchoolInformation, { SchoolAdmissions } from "./school-information";
 import StudentSchoolCard from "./student-school";
 import StudentRoute from "./student-route";
 import ProgramDetail from "./program-detail";
@@ -95,9 +95,10 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           {panel?.kind === "school" ? <div className="place-detail-content">
             <h2 id="detail-heading" tabIndex={-1}>{school?.shortName ?? student?.nazev ?? panel.id}</h2>
             <p>{selectedField} · {search.form === "den" ? "Denní" : "Dálkové"} studium</p>
+            <SchoolAdmissions redizo={panel.id} field={search.field} form={search.form} />
             {student ? <StudentSchoolCard result={student} school={school} showAdmissions={false} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
             {zone && <StudentRoute key={`${zone.id}:${panel.id}`} lat={zone.lat} lon={zone.lon} redizo={panel.id} />}
-            <section className="detail-section"><h3>O škole</h3><SchoolInformation redizo={panel.id} field={search.field} form={search.form} /></section>
+            <section className="detail-section"><h3>O škole</h3><SchoolInformation redizo={panel.id} field={search.field} form={search.form} showAdmissions={false} /></section>
           </div> : employer ? <EmployerDetail employer={employer} fieldName={selectedField} /> : <>
             <div className="journey-list-heading">
               <h2 id="results-heading" tabIndex={-1}>Nalezené školy ({students.data?.data.length ?? 0})</h2>
