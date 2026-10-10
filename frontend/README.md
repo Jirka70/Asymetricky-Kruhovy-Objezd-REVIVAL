@@ -1,6 +1,6 @@
 # Obor na dosah — frontend
 
-Next.js 16 / React 19 / TypeScript / TanStack Query. Dvě propojené stránky nad REST API a lokální mapovou geometrií:
+Next.js 16 / React 19 / TypeScript / TanStack Query. Dvě propojené stránky nad REST API:
 
 - `/kraj`: kartogram ZSJ, seskupené školy a zaměstnavatelé, přidání i odebrání oboru ve stávající škole, srovnání scénářů a grafy.
 - `/rodiny`: doporučení oboru, hledání výchozí ZSJ, ranní dojezdy ze studentského API, školy a zaměstnavatelé.
@@ -65,9 +65,10 @@ Po změně kódu nebo novém exportu dat zopakujte příkaz s `--build`.
 `public/data/` obsahuje export existujících dat: 839 ZSJ, 134 území obcí,
 34 škol, 81 oborů, nabídku a poptávku profesí, demografii a předpočítané
 cesty z 12. 10. 2026. Geometrie jsou zjednodušené pro zobrazení. Používají se
-lokální soubory pro geografii, výběr výchozí ZSJ a demografický detail tooltipu.
-Dojezdy, dostupnost, katalogy a statistiky se čtou z API; místní matice se používá
-jen pro dosud nepodporované odebrání oboru. Aplikace nevolá OTP.
+lokální soubory pro názvy a obrysy obcí, zkratky škol a demografický detail tooltipu.
+Seznam ZSJ, jejich názvy, vazby na obce, reprezentační body i polygony se čtou z API.
+Dojezdy, dostupnost, katalogy, statistiky i oba typy simulace používají API;
+místní matice se v krajské ani rodinné stránce nepoužívá. Aplikace nevolá OTP.
 
 ## Načítání a cache
 
@@ -75,16 +76,23 @@ jen pro dosud nepodporované odebrání oboru. Aplikace nevolá OTP.
 - `GET /obory?forma=den` a `forma=dal`: společný katalog včetně oborů nabízených pouze dálkově, poptávka trhu práce.
 - `GET /skoly/{redizo}`: informace o škole až po otevření jejího detailu.
 - `GET /obory/{kod}/zamestnavatele`: pracoviště a profese po výběru oboru, s `jen_ss=true` a `vhodnost=2` stejně jako katalog.
+- `GET /zsj/seznam`: společný seznam ZSJ včetně polygonů a reprezentačních bodů pro obě stránky. Z něj se plní hledání výchozí ZSJ i mapová geometrie. Demografie tooltipu se připojuje ze snímku podle kódu; chybějící záznam je neznámý, nikoli nula.
 - `GET /zsj`: aktuální dojezdy a odhad jednoho ročníku pro krajskou i rodinnou mapu, vždy `uroven=zsj`.
 - `GET /obory/{kod}`: souhrn všech forem studia, nabídky a kandidátní školy; chyba detailu neblokuje mapu.
 - `GET /student/skoly`: hledání podle souřadnic vybrané ZSJ, oboru, formy a maximálního ranního dojezdu. Zobrazuje i školy mimo limit a s neznámou dobou dojezdu.
 - `GET /simulace`: přidání denního oboru do jedné školy; kapacita 1–300 (výchozí 30), limit dojezdu, `uroven=zsj`, `format=geojson`, `scenar=rano`. Dotaz se spustí až po přidání oboru.
+- `POST /simulace/zmeny`: odebrání jedné denní nabídky; posílá zápornou celou kapacitu školy z filtrovaného `/skoly`, nikoli hodnotu vstupu pro přidání. Výpočet nic nezapisuje, proto používá `useQuery`, deduplikaci a cache. Odpověď určuje dojezdy, zhoršené ZSJ a změnu dosahu. Dálkové nabídky a neznámá/nulová kapacita nebo kapacita nad 300 míst jsou ve frontendovém MVP zakázané.
 
 Prohlížeč volá `/api/backend/...`. Next Route Handler předává jen tyto hotové
-čtecí endpointy. Katalogy používají `fetch(..., { next: { revalidate: 86400 } })`.
+čtecí endpointy včetně uvedeného POST výpočtu. Katalogy používají `fetch(..., { next: { revalidate: 86400 } })`.
 GeoJSON mapy a simulace má přibližně 13 MB, nad limitem fetch cache: server načte
 výsledek bez fetch cache, odstraní již známou geometrii a pomocí `unstable_cache`
-uloží na 86400 sekund pouze hodnoty. Chybové odpovědi se do této cache neukládají.
+uloží na 86400 sekund pouze hodnoty. U POST se klíč skládá z URL a JSON těla
+s kanonickým pořadím klíčů. Změna školy, oboru, kapacity nebo limitu má vlastní výsledek.
+`/zsj/seznam` se před uložením zjednoduší pouze pro zobrazení (tolerance 0,00012°,
+5 desetinných míst); reprezentační souřadnice pro hledání zůstávají přesné. Aktuální
+vrstva má po úpravě asi 1,6 MB místo 12,8 MB. Zjednodušení knihovnou `@turf/simplify`
+běží jen na serveru, ne při renderování mapy. Chybové odpovědi se do této cache neukládají.
 Serverová cache je oddělená podle URL včetně filtrů a sdílená mezi požadavky na
 stejné instanci. Po zestárnutí ji obnoví následující požadavek; nejde o denní úlohu.
 Změna filtrů znamená vlastní cache. Budoucí živé trasy se zde necachují.
@@ -95,6 +103,10 @@ Nejde o interval překreslování React komponent. Cache není ukládána do loc
 načtení daného výběru; obnova téhož výběru ponechá data na obrazovce. Chyby mají
 opakování a nikdy potichu neobnovují statistiky ze snímku. Chyba zaměstnavatelů
 neblokuje školy. Zkratky škol a názvy obcí dočasně doplňuje lokální snímek.
+Výpočet simulace zobrazuje skeleton a případnou chybu pouze v detailu školy.
+Mapa zůstává připojená se zachovaným přiblížením, posunem a vrstvami. Při změně
+kapacity nebo limitu stejné simulace ponechá poslední výsledek do dokončení dotazu;
+jiná škola nebo obor jej nepřebírají. Nové hodnoty aktualizují stávající mapu.
 V produkci může serverová cache přežít klientský reload; vývojový hard refresh
 s vypnutou cache v DevTools se může chovat odlišně.
 
@@ -130,9 +142,9 @@ lokálního RÚIAN podkladu jako `insert_zsj.sql`. Po novém exportu obnovte str
 - Dostupnost používá ročníkový odhad z API (10–14 let / 5); rozhodnutí o dosahu přebírá z API před zaokrouhlením minut.
 - Scénáře jsou dočasné v paměti prohlížeče, nejvýše jedna změna nabídky. Změna oboru nebo formy je resetuje.
 - Přidání oboru používá API pro dojezdy před/po i modelové vyhodnocení. Statistiky v tomto scénáři používají odhad jednoho ročníku (10–14 let / 5) z API a výslovně jej označují; tooltip nadále uvádí místní odhad celé skupiny 10–14 let.
-- Odebrání zůstává označenou lokální simulací, protože je API nepodporuje. Přidání dálkového oboru je zakázané.
+- Odebrání používá stejné chování mapy a lokální loading jako přidání; při chybě se žádný lokální scénář nedopočítává. Zrušení ruší rozběhnutý klientský požadavek; návrat scénáře využije cache. Oba typy jsou dostupné pouze pro denní studium.
 - `souhrn: null` se zobrazí jako neprovedená změna (např. `kapacita_staci`), nikoli jako úspěšná lokální simulace.
-- Skutečné počty přijatých DB neobsahuje. Přihlášky na místo nejsou acceptance rate; v aktivních výsledcích se neukazuje modelová míra přijetí.
+- Detail školy i výsledky hledání zobrazují skutečné přihlášky, přijaté a jejich podíl za vybraný obor a formu studia (CERMAT 2026, 1. kolo). Pole `prijati` poskytují existující endpointy `/skoly/{redizo}`, `/student/skoly` a `/obory/{kod}`. Při více zaměřeních se nejprve sečtou počty; chybějící přijatí nebo nulový počet přihlášek znamenají neznámý podíl. Kapacita se za počet přijatých nedosazuje.
 - Úseky cest, odjezdy, příjezdy a přestupy nejsou ve studentském API. Aktivní rodinné výsledky proto nezobrazují modelový itinerář ani časovou osu.
 - Pracovní nabídky mají vazby na více oborů; sloupce se nesčítají.
 

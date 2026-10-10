@@ -40,7 +40,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   const dirty = search.field !== field || search.origin !== origin || search.form !== form || search.limit !== limit;
   const zoneOptions = useMemo(() => {
     const names = new Map(data.municipalities.map((m) => [m.id, m.name]));
-    return data.zsj.map((z) => ({value: z.id, label: `${names.get(z.municipality)} · ${z.name}`})).sort((a, b) => a.label.localeCompare(b.label, "cs"));
+    return data.zsj.map((z) => ({value: z.id, label: `${names.get(z.municipality) ?? (z.municipality || "Obec neuvedena")} · ${z.name}`})).sort((a, b) => a.label.localeCompare(b.label, "cs"));
   }, [data]);
   const otherForm = search.form === "den" ? "dal" : "den";
   const hasAlternateForm = data.fields.find((f) => f.id === search.field)?.forms?.includes(otherForm);
@@ -94,7 +94,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
           {panel?.kind === "school" ? <div className="place-detail-content">
             <h2 id="detail-heading" tabIndex={-1}>{school?.shortName ?? student?.nazev ?? panel.id}</h2>
             <p>{selectedField} · {search.form === "den" ? "Denní" : "Dálkové"} studium</p>
-            {student ? <StudentSchoolCard result={student} school={school} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
+            {student ? <StudentSchoolCard result={student} school={school} showAdmissions={false} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
             <section className="detail-section"><h3>O škole</h3><SchoolInformation redizo={panel.id} field={search.field} form={search.form} /></section>
           </div> : employer ? <EmployerDetail employer={employer} fieldName={selectedField} /> : <>
             <div className="journey-list-heading">

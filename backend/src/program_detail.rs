@@ -298,6 +298,7 @@ fn build(data: Snapshot, params: requests::OborQuery) -> Result<dto::DetailOboru
             delka_let: mapped.delka_let,
             kapacita: mapped.kapacita,
             prihlasky: mapped.prihlasky,
+            prijati: mapped.prijati,
             prihlasky_na_misto: mapped.prihlasky_na_misto,
             index_pretlaku: mapped
                 .prihlasky_na_misto

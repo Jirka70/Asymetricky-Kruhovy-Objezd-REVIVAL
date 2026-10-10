@@ -1,10 +1,13 @@
+import type { Polygon, MultiPolygon } from "geojson";
+
 export type Zone = {
   id: string;
   name: string;
   municipality: string;
   lon: number;
   lat: number;
-  children: number;
+  children: number | null;
+  boundary?: Polygon | MultiPolygon;
 };
 export type School = {
   id: string;
@@ -119,9 +122,9 @@ export function bucket(t: number | null) {
   return t === null ? 4 : t <= 30 ? 0 : t <= 45 ? 1 : t <= 60 ? 2 : 3;
 }
 export function distribution(zones: Zone[], times: Travel) {
-  const total = zones.reduce((a, z) => a + z.children, 0);
+  const total = zones.reduce((a, z) => a + (z.children ?? 0), 0);
   const counts = [0, 0, 0, 0, 0];
-  zones.forEach((z) => (counts[bucket(times[z.id] ?? null)] += z.children));
+  zones.forEach((z) => (counts[bucket(times[z.id] ?? null)] += z.children ?? 0));
   return {
     total,
     counts,
@@ -129,10 +132,10 @@ export function distribution(zones: Zone[], times: Travel) {
   };
 }
 export function within(zones: Zone[], times: Travel, threshold: number) {
-  const total = zones.reduce((a, z) => a + z.children, 0);
+  const total = zones.reduce((a, z) => a + (z.children ?? 0), 0);
   const accessible = zones.reduce(
     (a, z) =>
-      a + (times[z.id] != null && times[z.id]! <= threshold ? z.children : 0),
+      a + (times[z.id] != null && times[z.id]! <= threshold ? z.children ?? 0 : 0),
     0,
   );
   return {

@@ -35,17 +35,20 @@ type MunicipalityGeometry = {
   }[];
 };
 let geometry: Promise<Boundary[]> | undefined;
-function loadMaps() {
-  geometry ??= Promise.all(
-    ["zsj", "municipalities"].map(async (name) => {
-      const response = await fetch(`/data/${name}.geojson`);
+function loadMaps(zones: Snapshot["zsj"]) {
+  echarts.registerMap("zsj", {
+    type: "FeatureCollection",
+    features: zones.filter((zone) => zone.boundary).map((zone) => ({
+      type: "Feature", properties: { name: zone.id }, geometry: zone.boundary!,
+    })),
+  });
+  geometry ??= fetch("/data/municipalities.geojson")
+    .then((response) => {
       if (!response.ok) throw Error("Chybí mapová data");
       return response.json();
-    }),
-  )
-    .then(([zones, municipalityData]) => {
+    })
+    .then((municipalityData) => {
       const municipalities = municipalityData as MunicipalityGeometry;
-      echarts.registerMap("zsj", zones);
       return municipalities.features.flatMap(({ geometry }) => {
         const polygons = geometry.type === "Polygon" ? [geometry.coordinates] : geometry.coordinates;
         return polygons.flatMap((rings) => rings.map((coords) => ({ coords })));
@@ -145,7 +148,7 @@ export default function RegionMap({
   }, []);
   useEffect(() => {
     let active = true;
-    loadMaps()
+    loadMaps(data.zsj)
       .then((boundaries) => {
         if (active) {
           setBoundaries(boundaries);
@@ -159,7 +162,7 @@ export default function RegionMap({
     return () => {
       active = false;
     };
-  }, [retry]);
+  }, [retry, data.zsj]);
   const places = useMemo<MapPlace[]>(
     () => [
       ...(schools
@@ -388,6 +391,7 @@ export default function RegionMap({
           <Chart
             label="Mapa dojezdů ze základních sídelních jednotek"
             option={option}
+            merge
             height={500}
             chartRef={chartRef}
             onReady={setMapChart}

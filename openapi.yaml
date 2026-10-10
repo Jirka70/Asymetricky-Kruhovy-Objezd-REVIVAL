@@ -703,6 +703,10 @@ components:
         delka_let: { type: integer, example: 3 }
         kapacita: { type: integer, example: 30 }
         prihlasky: { type: integer, example: 131 }
+        prijati:
+          type: [integer, 'null']
+          description: Skutečný počet přijatých v 1. kole přijímacího řízení 2026, ke stejnému období jako přihlášky. Null znamená chybějící údaj; kapacita jej nenahrazuje.
+          example: 30
         prihlasky_na_misto: { type: [number, 'null'], example: 4.37 }
         index_pretlaku: { type: [number, 'null'], example: 1.64 }
 

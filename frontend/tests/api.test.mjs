@@ -6,17 +6,18 @@ import { createQueryClient, schoolsQuery, employersQuery, schoolQuery, programsQ
 import { catalogData, selectionData } from "../src/lib/api-data.ts";
 import { proxyApi } from "../src/lib/server/api-proxy.ts";
 import { schoolIds, travelTimes } from "../src/lib/data.ts";
-import { schools, daily, distance, employers, points, responseFor, simulation } from "./fixtures/api.mjs";
+import { schools, daily, distance, employers, points, responseFor, simulation, zsjList } from "./fixtures/api.mjs";
 
 const snapshot = JSON.parse(readFileSync(new URL("../public/data/snapshot.json", import.meta.url)));
 
 test("API catalog replaces business data, unions both study forms and preserves the local matrix", () => {
-  const data = catalogData(snapshot, schools, daily, distance);
+  const data = catalogData(snapshot, schools, daily, distance, zsjList);
   assert.equal(data.schools.length, 3);
   assert.equal(data.schools[0].name, "SPŠ Ostrov z API");
   assert.equal(data.schools[0].shortName, "SPŠ Ostrov");
   assert.equal(data.routes, snapshot.routes);
-  assert.equal(data.zsj, snapshot.zsj);
+  assert.equal(data.zsj.length, zsjList.length);
+  assert.equal(data.zsj[0].boundary, zsjList[0].boundary);
   assert.equal(data.offerings.length, 0);
   assert.equal(data.employers.length, 0);
   assert.deepEqual(data.fields.find((f) => f.id === "26-41-M/01").forms, ["dal"]);
@@ -26,7 +27,7 @@ test("API catalog replaces business data, unions both study forms and preserves 
 });
 
 test("filtered API totals feed offers and local simulation; empty responses never revive snapshot offers", () => {
-  const base = catalogData(snapshot, schools, daily, distance);
+  const base = catalogData(snapshot, schools, daily, distance, zsjList);
   const data = selectionData(base, "18-20-M/01", "den", points(schools.features.slice(0, 2)), employers);
   assert.equal(data.offerings[0].applications, 999);
   assert.equal(data.offerings[0].capacity, 77);

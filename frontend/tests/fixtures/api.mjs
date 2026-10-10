@@ -1,5 +1,10 @@
 import { readFileSync } from "node:fs";
 const zones = JSON.parse(readFileSync(new URL("../../public/data/snapshot.json", import.meta.url))).zsj;
+const zoneGeometry = JSON.parse(readFileSync(new URL("../../public/data/zsj.geojson", import.meta.url)));
+export const zsjList = zones.map((zone, index) => ({
+  kod: zone.id, nazev: zone.name, lat: zone.lat, lon: zone.lon, kod_obce: zone.municipality,
+  boundary: zoneGeometry.features[index].geometry,
+}));
 export const points = (features) => ({ type: "FeatureCollection", features });
 export const schoolFeature = (redizo, nazev, count = 1) => ({
   type: "Feature",
@@ -24,8 +29,10 @@ export const detail = {
   redizo: "600009084", nazev: "SPŠ Ostrov z API", adresa: "Adresa z API 123",
   web: "https://example.com", lat: 50.3, lon: 12.95,
   nabidky: [
-    { kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 30, prihlasky: 400 },
-    { kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 47, prihlasky: 599 },
+    { kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 30, prihlasky: 400, prijati: 20 },
+    { kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 47, prihlasky: 599, prijati: 30 },
+    { kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "dal", kapacita: 100, prihlasky: 200, prijati: 100 },
+    { kod_oboru: "26-41-M/01", nazev_oboru: "Elektrotechnika", forma: "den", kapacita: 10, prihlasky: 20, prijati: 10 },
   ],
 };
 export const employers = {
@@ -39,8 +46,10 @@ export const employers = {
   }]),
   meta: { mapovani: true, existuje: true, importovano: "2026-10-10T08:00:00Z", bez_souradnic: [] },
 };
-export function responseFor(url) {
+export function responseFor(url, requestBody) {
   const path = decodeURIComponent(url.pathname);
+  if (path === "/api/v1/zsj/seznam") return zsjList;
+  if (path === "/api/v1/simulace/zmeny") return removal(requestBody);
   if (path === "/api/v1/zsj") return accessibility(url.searchParams);
   if (path === "/api/v1/student/skoly") return studentSchools(url.searchParams);
   if (/^\/api\/v1\/obory\/\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path)) return programDetail();
@@ -93,7 +102,7 @@ export function studentSchools(params = new URLSearchParams()) {
     redizo: feature.properties.redizo, nazev: feature.properties.nazev,
     lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0],
     v_dosahu: i === 0, spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180},
-    nabidky: [{kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 77, prihlasky: 999}],
+    nabidky: [{kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 77, prihlasky: 999, prijati: 50}],
   })), meta: {max_min: Number(params.get("max_min") ?? 120), zsj: "063550"}};
 }
 export function programDetail() {
@@ -103,5 +112,26 @@ export function programDetail() {
     nabidky: [{...detail.nabidky[0], redizo: detail.redizo, nazev_skoly: detail.nazev}],
     kandidati: [{redizo: "600009271", nazev: "SLŠ Žlutice z API", nove_dosazene_deti: 321, ma_pribuzny_obor: true}],
     trh_prace: null,
+  };
+}
+
+export function removal(input = {max_min: 45, zmeny: [{redizo: "600009084", zmena_kapacity: -77}]}) {
+  const lost = input.max_min < 60;
+  return {
+    type: "FeatureCollection",
+    features: zones.map((zone, index) => ({
+      type: "Feature",
+      properties: {
+        kod: zone.id, nazev: zone.name, deti: 10,
+        cas_min_puvodni: index === 0 ? 35 : 80,
+        // Omitted time is intentional: removal of the last accessible school.
+        ...(index === 0 ? {} : {cas_min: 80}),
+      },
+    })),
+    souhrn: {zlepsenych_jednotek: 0, zhorsenych_jednotek: 1,
+      deti_v_dosahu_pred: 10, deti_v_dosahu_po: lost ? 0 : 10,
+      ztracene_deti: lost ? 10 : 0, nove_dosazene_deti: 0,
+      kapacita_pred: 154, kapacita_po: 154 + input.zmeny[0].zmena_kapacity,
+    }, meta: {},
   };
 }

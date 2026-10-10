@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { accessibilityQuery, simulationQuery, type SimulationResponse } from "@/lib/api";
+import { accessibilityQuery, simulationQuery, removalQuery, type SimulationResponse, type RemovalResponse } from "@/lib/api";
 import ProgramDetail from "./program-detail";
 import { accessibilityData } from "@/lib/accessibility-data";
 import { simulationData } from "@/lib/simulation-data";
@@ -12,7 +12,6 @@ import {
   ArrowLeftIcon,
   CaretRightIcon,
   ArrowCounterClockwiseIcon,
-  FlaskIcon,
   CheckCircleIcon,
   WarningCircleIcon,
   GraduationCapIcon,
@@ -28,7 +27,6 @@ import { focusSection } from "@/lib/focus";
 import {
   DEFAULT_FIELD,
   schoolIds,
-  travelTimes,
   within,
   difference,
   number,
@@ -63,13 +61,25 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   const [capacity, setCapacity] = useState("30");
   const validCapacity = Number.isInteger(Number(capacity)) && Number(capacity) >= 1 && Number(capacity) <= 300;
   const addition = changes[0]?.action === "add";
-  const simulation = useQuery(simulationQuery({
+  const removal = changes[0]?.action === "remove";
+  const additionSimulation = useQuery(simulationQuery({
     redizo: addition && form === "den" ? changes[0]?.school ?? "" : "",
     obor: field, kapacita: Number(capacity), max_min: threshold,
   }));
-  const result = useMemo(() => simulation.data?.souhrn ? simulationData(simulation.data) : undefined, [simulation.data]);
   const selection = useSelectionData(baseData, field, form);
   const { data } = selection;
+  const removalCapacity = data.offerings.find((offer) => offer.school === changes[0]?.school)?.capacity ?? NaN;
+  const removalSimulation = useQuery(removalQuery({
+    redizo: removal && form === "den" ? changes[0]?.school ?? "" : "",
+    obor: field, kapacita: removalCapacity, max_min: threshold,
+  }));
+  const simulation = removal ? removalSimulation : additionSimulation;
+  const result = useMemo(() => simulation.data?.souhrn ? simulationData(simulation.data) : undefined, [simulation.data]);
+  const canRemove = (id: string) => {
+    const places = data.offerings.find((offer) => offer.school === id)?.capacity;
+    return form === "den" && places != null && Number.isInteger(places) && places >= 1 && places <= 300;
+  };
+  const scenarioValid = addition ? validCapacity : removal && canRemove(changes[0]?.school ?? "");
   const [panel, setPanel] = useState<Selection>(null);
   const returnFocus = useRef<HTMLElement | null>(null);
   const [undo, setUndo] = useState<{
@@ -87,24 +97,25 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   );
   const accessibility = useQuery(accessibilityQuery(field, form, threshold));
   const current = useMemo(() => accessibility.data ? accessibilityData(accessibility.data) : undefined, [accessibility.data]);
-  const removal = changes[0]?.action === "remove";
-  const removalBefore = useMemo(() => removal ? travelTimes(data, ids) : {}, [data, ids, removal]);
-  const removalAfter = useMemo(
-    () => removal ? travelTimes(data, scenarioIds) : {},
-    [data, scenarioIds, removal],
-  );
-  const before = addition && result ? result.before : removal ? removalBefore : current?.times ?? {};
-  const after = addition ? result?.after ?? before : removal ? removalAfter : before;
-  const zones = addition && result ? result.zones : current?.zones ?? [];
-  const base = (addition && result) || removal ? within(zones, before, threshold) : current?.coverage ?? within([], {}, threshold),
-    next = within(zones, after, threshold);
-  const better = (addition ? simulation.data?.souhrn?.zlepsenych_jednotek : undefined) ?? zones.filter(
+  const before = result?.before ?? current?.times ?? {};
+  const after = result?.after ?? before;
+  const zones = result?.zones ?? current?.zones ?? [];
+  const beforeCoverage = result ? within(zones, before, threshold) : current?.coverage ?? within([], {}, threshold);
+  const afterCoverage = within(zones, after, threshold);
+  const removalSummary = removal ? removalSimulation.data?.souhrn : undefined;
+  // API summaries use unrounded times when deciding whether a ZSJ is reachable.
+  const coverage = (value: typeof beforeCoverage, accessible: number | undefined) => accessible === undefined ? value : {
+    ...value, accessible, percent: value.total ? accessible / value.total * 100 : null,
+  };
+  const base = coverage(beforeCoverage, removalSummary?.deti_v_dosahu_pred);
+  const next = coverage(afterCoverage, removalSummary?.deti_v_dosahu_po);
+  const better = simulation.data?.souhrn?.zlepsenych_jednotek ?? zones.filter(
     (z) => difference(before[z.id], after[z.id]) < 0,
   ).length;
-  const worse = zones.filter(
+  const worse = removalSummary?.zhorsenych_jednotek ?? zones.filter(
     (z) => difference(before[z.id], after[z.id]) > 0,
   ).length;
-  const hasScenario = changes.length > 0 && (!addition || Boolean(result)),
+  const hasScenario = changes.length > 0 && Boolean(result),
     additionalChildren = next.accessible - base.accessible;
   function changeSelection(nextField: string, nextForm: string) {
     if (nextField === field && nextForm === form) return;
@@ -149,6 +160,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
   }
   function addChange(action: Change["action"]) {
     if (action === "add" && !ids.has(candidate) && (form !== "den" || !validCapacity)) return;
+    if (action === "remove" && ids.has(candidate) && !canRemove(candidate)) return;
     const desired = action === "add";
     const updated: ScenarioChanges =
       ids.has(candidate) === desired
@@ -167,17 +179,6 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     setChanges([]);
     setMode("current");
     setNotice("Scénář byl zrušen. Můžete jej vrátit.");
-  }
-  function example() {
-    setCapacity("30");
-    setField(DEFAULT_FIELD);
-    setForm("den");
-    setCandidate("600009271");
-    setChanges([{ school: "600009271", action: "add" }]);
-    setMode("scenario");
-    setPanel({ kind: "school", id: "600009271" });
-    setNotice("Ukázkový scénář: nový obor v Žluticích.");
-    focusSection("detail-heading");
   }
   const school =
     panel?.kind === "school"
@@ -249,7 +250,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             Přidat obor
           </button>
           <button
-            disabled={!selection.schools.data || !scenarioIds.has(candidate)}
+            disabled={!selection.schools.data || !scenarioIds.has(candidate) || (ids.has(candidate) && !canRemove(candidate))}
             onClick={() => addChange("remove")}
           >
             <MinusIcon size={17} />
@@ -264,19 +265,12 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             aria-invalid={!validCapacity} aria-describedby="simulation-hint"
             onChange={(event) => setCapacity(event.target.value)} />
         </label>
-        <span id="simulation-hint">1–300 míst v prvním ročníku. Přidání oboru je dostupné pouze pro denní studium.</span>
+        <span id="simulation-hint">1–300 míst v prvním ročníku. Simulace je dostupná pouze pro denní studium.</span>
         {changes.length > 0 && !hasScenario && (
           <button onClick={resetScenario}>Zrušit scénář</button>
         )}
       </div>
-      {!validCapacity && <p role="alert">Zadejte celou kapacitu od 1 do 300 míst.</p>}
-      {addition && simulation.data?.souhrn === null && (
-        <p role="status" className="query-notice">
-          {simulation.data.meta.duvod === "kapacita_staci"
-            ? "Současná kapacita podle modelu stačí. Simulace neprovedla změnu."
-            : "API nevrátilo vyhodnocení scénáře."}
-        </p>
-      )}
+      {!changes.length && !validCapacity && <p role="alert">Zadejte celou kapacitu od 1 do 300 míst.</p>}
       <div className="workspace-caption">
         <span>2026/27 · Po 12. 10. 2026 · příjezdy 7:00–8:00</span>
         <span id="threshold-hint">
@@ -315,8 +309,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
       )}
       <QueryStatus queries={selection.schools.data ? [selection.schools, selection.employers] : [selection.employers]} />
       {accessibility.data && <QueryStatus queries={[accessibility]} />}
-      {addition && validCapacity && simulation.data && <QueryStatus queries={[simulation]} />}
-      {(!addition || validCapacity) && <QueryBoundary queries={addition ? [selection.schools, accessibility, simulation] : [selection.schools, accessibility]}>
+      <QueryBoundary queries={[selection.schools, accessibility]}>
       <div
         className={`map-workspace region-workspace${panel ? " has-detail" : ""}`}
       >
@@ -422,7 +415,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                   ) : (
                     <button
                       className={ids.has(school.id) ? "" : "primary"}
-                      disabled={!ids.has(school.id) && (form !== "den" || !validCapacity)}
+                      disabled={ids.has(school.id) ? !canRemove(school.id) : form !== "den" || !validCapacity}
                       onClick={() =>
                         addChange(ids.has(school.id) ? "remove" : "add")
                       }
@@ -438,12 +431,28 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                     </button>
                   )}
                 </div>
-                {hasScenario && (
-                  <section className="detail-section">
+                {ids.has(school.id) && !canRemove(school.id) && <p className="detail-note">Odebrání vyžaduje denní nabídku se známou kapacitou 1–300 míst.</p>}
+                {changes.length > 0 && (
+                  <section className="detail-section simulation-feedback" aria-label="Výpočet simulace" aria-busy={Boolean(scenarioValid && simulation.isFetching)}>
                     <h3>Dopad celého scénáře</h3>
-                    {addition && simulation.data?.souhrn && (
-                      <SimulationSummary summary={simulation.data.souhrn} />
+                    {!scenarioValid ? (
+                      <p role="alert">{addition ? "Zadejte celou kapacitu od 1 do 300 míst." : "Odebrání vyžaduje denní nabídku se známou kapacitou 1–300 míst."}</p>
+                    ) : simulation.isFetching ? (
+                      <DataSkeleton compact label="Počítám simulaci… Mapa zůstává na posledním zobrazeném stavu." />
+                    ) : <>
+                    <QueryStatus queries={[simulation]} />
+                    {addition && additionSimulation.data?.souhrn === null && (
+                      <p role="status" className="query-notice">
+                        {additionSimulation.data.meta.duvod === "kapacita_staci"
+                          ? "Současná kapacita podle modelu stačí. Simulace neprovedla změnu."
+                          : "API nevrátilo vyhodnocení scénáře."}
+                      </p>
                     )}
+                    {hasScenario && <>
+                    {addition && additionSimulation.data?.souhrn && (
+                      <SimulationSummary summary={additionSimulation.data.souhrn} />
+                    )}
+                    {removalSummary && <RemovalSummary summary={removalSummary} />}
                     <div className="scenario-impact">
                       <div>
                         <strong>{better}</strong>
@@ -460,12 +469,14 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                         </strong>
                       </div>
                     </div>
+                    </>}
+                    </>}
                   </section>
                 )}
-                <details className="technical-details">
-                  <summary>Informace o škole</summary>
+                <section className="technical-details">
+                  <h3>Informace o škole</h3>
                   <SchoolInformation redizo={school.id} field={field} form={form} />
-                </details>
+                </section>
               </div>
             )}
             {employer && (
@@ -510,17 +521,11 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
               {number(base.total)} dětí v odhadovaném ročníku
               {!hasScenario && ` · ${ids.size} školy`}
             </p>
-            <button
-              className="button-link"
-              onClick={hasScenario ? resetScenario : example}
-            >
-              {hasScenario ? (
-                <ArrowCounterClockwiseIcon size={14} />
-              ) : (
-                <FlaskIcon size={14} />
-              )}{" "}
-              {hasScenario ? "Zrušit scénář" : "Ukázkový scénář"}
-            </button>
+            {hasScenario && (
+              <button className="button-link" onClick={resetScenario}>
+                <ArrowCounterClockwiseIcon size={14} /> Zrušit scénář
+              </button>
+            )}
           </div>
           {hasScenario && (
             <div className="changes-summary">
@@ -550,7 +555,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
                   </button>
                 </div>
               ))}
-              <small>{addition ? "Modelová simulace z API" : "Lokální simulace odebrání · API ji zatím nepodporuje"}</small>
+              <small>Modelová simulace z API</small>
             </div>
           )}
         </section>
@@ -575,9 +580,19 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
         />
         <ProgramDetail field={field} limit={threshold} onSelectSchool={(id) => openPlace("school", id)} />
       </div>
-      </QueryBoundary>}
+      </QueryBoundary>
     </>
   );
+}
+
+function RemovalSummary({ summary }: { summary: RemovalResponse["souhrn"] }) {
+  return <div className="simulation-result">
+    <p><strong>Dopad odebrání oboru</strong></p>
+    <p>Kapacita oboru v kraji: {number(summary.kapacita_pred)} → {number(summary.kapacita_po)} míst</p>
+    <p>Děti, které ztratí dostupnost oboru: <strong>{number(summary.ztracene_deti)}</strong></p>
+    <p>Děti nově v dosahu: {number(summary.nove_dosazene_deti)}</p>
+    <p className="data-note">Odhad jednoho ročníku z API (10–14 let / 5). Skutečná nabídka školy se nemění.</p>
+  </div>;
 }
 
 function SimulationSummary({ summary }: { summary: NonNullable<SimulationResponse["souhrn"]> }) {

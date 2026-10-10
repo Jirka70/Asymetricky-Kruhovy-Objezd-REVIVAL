@@ -24,7 +24,7 @@ export default function ImpactTable({
     (z) => before[z.id] != null && after[z.id] == null,
   );
   const missing = data.zsj.filter(
-    (z) => z.children > 0 && before[z.id] == null,
+    (z) => (z.children ?? 0) > 0 && before[z.id] == null,
   );
   const rows = data.zsj
     .filter((z) =>
@@ -32,7 +32,7 @@ export default function ImpactTable({
         ? before[z.id] != null &&
           after[z.id] != null &&
           difference(before[z.id], after[z.id]) !== 0
-        : z.children > 0 && before[z.id] != null,
+        : (z.children ?? 0) > 0 && before[z.id] != null,
     )
     .sort((a, b) => {
       const av = hasScenario
@@ -41,7 +41,7 @@ export default function ImpactTable({
       const bv = hasScenario
         ? Math.abs(difference(before[b.id], after[b.id]))
         : (before[b.id] ?? Infinity);
-      return av === bv ? b.children - a.children : av > bv ? -1 : 1;
+      return av === bv ? (b.children ?? 0) - (a.children ?? 0) : av > bv ? -1 : 1;
     });
   const visible = rows.slice(0, limit);
   const maximum = Math.max(

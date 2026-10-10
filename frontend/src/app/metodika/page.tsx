@@ -13,9 +13,10 @@ export default function Methodology() {
           <h2>Katalogy škol a uložené dojezdy</h2>
           <p>
             Školy, nabídku oborů, kapacity, přihlášky a pracovní poptávku načítáme
-            z datové služby projektu. Dojezdy, geometrie a demografie pocházejí
-            z uloženého snímku. Simulace používá aktuální nabídku škol a tyto
-            uložené dojezdy. Aplikace nevyhledává nové spoje v OTP.
+            z datové služby projektu. Stejná služba poskytuje seznam ZSJ,
+            jejich polygony, předpočítané dojezdy a výsledky simulací.
+            Názvy a obrysy obcí a demografický detail tooltipu doplňuje uložený
+            snímek. Aplikace nevyhledává nové spoje v OTP.
           </p>
         </section>
         <section>
@@ -72,9 +73,11 @@ export default function Methodology() {
           <p>
             Přidání nebo odebrání oboru mění množinu škol, z nichž pro každou
             ZSJ vybíráme nejrychlejší uložený dojezd. Nemění jízdní řády,
-            kapacity škol, počty uchazečů ani chování rodin. Jde o model
-            dostupnosti ve stávajících školách. Při změně oboru nebo formy
-            studia se scénář resetuje.
+            skutečné kapacity škol, počty uchazečů ani chování rodin.
+            Výpočet přidání i odebrání provádí datová služba pouze pro scénář;
+            při odebrání se ze simulované nabídky odstraní celá kapacita
+            daného oboru na vybrané škole. Měnit lze jednu školu současně
+            a pouze denní studium. Při změně oboru nebo formy se scénář resetuje.
           </p>
         </section>
         <section>

@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { zsjListQuery } from "@/lib/api";
 import type { EChartsOption } from "echarts";
-import { echarts } from "@/lib/echarts";
 import {
   bucket,
   TIME_COLORS,
@@ -11,15 +12,6 @@ import {
   type Travel,
 } from "@/lib/data";
 import Chart from "./chart";
-type Geo = {
-  type: "FeatureCollection";
-  features: {
-    type: "Feature";
-    properties: { name: string };
-    geometry: unknown;
-  }[];
-};
-let source: Promise<Geo> | undefined;
 export default function LocalMap({
   id,
   zones,
@@ -30,33 +22,26 @@ export default function LocalMap({
   times: Travel;
 }) {
   const [ready, setReady] = useState("");
+  const query = useQuery(zsjListQuery);
   const mapName = `local-${id}`;
   const ids = zones.map((z) => z.id).join(",");
   useEffect(() => {
+    if (!query.data) return;
+    const available = query.data;
     let active = true;
-    source ??= fetch("/data/zsj.geojson").then((r) => {
-      if (!r.ok) throw Error();
-      return r.json();
-    });
-    source
-      .then((geo) => {
-        const selected = new Set(ids.split(","));
-        if (!echarts.getMap(mapName))
-          echarts.registerMap(mapName, {
-            ...geo,
-            features: geo.features.filter((f) =>
-              selected.has(f.properties.name),
-            ),
-          } as Parameters<typeof echarts.registerMap>[1]);
-        if (active) setReady(mapName);
-      })
-      .catch(() => {
-        source = undefined;
+    void import("@/lib/echarts").then(({ echarts }) => {
+      if (!active) return;
+      const selected = new Set(ids.split(","));
+      echarts.registerMap(mapName, {
+        type: "FeatureCollection",
+        features: available.filter((zone) => selected.has(zone.kod)).map((zone) => ({
+          type: "Feature", properties: { name: zone.kod }, geometry: zone.boundary,
+        })),
       });
-    return () => {
-      active = false;
-    };
-  }, [mapName, ids]);
+      setReady(mapName);
+    });
+    return () => { active = false; };
+  }, [mapName, ids, query.data]);
   const option = useMemo<EChartsOption>(
     () => ({
       tooltip: {

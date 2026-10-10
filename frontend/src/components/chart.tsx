@@ -16,6 +16,7 @@ export default function Chart({
   onClick,
   chartRef,
   onReady,
+  merge = false,
 }: {
   option: EChartsOption;
   label: string;
@@ -23,6 +24,7 @@ export default function Chart({
   onClick?: (event: ChartClick) => void;
   chartRef?: RefObject<EChartsType | null>;
   onReady?: (chart: EChartsType | null) => void;
+  merge?: boolean;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<EChartsType | null>(null);
@@ -49,8 +51,8 @@ export default function Chart({
             geo: { ...geo, center: previous.center, zoom: previous.zoom },
           }
         : option;
-    chart.setOption(withDefaults(next), { notMerge: true });
-  }, [option]);
+    chart.setOption(withDefaults(next), { notMerge: !merge });
+  }, [option, merge]);
   useEffect(() => {
     const element = container.current;
     if (!element) return;

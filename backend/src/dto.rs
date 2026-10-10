@@ -156,6 +156,8 @@ pub struct Nabidka {
     pub delka_let: Option<i64>,
     pub kapacita: i64,
     pub prihlasky: i64,
+    #[serde(default)]
+    pub prijati: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prihlasky_na_misto: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -571,6 +573,8 @@ pub struct DetailOboruNabidkyItem {
     pub delka_let: Option<i64>,
     pub kapacita: i64,
     pub prihlasky: i64,
+    #[serde(default)]
+    pub prijati: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prihlasky_na_misto: Option<f64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

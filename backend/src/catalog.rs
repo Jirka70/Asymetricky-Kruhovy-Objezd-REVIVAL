@@ -377,6 +377,7 @@ pub(crate) fn offering(
         delka_let: Some(i64::from(offer.delka_studia)),
         kapacita: i64::from(offer.pocet_prijimanych),
         prihlasky: i64::from(offer.loni_pocet_prihlasek),
+        prijati: offer.loni_pocet_prijatych.map(i64::from),
         prihlasky_na_misto: (offer.pocet_prijimanych > 0)
             .then(|| f64::from(offer.loni_pocet_prihlasek) / f64::from(offer.pocet_prijimanych)),
         index_pretlaku: None,

@@ -31,7 +31,7 @@ export default function MunicipalityDetail({
   const municipality = data.municipalities.find((m) => m.id === id)!;
   const zones = data.zsj
     .filter((z) => z.municipality === id)
-    .sort((a, b) => b.children - a.children);
+    .sort((a, b) => (b.children ?? 0) - (a.children ?? 0));
   const base = within(zones, before, threshold);
   const next = after ? within(zones, after, threshold) : base;
   return (

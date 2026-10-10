@@ -1,5 +1,11 @@
 import { QueryClient, queryOptions } from "@tanstack/react-query";
 import type { Snapshot } from "./data";
+import type { Polygon, MultiPolygon } from "geojson";
+
+export type ZsjRecord = {
+  kod: string; nazev: string; lat: number; lon: number; kod_obce: string | null;
+  boundary: Polygon | MultiPolygon;
+};
 
 export type Forma = "den" | "dal";
 type Points<T> = {
@@ -42,6 +48,7 @@ export type SchoolResponse = {
     forma: Forma;
     kapacita: number;
     prihlasky: number;
+    prijati?: number | null;
   }[];
 };
 export type EmployersResponse = Points<{
@@ -86,8 +93,8 @@ export function createQueryClient() {
   });
 }
 
-async function getJson<T>(url: string, signal: AbortSignal): Promise<T> {
-  const response = await fetch(url, { signal });
+async function getJson<T>(url: string, signal: AbortSignal, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, { ...init, signal });
   if (!response.ok) throw new ApiError(response.status);
   return response.json();
 }
@@ -97,6 +104,39 @@ export const snapshotQuery = queryOptions({
   queryFn: ({ signal }) => getJson<Snapshot>("/data/snapshot.json", signal),
   staleTime: Infinity,
 });
+
+export const zsjListQuery = queryOptions({
+  queryKey: ["zsj-seznam"],
+  queryFn: ({ signal }) => getJson<ZsjRecord[]>("/api/backend/zsj/seznam", signal),
+});
+
+export type RemovalResponse = Omit<SimulationResponse, "souhrn"> & {
+  souhrn: {
+    zlepsenych_jednotek: number; zhorsenych_jednotek: number;
+    deti_v_dosahu_pred: number; deti_v_dosahu_po: number;
+    ztracene_deti: number; nove_dosazene_deti: number;
+    kapacita_pred: number; kapacita_po: number;
+  };
+};
+
+export function removalQuery(input: SimulationParams) {
+  return queryOptions({
+    queryKey: ["simulace-odebrani", input] as const,
+    queryFn: ({ signal }) => getJson<RemovalResponse>("/api/backend/simulace/zmeny", signal, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        obor: input.obor,
+        zmeny: [{ redizo: input.redizo, zmena_kapacity: -input.kapacita }],
+        max_min: input.max_min, scenar: "rano", uroven: "zsj", format: "geojson",
+      }),
+    }),
+    placeholderData: (previous, query) =>
+      query?.queryKey[1].redizo === input.redizo && query.queryKey[1].obor === input.obor
+        ? previous : undefined,
+    enabled: Boolean(input.redizo && input.obor) && Number.isInteger(input.kapacita) && input.kapacita >= 1 && input.kapacita <= 300,
+  });
+}
 
 export function schoolsQuery(obor?: string, forma: string = "den") {
   const params = new URLSearchParams({ forma });
@@ -149,8 +189,8 @@ export type SimulationResponse = {
     properties: {
       kod: string;
       nazev: string;
-      cas_min_puvodni: number | null;
-      cas_min: number | null;
+      cas_min_puvodni?: number | null;
+      cas_min?: number | null;
       deti: number;
     };
   }[];
@@ -177,8 +217,13 @@ export function simulationQuery(input: SimulationParams) {
     scenar: "rano",
   });
   return queryOptions({
-    queryKey: ["simulace", { ...input, uroven: "zsj", format: "geojson", scenar: "rano" }],
+    queryKey: ["simulace", { ...input, uroven: "zsj", format: "geojson", scenar: "rano" }] as const,
     queryFn: ({ signal }) => getJson<SimulationResponse>(`/api/backend/simulace?${params}`, signal),
+    // Keep the last map while recalculating capacity/limit for this offering.
+    // A different school or program must never inherit its result.
+    placeholderData: (previous, query) =>
+      query?.queryKey[1].redizo === input.redizo && query.queryKey[1].obor === input.obor
+        ? previous : undefined,
     enabled: Boolean(input.redizo && input.obor) && Number.isInteger(input.kapacita) && input.kapacita >= 1 && input.kapacita <= 300,
   });
 }
@@ -210,8 +255,11 @@ export type ProgramResponse = {
 export function accessibilityQuery(obor: string, forma: string, max_min: number) {
   const params = new URLSearchParams({ obor, forma, max_min: String(max_min), uroven: "zsj", scenar: "rano" });
   return queryOptions({
-    queryKey: ["zsj", { obor, forma, max_min, uroven: "zsj", scenar: "rano" }],
+    queryKey: ["zsj", { obor, forma, max_min, uroven: "zsj", scenar: "rano" }] as const,
     queryFn: ({ signal }) => getJson<AccessibilityResponse>(`/api/backend/zsj?${params}`, signal),
+    placeholderData: (previous, query) =>
+      query?.queryKey[1].obor === obor && query.queryKey[1].forma === forma
+        ? previous : undefined,
   });
 }
 export function programQuery(kod: string, max_min: number, kandidatu = 5) {

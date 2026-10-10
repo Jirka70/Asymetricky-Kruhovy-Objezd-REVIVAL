@@ -49,9 +49,10 @@ test("region loads a skeleton, uses API school details and reuses cached form re
   await expect(page.getByText("Seznam míst", { exact: true })).toHaveCount(0);
   await page.getByRole("combobox", { name: "Škola pro změnu nabídky" }).fill("SPŠ Ostrov");
   await page.getByRole("option", { name: /SPŠ Ostrov/ }).click();
-  await page.getByText("Informace o škole", { exact: true }).click();
   await expect(page.getByText("Adresa z API 123", { exact: true })).toBeVisible();
-  await expect(page.locator(".technical-details")).toContainText("Kapacita: 77 · Přihlášky: 999");
+  await expect(page.locator(".technical-details")).toContainText("Kapacita: 77");
+  await expect(page.getByRole("region", { name: "Statistiky přijetí" })).toBeVisible();
+  await expect(page.locator(".admission-numbers dd")).toHaveText(["999", "50", "5 %"]);
   await page.getByRole("button", { name: "Odebrat obor ze simulované nabídky" }).click();
   await expect(page.locator(".scenario-impact")).toContainText("2 → 1");
   expect(errors).toEqual([]);
@@ -74,7 +75,7 @@ test("family search uses API travel times and offers; empty form can recover", a
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/rodiny");
   await expect(page.locator(".journey-result").first()).toBeVisible();
-  await expect(page.locator(".journey-capacity").first()).toContainText("77 / 999");
+  await expect(page.locator(".journey-result").first().locator(".admission-numbers dd")).toHaveText(["999", "50", "5 %"]);
   await page.getByRole("combobox", { name: "Forma studia" }).selectOption("dal");
   await page.getByRole("button", { name: "Najít školy", exact: true }).click();
   await expect(page.getByText("Tento obor v této formě nemá v nabídce žádná škola.")).toBeVisible();
@@ -82,6 +83,8 @@ test("family search uses API travel times and offers; empty form can recover", a
   await expect(page.locator(".journey-result").first()).toBeVisible();
   await page.locator(".journey-select").first().click();
   await expect(page.getByText("Adresa z API 123", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Statistiky přijetí" })).toHaveCount(1);
+  await expect(page.locator(".admission-numbers dd")).toHaveText(["999", "50", "5 %"]);
   expect(errors).toEqual([]);
 });
 

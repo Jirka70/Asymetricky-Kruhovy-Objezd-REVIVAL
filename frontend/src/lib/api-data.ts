@@ -1,14 +1,16 @@
 import type { Snapshot } from "./data";
-import type { EmployersResponse, ProgramsResponse, SchoolsResponse } from "./api";
+import type { EmployersResponse, ProgramsResponse, SchoolsResponse, ZsjRecord } from "./api";
 
-/** API owns catalogs and statistics; the snapshot supplies geography and journeys. */
+/** API owns catalogs, ZSJ and statistics; the snapshot supplies municipality names and demography. */
 export function catalogData(
   snapshot: Snapshot,
   schools: SchoolsResponse,
   daily: ProgramsResponse,
   distance: ProgramsResponse,
+  zones: ZsjRecord[],
 ): Snapshot {
   const localSchools = new Map(snapshot.schools.map((s) => [s.id, s]));
+  const demography = new Map(snapshot.zsj.map((zone) => [zone.id, zone.children]));
   const fields = new Map<string, Snapshot["fields"][number]>();
   const demand = new Map<string, Snapshot["demand"][number]>();
   for (const [form, catalog] of [["den", daily], ["dal", distance]] as const) {
@@ -30,6 +32,11 @@ export function catalogData(
   }
   return {
     ...snapshot,
+    zsj: zones.map((zone) => ({
+      id: zone.kod, name: zone.nazev, municipality: zone.kod_obce ?? "",
+      lat: zone.lat, lon: zone.lon, boundary: zone.boundary,
+      children: demography.get(zone.kod) ?? null,
+    })),
     schools: schools.features.map(({ properties: p, geometry }) => {
       const local = localSchools.get(p.redizo);
       return {

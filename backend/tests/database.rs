@@ -106,6 +106,7 @@ async fn migrations_and_api() {
     analytical_data(&mut connection);
 
     let app = contract::router(db::pool(&url, 2).unwrap());
+    admission_statistics_api(db::pool(&url, 2).unwrap(), &mut connection).await;
     student_school_data(&app, &mut connection, db::pool(&url, 2).unwrap()).await;
     zsj_api(&app, &mut connection).await;
     zsj_accessibility_api(&app, &mut connection).await;
@@ -684,6 +685,79 @@ async fn zsj_api(app: &axum::Router, connection: &mut PgConnection) {
         .batch_execute(
             "DROP TABLE public.\"ZSJ\"; ALTER TABLE public.zsj_test_saved RENAME TO \"ZSJ\"",
         )
+        .unwrap();
+}
+
+async fn admission_statistics_api(pool: db::DbPool, connection: &mut PgConnection) {
+    let mock = support::MockOtp::start(|body| {
+        (
+            StatusCode::OK,
+            support::response(vec![support::itinerary(
+                30.0,
+                "2026-10-12T07:50:00+02:00",
+                support::origin(body),
+                support::destination(body),
+            )]),
+        )
+    })
+    .await;
+    let app = contract::router_with_otp(pool, mock.client.clone());
+    let offer = nabidka_oboru::table
+        .filter(nabidka_oboru::redizo.eq("600009084"))
+        .filter(nabidka_oboru::kod_oboru.eq("18-20-M/01"))
+        .filter(nabidka_oboru::forma_studia.eq("den"))
+        .select(NabidkaOboru::as_select())
+        .first::<NabidkaOboru>(connection)
+        .unwrap();
+    assert_eq!(offer.loni_pocet_prijatych, Some(30));
+    assert_eq!(offer.loni_pocet_prihlasek, 95);
+    // Only the disposable test database is modified. All three response shapes
+    // must preserve zero and unknown separately from an actual accepted count.
+    for accepted in [Some(30), Some(0), None] {
+        diesel::update(nabidka_oboru::table.find(offer.id))
+            .set(nabidka_oboru::loni_pocet_prijatych.eq(accepted))
+            .execute(connection)
+            .unwrap();
+        for (uri, path) in [
+            ("/api/v1/skoly/600009084", "/skoly/{redizo}"),
+            ("/api/v1/obory/18-20-M%2F01", "/obory/{kod}"),
+            (
+                "/api/v1/student/skoly?lat=50.23505&lon=12.84994&obor=18-20-M%2F01&max_min=180",
+                "/student/skoly",
+            ),
+        ] {
+            let body = contract_response(&app, uri, path, StatusCode::OK).await;
+            let parent = if path == "/student/skoly" {
+                body["data"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .find(|row| row["redizo"] == offer.redizo)
+                    .unwrap()
+            } else {
+                &body
+            };
+            let actual = parent["nabidky"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|row| {
+                    row["kod_oboru"] == offer.kod_oboru
+                        && row["forma"] == "den"
+                        && (path != "/obory/{kod}" || row["redizo"] == offer.redizo)
+                })
+                .unwrap();
+            assert_eq!(
+                actual.get("prijati"),
+                Some(&serde_json::json!(accepted)),
+                "{path}"
+            );
+            assert_eq!(actual["prihlasky"], 95);
+        }
+    }
+    diesel::update(nabidka_oboru::table.find(offer.id))
+        .set(nabidka_oboru::loni_pocet_prijatych.eq(offer.loni_pocet_prijatych))
+        .execute(connection)
         .unwrap();
 }
 

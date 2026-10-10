@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRightIcon } from "@phosphor-icons/react";
 import { schoolQuery } from "@/lib/api";
 import { QueryBoundary, QueryStatus } from "./query-state";
+import AdmissionStats from "./admission-stats";
 
 export default function SchoolInformation({ redizo, field, form }: {
   redizo: string;
@@ -22,8 +23,9 @@ export default function SchoolInformation({ redizo, field, form }: {
         <p>{school.nazev}</p>
         <p>{school.adresa ?? "Adresa není uvedena."}</p>
         {offers.length > 0 && <p>
-          Kapacita: {offers.reduce((sum, o) => sum + o.kapacita, 0)} · Přihlášky: {offers.reduce((sum, o) => sum + o.prihlasky, 0)}
+          Kapacita: {offers.reduce((sum, o) => sum + o.kapacita, 0)}
         </p>}
+        <AdmissionStats offers={offers} />
         {href && <a className="text-link" href={href} target="_blank" rel="noreferrer">
           Web školy <ArrowUpRightIcon size={15} />
         </a>}

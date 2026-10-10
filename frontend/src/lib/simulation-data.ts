@@ -7,8 +7,8 @@ export function simulationData(response: SimulationResponse) {
   const after: Travel = {};
   const zones: Zone[] = [];
   for (const { properties: area } of response.features) {
-    before[area.kod] = area.cas_min_puvodni;
-    after[area.kod] = area.cas_min;
+    before[area.kod] = area.cas_min_puvodni ?? null;
+    after[area.kod] = area.cas_min ?? null;
     zones.push({
       id: area.kod, name: area.nazev, municipality: "", lon: 0, lat: 0,
       children: area.deti,
