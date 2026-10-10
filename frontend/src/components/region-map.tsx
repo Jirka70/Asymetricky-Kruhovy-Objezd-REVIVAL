@@ -21,6 +21,7 @@ import {
   TIME_COLORS,
   TIME_LABELS,
   bucket,
+  number,
   time,
   escapeHtml,
   type Snapshot,
@@ -91,6 +92,27 @@ export default function RegionMap({
   const [listOpen, setListOpen] = useState(false);
   const chartRef = useRef<EChartsType | null>(null);
   const [mapChart, setMapChart] = useState<EChartsType | null>(null);
+  const hoveredZone = useRef<string | null>(null);
+  useEffect(() => {
+    if (!mapChart) return;
+    // Clear the previous area's tooltip while the next area's delay runs.
+    const rememberZone = (event: { componentType?: string; name?: string }) => {
+      hoveredZone.current = event.componentType === "geo" ? event.name ?? null : null;
+    };
+    const hideTooltip = () => {
+      hoveredZone.current = null;
+      mapChart.dispatchAction({ type: "hideTip" });
+    };
+    mapChart.on("mousemove", rememberZone);
+    mapChart.on("mouseout", hideTooltip);
+    mapChart.on("georoam", hideTooltip);
+    return () => {
+      hoveredZone.current = null;
+      mapChart.off("mousemove", rememberZone);
+      mapChart.off("mouseout", hideTooltip);
+      mapChart.off("georoam", hideTooltip);
+    };
+  }, [mapChart]);
   const frameRef = useRef<HTMLDivElement>(null);
   const [mapSize, setMapSize] = useState({ width: 900, height: 600 });
   useEffect(() => {
@@ -204,6 +226,10 @@ export default function RegionMap({
     return {
       tooltip: {
         trigger: "item",
+        showDelay: 2000,
+        hideDelay: 0,
+        transitionDuration: 0,
+        className: "zsj-tooltip",
         confine: true,
         backgroundColor: "#fff",
         borderColor: "#d6dce0",
@@ -213,16 +239,32 @@ export default function RegionMap({
           fontSize: 12,
           color: "#24292f",
         },
-        formatter: (p) => {
-          const zone = data.zsj.find(
-            (z) => z.id === (p as { name: string }).name,
-          );
-          if (!zone) return "";
-          return `<strong>${escapeHtml(zone.name)}</strong><br/>${time(times[zone.id])}<br/><span style="color:#606870">Odhad dětí 10–14 let: ${zone.children ?? "bez dat"}</span>`;
-        },
       },
       geo: {
         map: "zsj",
+        // Geo regions do not inherit the global series tooltip formatter.
+        tooltip: {
+          formatter: ({ name }) => {
+            // ECharts may finish its showDelay timer after the pointer left.
+            if (hoveredZone.current !== name) return "";
+            const zone = data.zsj.find((z) => z.id === name);
+            if (!zone) return "";
+            const municipality = data.municipalities.find((m) => m.id === zone.municipality);
+            const duration = (value: number | null | undefined) =>
+              value == null ? "Bez uloženého spojení" : time(value);
+            const journey = mode === "current"
+              ? `Dojezd: <strong>${duration(times[zone.id])}</strong>`
+              : `Současný stav: <strong>${duration(before?.[zone.id])}</strong><br/>Scénář: <strong>${duration(times[zone.id])}</strong>`;
+            return `<div style="max-width:280px;white-space:normal;line-height:1.5">
+              <strong>${escapeHtml(zone.name)}</strong><br/>
+              Obec: ${escapeHtml(municipality?.name ?? zone.municipality)}<br/>
+              <span style="color:#606870">ZSJ ${escapeHtml(zone.id)}</span>
+              <div style="margin-top:8px">Odhad dětí 10–14 let: <strong>${zone.children == null ? "bez dat" : number(zone.children)}</strong><br/>
+              <span style="color:#606870">Demografický podklad: ${data.meta.demographyYear}</span></div>
+              <div style="margin-top:8px">K nejbližší škole s vybraným oborem<br/>${journey}</div>
+            </div>`;
+          },
+        },
         roam: true,
         layoutCenter: ["50%", "48%"],
         layoutSize: Math.min(
