@@ -324,6 +324,8 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             data={data}
             times={mode === "current" || !hasScenario ? before : after}
             before={before}
+            nearestSchools={mode === "current" || !hasScenario ? current?.nearestSchools : result?.nearestSchools}
+            beforeSchools={current?.nearestSchools}
             schoolIds={mode === "current" || !hasScenario ? ids : scenarioIds}
             field={field}
             employersNotice={selection.employersNotice}

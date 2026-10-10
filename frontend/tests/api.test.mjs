@@ -123,14 +123,14 @@ test("proxy preserves encoded program paths, canonicalizes filters and sets a da
   assert.deepEqual(await response.json(), employers);
 });
 
-test("proxy forwards backend errors, handles outages and excludes unfinished/live endpoints", async () => {
+test("proxy forwards backend errors, handles outages and excludes unsupported endpoints", async () => {
   const request = new Request("http://frontend/api/backend/skoly");
   const unavailable = await proxyApi(request, ["skoly"], "http://backend", async () => { throw Error("offline"); });
   assert.equal(unavailable.status, 502);
   const missing = await proxyApi(request, ["skoly", "600000000"], "http://backend", async () => Response.json({ error: { kod: "nenalezeno" } }, { status: 404 }));
   assert.equal(missing.status, 404);
   assert.equal((await missing.json()).error.kod, "nenalezeno");
-  for (const path of [["student", "trasa"], ["zsj", "unsupported"], ["..", "docs"]]) {
+  for (const path of [["student", "unsupported"], ["zsj", "unsupported"], ["..", "docs"]]) {
     const result = await proxyApi(request, path, "http://backend", () => { throw Error("must not fetch"); });
     assert.equal(result.status, 404);
   }

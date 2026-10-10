@@ -7,6 +7,7 @@ import SearchSelect from "./search-select";
 import { EmployerDetail } from "./place-details";
 import SchoolInformation from "./school-information";
 import StudentSchoolCard from "./student-school";
+import StudentRoute from "./student-route";
 import ProgramDetail from "./program-detail";
 import { focusSection } from "@/lib/focus";
 import { DataProvider } from "./data-provider";
@@ -87,7 +88,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
     <QueryBoundary queries={[students, accessibility]}>
       <div className="map-workspace family-workspace">
         <section className="workspace-map" aria-label="Dostupnost oboru na mapě">
-          <RegionMap data={data} times={map?.times ?? {}} schoolIds={ids} field={search.field} employersNotice={selection.employersNotice} onSelectSchool={(id) => openPlace("school", id)} onSelectEmployer={(id) => openPlace("employer", id)} selectedEmployerId={panel?.kind === "employer" ? panel.id : undefined} selectedSchoolId={panel?.kind === "school" ? panel.id : undefined} family />
+          <RegionMap data={data} times={map?.times ?? {}} nearestSchools={map?.nearestSchools} schoolIds={ids} field={search.field} employersNotice={selection.employersNotice} onSelectSchool={(id) => openPlace("school", id)} onSelectEmployer={(id) => openPlace("employer", id)} selectedEmployerId={panel?.kind === "employer" ? panel.id : undefined} selectedSchoolId={panel?.kind === "school" ? panel.id : undefined} family />
         </section>
         <aside className="workspace-detail family-detail" aria-label="Spojení a podrobnosti" onKeyDown={(e) => {if (e.key === "Escape" && panel) closeDetail();}}>
           <div className="detail-navigation"><button className="button-link" onClick={panel ? closeDetail : () => focusSection("search-heading")}><ArrowLeftIcon size={18} />{panel ? "Zpět na školy" : "Zpět k hledání"}</button></div>
@@ -95,11 +96,13 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
             <h2 id="detail-heading" tabIndex={-1}>{school?.shortName ?? student?.nazev ?? panel.id}</h2>
             <p>{selectedField} · {search.form === "den" ? "Denní" : "Dálkové"} studium</p>
             {student ? <StudentSchoolCard result={student} school={school} showAdmissions={false} /> : <p>Pro tuto školu nejsou výsledky tohoto hledání dostupné.</p>}
+            {zone && <StudentRoute key={`${zone.id}:${panel.id}`} lat={zone.lat} lon={zone.lon} redizo={panel.id} />}
             <section className="detail-section"><h3>O škole</h3><SchoolInformation redizo={panel.id} field={search.field} form={search.form} /></section>
           </div> : employer ? <EmployerDetail employer={employer} fieldName={selectedField} /> : <>
             <div className="journey-list-heading">
               <h2 id="results-heading" tabIndex={-1}>Nalezené školy ({students.data?.data.length ?? 0})</h2>
               <p>Do {search.limit} minut · {location?.name} · {zone?.name}</p>
+              {students.data?.meta.den && <p className="data-note">Den spojení: {students.data.meta.den.split("-").reverse().join(". ")}</p>}
             </div>
             {students.data?.data.length ? <div className="journey-results">{students.data.data.map((result) => <StudentSchoolCard key={result.redizo} result={result} school={data.schools.find((s) => s.id === result.redizo)} onSelect={() => openPlace("school", result.redizo)} />)}</div> : <div className="empty-state">
               <strong>Tento obor v této formě nemá v nabídce žádná škola.</strong>
@@ -107,7 +110,7 @@ function Dashboard({ data: baseData }: { data: Snapshot }) {
               {hasAlternateForm && <button onClick={() => {setForm(otherForm); applySearch({...search, form: otherForm});}}>Zkusit {otherForm === "den" ? "denní" : "dálkové"} studium</button>}
             </div>}
           </>}
-          <p className="detail-note results-caveat">Dojezdy jsou odhady pro výchozí ZSJ. Přesné odjezdy, příjezdy, přestupy a úseky tras zatím nejsou dostupné.</p>
+          <p className="detail-note results-caveat">Spojení vychází z výchozího bodu ZSJ, nikoli z konkrétní adresy. Ranní příjezdy 7:00–8:00 · časy v Europe/Prague. Výsledky se uchovávají až 24 hodin.</p>
         </aside>
       </div>
     </QueryBoundary>

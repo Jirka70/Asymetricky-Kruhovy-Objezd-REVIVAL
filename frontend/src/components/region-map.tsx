@@ -74,6 +74,8 @@ export default function RegionMap({
   data,
   times,
   before,
+  nearestSchools,
+  beforeSchools,
   schoolIds,
   field,
   employersNotice,
@@ -90,6 +92,8 @@ export default function RegionMap({
   data: Snapshot;
   times: Travel;
   before?: Travel;
+  nearestSchools?: Record<string, string | null>;
+  beforeSchools?: Record<string, string | null>;
   schoolIds: Set<string>;
   field: string;
   employersNotice?: string;
@@ -272,9 +276,15 @@ export default function RegionMap({
             const municipality = data.municipalities.find((m) => m.id === zone.municipality);
             const duration = (value: number | null | undefined) =>
               value == null ? "Bez uloženého spojení" : time(value);
+            const schoolLine = (ids: Record<string, string | null> | undefined, minutes: number | null | undefined) => {
+              const id = ids?.[zone.id];
+              if (!id || minutes == null) return "";
+              const school = data.schools.find((s) => s.id === id);
+              return `<br/>Nejbližší škola: <strong>${escapeHtml(school?.name ?? `REDIZO ${id}`)}</strong>`;
+            };
             const journey = mode === "current"
-              ? `Dojezd: <strong>${duration(times[zone.id])}</strong>`
-              : `Současný stav: <strong>${duration(before?.[zone.id])}</strong><br/>Scénář: <strong>${duration(times[zone.id])}</strong>`;
+              ? `Dojezd: <strong>${duration(times[zone.id])}</strong>${schoolLine(nearestSchools, times[zone.id])}`
+              : `Současný stav: <strong>${duration(before?.[zone.id])}</strong>${schoolLine(beforeSchools, before?.[zone.id])}<br/>Scénář: <strong>${duration(times[zone.id])}</strong>${schoolLine(nearestSchools, times[zone.id])}`;
             return `<div style="max-width:280px;white-space:normal;line-height:1.5">
               <strong>${escapeHtml(zone.name)}</strong><br/>
               Obec: ${escapeHtml(municipality?.name ?? zone.municipality)}<br/>
@@ -346,7 +356,7 @@ export default function RegionMap({
         },
       ],
     };
-  }, [data, times, before, mode, mapSize, family, boundaries]);
+  }, [data, times, before, nearestSchools, beforeSchools, mode, mapSize, family, boundaries]);
   const legend =
     mode === "difference"
       ? [

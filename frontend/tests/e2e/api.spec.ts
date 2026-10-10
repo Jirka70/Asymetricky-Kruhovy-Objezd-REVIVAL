@@ -15,7 +15,7 @@ test("server cache shares responses across requests and keeps filters separate",
   const employers = await request.get("/api/backend/obory/18-20-M%2F01/zamestnavatele");
   expect(employers.status()).toBe(200);
   expect((await employers.json()).features[0].properties.pocet_mist).toBe(321);
-  expect((await request.get("/api/backend/student/trasa")).status()).toBe(404);
+  expect((await request.get("/api/backend/student/unsupported")).status()).toBe(404);
 });
 
 test("region loads a skeleton, uses API school details and reuses cached form results", async ({ page }) => {

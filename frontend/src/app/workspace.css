@@ -1479,3 +1479,19 @@ button.journey-select:hover {
 .simulation-result p {
   margin: 8px 0;
 }
+
+.connection-summary { margin: 8px 0; color: #536259; font-size: 12px; line-height: 1.6; }
+.connection-summary p { margin: 3px 0; }
+.route-options { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.route-options button { padding: 8px 10px; border: 1px solid #d6dce0; border-radius: 6px; background: white; font: inherit; font-size: 12px; text-align: left; }
+.route-options button[aria-pressed="true"] { border-color: #2e7360; background: #edf4f0; color: #1c3c2e; }
+.route-geometry { margin: 12px 0; background: #f6f8f4; border-radius: 8px; padding: 8px; }
+.student-route-map { height: 280px; width: 100%; border-radius: 6px; isolation: isolate; }
+.route-map-controls { margin: 8px 0; }
+.route-map-controls button { font: inherit; font-size: 12px; padding: 6px 10px; border: 1px solid #d6dce0; border-radius: 6px; background: white; }
+.student-route-map .leaflet-control-attribution { font-size: 10px; }
+.route-geometry figcaption { font-size: 11px; color: #606870; text-align: center; }
+.route-legs { padding-left: 22px; margin: 12px 0; }
+.route-legs li { margin-bottom: 12px; padding-left: 4px; }
+.route-legs span, .route-legs small { display: block; margin-top: 3px; overflow-wrap: anywhere; }
+.route-legs small { color: #606870; }

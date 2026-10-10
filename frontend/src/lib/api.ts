@@ -191,6 +191,7 @@ export type SimulationResponse = {
       nazev: string;
       cas_min_puvodni?: number | null;
       cas_min?: number | null;
+      nejblizsi_redizo?: string | null;
       deti: number;
     };
   }[];
@@ -232,16 +233,44 @@ export type AccessibilityResponse = {
   features: { properties: {
     kod: string; nazev: string; cas_min?: number; deti: number;
     v_dosahu: boolean; deti_v_dosahu?: number; pasmo: string;
+    nejblizsi_redizo?: string | null;
   } }[];
 };
+export type ConnectionSummary = {
+  stav: "ok" | "bez_spojeni" | "data_nedostupna";
+  cas_min?: number; odjezd?: string; prijezd?: string;
+  prestupy?: number; chuze_m?: number; linky?: string[]; vzdalenost_m?: number;
+};
+export type StudentRoute = {
+  type: "FeatureCollection";
+  features: {
+    type: "Feature";
+    geometry: { type: "LineString"; coordinates: [number, number][] };
+    properties: {
+      spoj: number; usek: number; druh: "WALK" | "BUS" | "RAIL" | "TRAM" | "TROLLEYBUS";
+      linka?: string; od: string; do: string; odjezd: string; prijezd: string; chuze_m?: number;
+    };
+  }[];
+  spoje: { spoj: number; odjezd: string; prijezd: string; cas_min: number; prestupy: number;
+    chuze_m?: number; rezerva_min?: number; vzdalenost_m?: number }[];
+  meta: { den?: string; scenar?: string; okno_prijezdu?: string[] };
+};
+export function studentRouteQuery(input: { lat: number; lon: number; redizo: string }) {
+  const params = new URLSearchParams(Object.entries({ ...input, scenar: "rano" }).map(([key, value]) => [key, String(value)]));
+  return queryOptions({
+    queryKey: ["student-trasa", { ...input, scenar: "rano" }],
+    queryFn: ({ signal }) => getJson<StudentRoute>(`/api/backend/student/trasa?${params}`, signal),
+    enabled: Boolean(input.redizo) && Number.isFinite(input.lat) && Number.isFinite(input.lon),
+  });
+}
 export type StudentSchool = {
   redizo: string; nazev: string; lat: number; lon: number; v_dosahu: boolean;
-  spoj: { stav: string; cas_min?: number };
+  spoj: ConnectionSummary;
   nabidky: SchoolResponse["nabidky"];
 };
 export type StudentSchoolsResponse = {
   data: StudentSchool[];
-  meta: { zsj?: string; max_min: number; presnost?: string };
+  meta: { zsj?: string; max_min: number; presnost?: string; den?: string };
 };
 export type ProgramResponse = {
   obor: { kod: string; nazev: string; pocet_skol: number; kapacita: number; prihlasky: number;

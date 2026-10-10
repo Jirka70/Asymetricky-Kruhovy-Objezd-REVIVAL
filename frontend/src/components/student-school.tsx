@@ -3,6 +3,7 @@ import { GraduationCapIcon, CaretRightIcon } from "@phosphor-icons/react";
 import type { StudentSchool } from "@/lib/api";
 import type { School } from "@/lib/data";
 import AdmissionStats from "./admission-stats";
+import ConnectionSummary from "./connection-summary";
 
 export default function StudentSchoolCard({ result, school, active, onSelect, showAdmissions = true }: {
   result: StudentSchool; school?: School; active?: boolean; onSelect?: () => void;
@@ -18,7 +19,8 @@ export default function StudentSchoolCard({ result, school, active, onSelect, sh
   </>;
   return <article className={`journey-result${active ? " is-selected" : ""}`}>
     {onSelect ? <button className="journey-select" onClick={onSelect} aria-label={`Detail školy ${result.nazev}`}>{title}</button> : <div className="journey-select">{title}</div>}
-    <p className="detail-note">{duration == null ? "Doba dojezdu není v datech dostupná; spojení může existovat." : result.v_dosahu ? "V zadaném limitu dojezdu" : "Mimo zadaný limit dojezdu"}</p>
+    <ConnectionSummary connection={result.spoj} />
+    <p className="detail-note">{result.spoj.stav === "bez_spojeni" ? "V ranním okně nebylo nalezeno spojení." : duration == null ? "Doba dojezdu není v datech dostupná; spojení může existovat." : result.v_dosahu ? "V zadaném limitu dojezdu" : "Mimo zadaný limit dojezdu"}</p>
     {showAdmissions && <>
       <p className="detail-note">Kapacita: {capacity}</p>
       <AdmissionStats offers={result.nabidky} />

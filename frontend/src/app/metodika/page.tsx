@@ -16,7 +16,9 @@ export default function Methodology() {
             z datové služby projektu. Stejná služba poskytuje seznam ZSJ,
             jejich polygony, předpočítané dojezdy a výsledky simulací.
             Názvy a obrysy obcí a demografický detail tooltipu doplňuje uložený
-            snímek. Aplikace nevyhledává nové spoje v OTP.
+            snímek. Pro rodiny backend vyhledává ranní spojení v OTP; v detailu
+            školy zobrazujeme jeho skutečné úseky a průběh trasy. Výsledky se
+            uchovávají až 24 hodin a uvádějí den spojení.
           </p>
         </section>
         <section>
@@ -32,8 +34,8 @@ export default function Methodology() {
             Výchozí bod je modelový bod uvnitř ZSJ, nikoli konkrétní adresa
             dítěte. „Bez spojení“ znamená, že výpočet v tomto okně nenašel
             použitelnou variantu. Neznamená to, že se do školy nedá dostat
-            nikdy. Při filtrování konkrétního času pracujeme jen s již uloženou
-            variantou pro každou dvojici; další varianty nedohledáváme.
+            nikdy. Rodinné hledání používá výchozí bod vybrané ZSJ a nabídne až
+            tři spojení s příjezdem v ranním okně pro den uvedený u výsledků.
           </p>
           <p>
             Zdroj: <code>datasety/zsj_skoly_2026-10-12.csv</code> a soubor{" "}

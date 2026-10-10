@@ -3,7 +3,7 @@
 Next.js 16 / React 19 / TypeScript / TanStack Query. Dvě propojené stránky nad REST API:
 
 - `/kraj`: kartogram ZSJ, seskupené školy a zaměstnavatelé, přidání i odebrání oboru ve stávající škole, srovnání scénářů a grafy.
-- `/rodiny`: doporučení oboru, hledání výchozí ZSJ, ranní dojezdy ze studentského API, školy a zaměstnavatelé.
+- `/rodiny`: doporučení oboru, hledání výchozí ZSJ, ranní dojezdy a spojení ze studentského API, alternativy cest s úseky a průběhem trasy, školy a zaměstnavatelé.
 - `/metodika`: původ, význam a omezení jednotlivých údajů.
 - `/`: přesměrování na `/kraj`.
 
@@ -18,7 +18,7 @@ npm run dev -- --port 3000
 
 Otevřete http://localhost:3000. Spusťte také backend s databází (`docker compose up -d backend` z kořene projektu).
 Serverový `BACKEND_URL` má výchozí hodnotu `http://127.0.0.1:8000`; jinou adresu lze nastavit v `frontend/.env.local`.
-OTP není potřeba.
+Pro rodinné hledání a spojení je potřeba dostupné OTP na backendu. V Compose jej spusťte pomocí `docker compose --profile otp up -d --build backend otp` z kořene projektu. Katalogy a krajská mapa fungují bez OTP.
 
 ```bash
 npm run lint
@@ -68,7 +68,7 @@ cesty z 12. 10. 2026. Geometrie jsou zjednodušené pro zobrazení. Používají
 lokální soubory pro názvy a obrysy obcí, zkratky škol a demografický detail tooltipu.
 Seznam ZSJ, jejich názvy, vazby na obce, reprezentační body i polygony se čtou z API.
 Dojezdy, dostupnost, katalogy, statistiky i oba typy simulace používají API;
-místní matice se v krajské ani rodinné stránce nepoužívá. Aplikace nevolá OTP.
+místní matice se v krajské ani rodinné stránce nepoužívá. Rodinné spojení počítá backend pomocí OTP; frontend volá pouze REST API.
 
 ## Načítání a cache
 
@@ -79,7 +79,8 @@ místní matice se v krajské ani rodinné stránce nepoužívá. Aplikace nevol
 - `GET /zsj/seznam`: společný seznam ZSJ včetně polygonů a reprezentačních bodů pro obě stránky. Z něj se plní hledání výchozí ZSJ i mapová geometrie. Demografie tooltipu se připojuje ze snímku podle kódu; chybějící záznam je neznámý, nikoli nula.
 - `GET /zsj`: aktuální dojezdy a odhad jednoho ročníku pro krajskou i rodinnou mapu, vždy `uroven=zsj`.
 - `GET /obory/{kod}`: souhrn všech forem studia, nabídky a kandidátní školy; chyba detailu neblokuje mapu.
-- `GET /student/skoly`: hledání podle souřadnic vybrané ZSJ, oboru, formy a maximálního ranního dojezdu. Zobrazuje i školy mimo limit a s neznámou dobou dojezdu.
+- `GET /student/skoly`: hledání podle souřadnic vybrané ZSJ, oboru, formy a maximálního ranního dojezdu. Karty zobrazují dobu, odjezd, příjezd, přestupy, chůzi a linky, včetně škol mimo limit a s neznámou dobou dojezdu.
+- `GET /student/trasa`: načítá se až při otevření školy pro přesný bod vybrané ZSJ. Nabízí až tři varianty, jednotlivé úseky se zastávkami a skutečnou geometrii OTP nad podkladem OpenStreetMap s přiblížením a posunem. Dlaždice se načítají přímo v prohlížeči jen pro zobrazený výřez; jejich výpadek neblokuje úseky trasy. Prázdný výsledek ani chyba nevytváří ukázkové úseky. Při výpadku zůstane souhrn školy a lze zopakovat načtení. Den spojení se zobrazuje z metadat API.
 - `GET /simulace`: přidání denního oboru do jedné školy; kapacita 1–300 (výchozí 30), limit dojezdu, `uroven=zsj`, `format=geojson`, `scenar=rano`. Dotaz se spustí až po přidání oboru.
 - `POST /simulace/zmeny`: odebrání jedné denní nabídky; posílá zápornou celou kapacitu školy z filtrovaného `/skoly`, nikoli hodnotu vstupu pro přidání. Výpočet nic nezapisuje, proto používá `useQuery`, deduplikaci a cache. Odpověď určuje dojezdy, zhoršené ZSJ a změnu dosahu. Dálkové nabídky a neznámá/nulová kapacita nebo kapacita nad 300 míst jsou ve frontendovém MVP zakázané.
 
@@ -138,7 +139,7 @@ Exportér používá `BEGIN READ ONLY` a společný `scripts/db_common.py` z ko�
 repozitáře. Názvy obcí v `scripts/municipality-names.json` pocházejí ze stejného
 lokálního RÚIAN podkladu jako `insert_zsj.sql`. Po novém exportu obnovte stránku.
 
-- Dojezdy jsou odhady z ranní matice 7:00–8:00. Rodinné hledání nepodporuje přesný odjezd ani příjezd; nabízí maximální délku dojezdu. Neznámé časy se nezaměňují za neexistující spojení.
+- Mapové dojezdy jsou odhady z ranní matice 7:00–8:00; rodinné výsledky a trasy počítá OTP pro den uvedený v odpovědi. Rodinné hledání nepodporuje přesný odjezd ani příjezd; nabízí maximální délku dojezdu. Neznámé časy se nezaměňují za neexistující spojení.
 - Dostupnost používá ročníkový odhad z API (10–14 let / 5); rozhodnutí o dosahu přebírá z API před zaokrouhlením minut.
 - Scénáře jsou dočasné v paměti prohlížeče, nejvýše jedna změna nabídky. Změna oboru nebo formy je resetuje.
 - Přidání oboru používá API pro dojezdy před/po i modelové vyhodnocení. Statistiky v tomto scénáři používají odhad jednoho ročníku (10–14 let / 5) z API a výslovně jej označují; tooltip nadále uvádí místní odhad celé skupiny 10–14 let.

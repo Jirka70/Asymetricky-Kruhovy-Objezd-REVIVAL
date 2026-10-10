@@ -9,8 +9,11 @@ async function hoverZone(page: Page, id: string) {
   const index = geometry.features.findIndex((f: { properties: { name: string } }) => f.properties.name === id);
   expect(index).toBeGreaterThanOrEqual(0);
   const area = page.locator(".map-frame .echart svg path").nth(index);
-  await expect(area).toBeVisible();
-  const point = await area.evaluate((element) => {
+  // Closing the detail resizes the map and replaces its SVG paths.
+  await expect(async () => {
+    await page.locator(".map-frame").scrollIntoViewIfNeeded();
+    await expect(area).toBeVisible();
+    const point = await area.evaluate((element) => {
     const path = element as SVGPathElement;
     const bounds = path.getBBox();
     for (let x = 0.2; x < 0.9; x += 0.1) {
@@ -24,7 +27,8 @@ async function hoverZone(page: Page, id: string) {
     }
     throw new Error("No uncovered interior point in ZSJ polygon");
   });
-  await page.mouse.move(point.x, point.y);
+    await page.mouse.move(point.x, point.y);
+  }).toPass({ timeout: 5000 });
 }
 
 test("ZSJ tooltip waits half a second, describes the area and clears when leaving", async ({ page }) => {
@@ -43,6 +47,7 @@ test("ZSJ tooltip waits half a second, describes the area and clears when leavin
   await expect(tooltip).toContainText("Demografický podklad: 2021");
   await expect(tooltip).toContainText("K nejbližší škole s vybraným oborem");
   await expect(tooltip).toContainText("Dojezd:");
+  await expect(tooltip).toContainText("Nejbližší škola: ISŠTE Sokolov z API");
 
   await hoverZone(page, "000019");
   await expect(tooltip).toBeHidden();
@@ -51,6 +56,8 @@ test("ZSJ tooltip waits half a second, describes the area and clears when leavin
   await expect(tooltip).toBeVisible({ timeout: 1500 });
   await expect(tooltip).toContainText("Abertamy");
   await expect(tooltip).not.toContainText("Bečov nad Teplou");
+  await expect(tooltip).toContainText("Nejbližší škola: SPŠ Ostrov z API");
+  await expect(tooltip).not.toContainText("ISŠTE Sokolov z API");
   await page.mouse.move(10, 10);
   await expect(tooltip).toBeHidden();
 
@@ -70,6 +77,7 @@ test("ZSJ tooltip distinguishes missing journeys and compares the scenario", asy
   const tooltip = page.locator(".zsj-tooltip");
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toContainText("Bez uloženého spojení");
+  await expect(tooltip).not.toContainText("Nejbližší škola:");
   await expect(page.getByRole("button", { name: "Přidat obor", exact: true })).toBeDisabled();
   await page.getByRole("combobox", { name: "Forma studia" }).selectOption("den");
   await page.getByRole("button", { name: "Přidat obor", exact: true }).click();
@@ -79,4 +87,5 @@ test("ZSJ tooltip distinguishes missing journeys and compares the scenario", asy
   await expect(tooltip).toBeVisible();
   await expect(tooltip).toContainText("Současný stav: Bez uloženého spojení");
   await expect(tooltip).toContainText(/Scénář: \d+ min/);
+  await expect(tooltip).toContainText("Nejbližší škola: SLŠ Žlutice z API");
 });

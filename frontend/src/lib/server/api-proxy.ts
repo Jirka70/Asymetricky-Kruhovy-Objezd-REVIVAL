@@ -1,8 +1,8 @@
-/** Cache only the public, implemented reads, never future live routing. */
+/** Proxy the implemented public reads and read-only simulations. */
 function supportedPath(path: string[]) {
   return (
     (path.length === 1 && ["skoly", "obory", "simulace", "zsj"].includes(path[0])) ||
-    (path.length === 2 && path[0] === "student" && path[1] === "skoly") ||
+    (path.length === 2 && path[0] === "student" && ["skoly", "trasa"].includes(path[1])) ||
     (path.length === 2 && path[0] === "zsj" && path[1] === "seznam") ||
     (path.length === 2 && path[0] === "obory" && /^\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path[1])) ||
     (path.length === 2 && path[0] === "skoly" && /^\d{9}$/.test(path[1])) ||
@@ -36,7 +36,7 @@ export async function proxyApi(
   try {
     const response = await fetcher(url, {
       next: { revalidate: 86400 },
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(path[0] === "student" ? 65_000 : 15_000),
       ...(simulationPost ? { method: "POST", body, headers: { "Content-Type": "application/json" } } : {}),
     });
     return new Response(await response.text(), {

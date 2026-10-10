@@ -51,6 +51,7 @@ export function responseFor(url, requestBody) {
   if (path === "/api/v1/zsj/seznam") return zsjList;
   if (path === "/api/v1/simulace/zmeny") return removal(requestBody);
   if (path === "/api/v1/zsj") return accessibility(url.searchParams);
+  if (path === "/api/v1/student/trasa") return studentRoute();
   if (path === "/api/v1/student/skoly") return studentSchools(url.searchParams);
   if (/^\/api\/v1\/obory\/\d{2}-\d{2}-[A-Z]\/\d{2}$/.test(path)) return programDetail();
   if (path === "/api/v1/simulace") return simulation(url.searchParams);
@@ -80,6 +81,7 @@ export function simulation(params = new URLSearchParams()) {
         kod: zone.id, nazev: zone.name, deti: 10,
         cas_min_puvodni: null,
         cas_min: zone.id === "001261" ? 12.5 : null,
+        nejblizsi_redizo: zone.id === "001261" ? params.get("redizo") ?? "600009271" : null,
       },
     })),
     souhrn: {
@@ -94,6 +96,7 @@ export function simulation(params = new URLSearchParams()) {
 export function accessibility(params = new URLSearchParams()) {
   return {type: "FeatureCollection", features: zones.map((zone, index) => ({
     properties: {kod: zone.id, nazev: zone.name, cas_min: params.get("forma") === "dal" ? undefined : index === 0 ? 45 : 80,
+      nejblizsi_redizo: params.get("forma") === "dal" ? undefined : zone.id === "001261" ? "600170527" : "600009084",
       deti: 10, v_dosahu: false, deti_v_dosahu: 0, pasmo: "nad_60"},
   })), meta: {}};
 }
@@ -101,9 +104,9 @@ export function studentSchools(params = new URLSearchParams()) {
   return {data: params.get("forma") === "dal" ? [] : schools.features.map((feature, i) => ({
     redizo: feature.properties.redizo, nazev: feature.properties.nazev,
     lat: feature.geometry.coordinates[1], lon: feature.geometry.coordinates[0],
-    v_dosahu: i === 0, spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180},
+    v_dosahu: i === 0, spoj: i === 2 ? {stav: "data_nedostupna"} : {stav: "ok", cas_min: i === 0 ? 17 : 180, odjezd: i === 0 ? "07:12" : "04:29", prijezd: "07:29", prestupy: 0, chuze_m: 250, vzdalenost_m: 4100, linky: ["421"]},
     nabidky: [{kod_oboru: "18-20-M/01", nazev_oboru: "Informační technologie", forma: "den", kapacita: 77, prihlasky: 999, prijati: 50}],
-  })), meta: {max_min: Number(params.get("max_min") ?? 120), zsj: "063550"}};
+  })), meta: {max_min: Number(params.get("max_min") ?? 120), zsj: "063550", den: "2026-10-12"}};
 }
 export function programDetail() {
   return {
@@ -134,4 +137,21 @@ export function removal(input = {max_min: 45, zmeny: [{redizo: "600009084", zmen
       kapacita_pred: 154, kapacita_po: 154 + input.zmeny[0].zmena_kapacity,
     }, meta: {},
   };
+}
+
+export function studentRoute() {
+  const leg = (spoj, usek, druh, od, to, odjezd, prijezd, coordinates) => ({
+    type: "Feature", geometry: {type: "LineString", coordinates},
+    properties: {spoj, usek, druh, od, do: to, odjezd, prijezd,
+      ...(druh === "WALK" ? {chuze_m: 250} : {linka: "421"})},
+  });
+  return {type: "FeatureCollection", features: [
+    // Deliberately mixed order: the UI must group alternatives and sort legs.
+    leg(0, 1, "BUS", "Zastávka z API", "Škola z API", "07:15", "07:29", [[12.81, 50.205], [12.83, 50.21], [12.95, 50.3]]),
+    leg(1, 0, "RAIL", "Nádraží z API", "Cílové nádraží", "07:00", "07:30", [[12.8, 50.2], [12.95, 50.3]]),
+    leg(0, 0, "WALK", "Výchozí bod ZSJ", "Zastávka z API", "07:12", "07:15", [[12.8, 50.2], [12.805, 50.201], [12.81, 50.205]]),
+  ], spoje: [
+    {spoj: 0, odjezd: "07:12", prijezd: "07:29", cas_min: 17, prestupy: 0, chuze_m: 250, vzdalenost_m: 4100},
+    {spoj: 1, odjezd: "07:00", prijezd: "07:30", cas_min: 30, prestupy: 0, chuze_m: 0},
+  ], meta: {den: "2026-10-12", scenar: "rano", okno_prijezdu: ["07:00", "08:00"]}};
 }

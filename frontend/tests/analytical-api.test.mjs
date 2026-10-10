@@ -47,5 +47,5 @@ test("proxy permits only implemented analytical routes and forwards parameters",
     assert.equal(upstream.searchParams.get("max_min"), "45");
     assert.equal(upstream.pathname, `/api/v1/${path.map(encodeURIComponent).join("/")}`);
   }
-  assert.equal((await proxyApi(new Request("http://frontend"), ["student", "trasa"])).status, 404);
+  assert.equal((await proxyApi(new Request("http://frontend"), ["student", "unsupported"])).status, 404);
 });

@@ -5,8 +5,10 @@ import type { Travel, Zone } from "./data";
 export function simulationData(response: SimulationResponse) {
   const before: Travel = {};
   const after: Travel = {};
+  const nearestSchools: Record<string, string | null> = {};
   const zones: Zone[] = [];
   for (const { properties: area } of response.features) {
+    nearestSchools[area.kod] = area.nejblizsi_redizo ?? null;
     before[area.kod] = area.cas_min_puvodni ?? null;
     after[area.kod] = area.cas_min ?? null;
     zones.push({
@@ -14,5 +16,5 @@ export function simulationData(response: SimulationResponse) {
       children: area.deti,
     });
   }
-  return { before, after, zones };
+  return { before, after, nearestSchools, zones };
 }
