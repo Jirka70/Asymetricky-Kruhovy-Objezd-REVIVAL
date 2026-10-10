@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { PathIcon, MapPinIcon, ArrowUpRightIcon } from "@phosphor-icons/react";
+import { MapPinIcon, ArrowUpRightIcon } from "@phosphor-icons/react";
 export function Header() {
   const pathname = usePathname();
   return (
@@ -11,7 +12,14 @@ export function Header() {
       </a>
       <div className="header-inner">
         <Link href="/kraj" className="brand" aria-label="Obor na dosah – úvod">
-          <PathIcon size={31} weight="bold" />
+          <Image
+            src="/logo.svg"
+            alt=""
+            width={74}
+            height={44}
+            className="brand-logo"
+            unoptimized
+          />
           <span>
             Obor na dosah
             <span className="brand-caption">VZDĚLÁVÁNÍ · DOPRAVA · REGION</span>
