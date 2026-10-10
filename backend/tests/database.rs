@@ -105,6 +105,7 @@ async fn migrations_and_api() {
     analytical_data(&mut connection);
 
     let app = contract::router(db::pool(&url, 2).unwrap());
+    zsj_api(&app, &mut connection).await;
     catalog_api(&app, &mut connection).await;
 
     assert_eq!(
@@ -280,8 +281,13 @@ async fn contract_response(
             "application/json"
         };
     assert_eq!(response.headers()["content-type"], media);
+    let body_limit = if path == "/zsj/seznam" {
+        64_000_000
+    } else {
+        2_000_000
+    };
     let body: serde_json::Value =
-        serde_json::from_slice(&to_bytes(response.into_body(), 2_000_000).await.unwrap()).unwrap();
+        serde_json::from_slice(&to_bytes(response.into_body(), body_limit).await.unwrap()).unwrap();
     let declared = contract::resolve(&SPEC["paths"][path]["get"]["responses"][status.as_str()]);
     let validator = contract::schema_validator(&declared["content"][media]["schema"]);
     let errors: Vec<_> = validator
@@ -290,6 +296,83 @@ async fn contract_response(
         .collect();
     assert!(errors.is_empty(), "{uri}: {}", errors.join("; "));
     body
+}
+
+async fn zsj_api(app: &axum::Router, connection: &mut PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::json;
+    let uri = "/api/v1/zsj/seznam";
+    let path = "/zsj/seznam";
+    let body = contract_response(app, uri, path, StatusCode::OK).await;
+    let rows = body.as_array().unwrap();
+    let expected = zsj::table
+        .order(zsj::kod)
+        .select(Zsj::as_select())
+        .load::<Zsj>(connection)
+        .unwrap();
+    assert_eq!(rows.len(), 839);
+    assert_eq!(rows.len(), expected.len());
+    for (row, expected) in rows.iter().zip(&expected) {
+        assert_eq!(row["kod"], expected.kod);
+        assert_eq!(row["nazev"], expected.nazev);
+        assert_eq!(row["lat"], expected.lat);
+        assert_eq!(row["lon"], expected.lon);
+        assert_eq!(row["kod_obce"], json!(expected.kod_obce));
+        assert_eq!(row["boundary"]["type"], "Polygon");
+        assert!(
+            !row["boundary"]["coordinates"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+        assert!(row["boundary"].get("crs").is_none());
+    }
+    assert_eq!(rows[0]["kod"], "000019");
+    #[derive(QueryableByName)]
+    struct GeometryCheck {
+        #[diesel(sql_type = diesel::sql_types::Bool)]
+        matches: bool,
+    }
+    let check = diesel::sql_query(
+        "SELECT ST_HausdorffDistance(boundary, ST_SetSRID(ST_GeomFromGeoJSON($1), 4326)) < 1e-12 AS matches FROM public.\"ZSJ\" WHERE kod = $2",
+    )
+    .bind::<diesel::sql_types::Text, _>(rows[0]["boundary"].to_string())
+    .bind::<diesel::sql_types::Text, _>(rows[0]["kod"].as_str().unwrap())
+    .get_result::<GeometryCheck>(connection)
+    .unwrap();
+    assert!(
+        check.matches,
+        "API polygon must preserve the stored boundary"
+    );
+
+    diesel::update(zsj::table.find("000019"))
+        .set(zsj::kod_obce.eq(None::<String>))
+        .execute(connection)
+        .unwrap();
+    let body = contract_response(app, uri, path, StatusCode::OK).await;
+    assert!(body[0].get("kod_obce").unwrap().is_null());
+    diesel::update(zsj::table.find("000019"))
+        .set(zsj::kod_obce.eq(expected[0].kod_obce.clone()))
+        .execute(connection)
+        .unwrap();
+
+    // DDL changes affect only this test's disposable container and retain all seeded data.
+    connection
+        .batch_execute("ALTER TABLE public.\"ZSJ\" RENAME TO zsj_test_saved")
+        .unwrap();
+    contract_response(app, uri, path, StatusCode::INTERNAL_SERVER_ERROR).await;
+    connection
+        .batch_execute("CREATE TABLE public.\"ZSJ\" (LIKE public.zsj_test_saved INCLUDING ALL)")
+        .unwrap();
+    assert_eq!(
+        contract_response(app, uri, path, StatusCode::OK).await,
+        json!([])
+    );
+    connection
+        .batch_execute(
+            "DROP TABLE public.\"ZSJ\"; ALTER TABLE public.zsj_test_saved RENAME TO \"ZSJ\"",
+        )
+        .unwrap();
 }
 
 async fn catalog_api(app: &axum::Router, connection: &mut diesel::PgConnection) {

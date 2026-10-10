@@ -137,7 +137,7 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
         let path = fixture["path"].as_str().unwrap();
         if !matches!(
             path,
-            "/skoly" | "/skoly/{redizo}" | "/obory" | "/obory/{kod}/zamestnavatele"
+            "/skoly" | "/skoly/{redizo}" | "/zsj/seznam" | "/obory" | "/obory/{kod}/zamestnavatele"
         ) {
             check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
         }
@@ -180,6 +180,7 @@ async fn rust_success_dtos_and_media_types_match_openapi() {
             "/skoly/{redizo}" => dto_response::<dto::SkolaDetail>(body, geo).await,
             "/student/skoly" => dto_response::<dto::StudentSkoly>(body, geo).await,
             "/student/trasa" => dto_response::<dto::Trasa>(body, geo).await,
+            "/zsj/seznam" => dto_response::<Vec<dto::ZsjZaznam>>(body, geo).await,
             "/zsj" => dto_response::<dto::MapaDosahu>(body, geo).await,
             "/obory" => dto_response::<dto::Obory>(body, geo).await,
             "/obory/{kod}" => dto_response::<dto::DetailOboru>(body, geo).await,
@@ -372,6 +373,32 @@ fn schema_validator_rejects_real_contract_drift() {
 }
 
 #[test]
+fn zsj_list_requires_polygon_and_preserves_nullable_municipality() {
+    let fixture = fixtures()
+        .into_iter()
+        .find(|fixture| fixture["path"] == "/zsj/seznam")
+        .unwrap();
+    let schema = response_schema("/zsj/seznam", "200", "application/json");
+    let validator = contract::schema_validator(&schema);
+    assert_valid(&schema, &json!([]));
+    let mut body = fixture["body"].clone();
+    body[0]["kod_obce"] = Value::Null;
+    assert_valid(&schema, &body);
+    let rows: Vec<dto::ZsjZaznam> = serde_json::from_value(body.clone()).unwrap();
+    assert!(rows[0].kod_obce.is_none());
+    assert_valid(&schema, &serde_json::to_value(rows).unwrap());
+    for field in ["boundary", "kod_obce"] {
+        let mut missing = body.clone();
+        missing[0].as_object_mut().unwrap().remove(field);
+        assert!(!validator.is_valid(&missing));
+        assert!(serde_json::from_value::<Vec<dto::ZsjZaznam>>(missing).is_err());
+    }
+    body[0]["boundary"]["type"] = json!("Point");
+    assert!(!validator.is_valid(&body));
+    assert!(serde_json::from_value::<Vec<dto::ZsjZaznam>>(body).is_err());
+}
+
+#[test]
 fn every_component_and_declared_response_schema_compiles() {
     for schema in SPEC["components"]["schemas"].as_object().unwrap().values() {
         contract::schema_validator(schema);
@@ -527,6 +554,11 @@ fn all_response_dto_fields_types_enums_and_required_fields_match_spec() {
         "200",
         "application/geo+json",
     ));
+    check_dto_shape::<Vec<dto::ZsjZaznam>>(response_schema(
+        "/zsj/seznam",
+        "200",
+        "application/json",
+    ));
     check_dto_shape::<dto::MapaDosahu>(response_schema("/zsj", "200", "application/geo+json"));
     check_dto_shape::<dto::Obory>(response_schema("/obory", "200", "application/json"));
     check_dto_shape::<dto::DetailOboru>(response_schema("/obory/{kod}", "200", "application/json"));
@@ -589,6 +621,7 @@ fn every_query_struct_matches_declared_fields_types_enums_required_and_defaults(
     check_query_schema::<SkolaQuery>();
     check_query_schema::<StudentSkolyQuery>();
     check_query_schema::<StudentTrasaQuery>();
+    check_query_schema::<ZsjSeznamQuery>();
     check_query_schema::<ZsjQuery>();
     check_query_schema::<OboryQuery>();
     check_query_schema::<OborQuery>();
@@ -698,6 +731,7 @@ async fn every_typed_query_serializes_values_accepted_by_openapi() {
             "/skoly/{redizo}" => check::<SkolaQuery>(&fixture).await,
             "/student/skoly" => check::<StudentSkolyQuery>(&fixture).await,
             "/student/trasa" => check::<StudentTrasaQuery>(&fixture).await,
+            "/zsj/seznam" => check::<ZsjSeznamQuery>(&fixture).await,
             "/zsj" => check::<ZsjQuery>(&fixture).await,
             "/obory" => check::<OboryQuery>(&fixture).await,
             "/obory/{kod}" => check::<OborQuery>(&fixture).await,
@@ -896,6 +930,7 @@ fn simulation_area_codes_bands_and_required_nullable_times_match_new_contract() 
 async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
     for (uri, path) in [
         ("/api/v1/skoly", "/skoly"),
+        ("/api/v1/zsj/seznam", "/zsj/seznam"),
         ("/api/v1/obory", "/obory"),
         ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
         (

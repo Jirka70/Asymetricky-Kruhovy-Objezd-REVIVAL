@@ -178,6 +178,9 @@ pub struct StudentTrasaQuery {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ZsjSeznamQuery {}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ZsjQuery {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub obor: Option<KodOboru>,
@@ -255,6 +258,7 @@ operation!(SkolyQuery, "listSkoly");
 operation!(SkolaQuery, "getSkola");
 operation!(StudentSkolyQuery, "listStudentSkoly");
 operation!(StudentTrasaQuery, "getStudentTrasa");
+operation!(ZsjSeznamQuery, "listZsj");
 operation!(ZsjQuery, "getZsj");
 operation!(OboryQuery, "listObory");
 operation!(OborQuery, "getObor");

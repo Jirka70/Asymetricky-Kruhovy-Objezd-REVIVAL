@@ -187,6 +187,30 @@ pub struct GeoPlocha {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
+pub enum ZsjBoundaryType {
+    #[serde(rename = "Polygon")]
+    Polygon,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct ZsjBoundary {
+    pub r#type: ZsjBoundaryType,
+    pub coordinates: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct ZsjZaznam {
+    pub kod: KodZsj,
+    pub nazev: String,
+    pub lat: f64,
+    pub lon: f64,
+    pub boundary: ZsjBoundary,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub kod_obce: Option<KodObce>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
 pub enum GeoLinieType {
     #[serde(rename = "LineString")]
     LineString,

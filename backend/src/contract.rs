@@ -46,6 +46,10 @@ pub const OPERATIONS: &[Operation] = &[
         id: "getStudentTrasa",
     },
     Operation {
+        path: "/zsj/seznam",
+        id: "listZsj",
+    },
+    Operation {
         path: "/zsj",
         id: "getZsj",
     },
@@ -308,6 +312,12 @@ pub async fn get_student_trasa(
 ) -> Result<GeoJson<dto::Trasa>, StubError> {
     Err(StubError::unimplemented("getStudentTrasa"))
 }
+pub async fn list_zsj(
+    State(pool): State<DbPool>,
+    ContractQuery(_params): ContractQuery<requests::ZsjSeznamQuery>,
+) -> Result<Json<Vec<dto::ZsjZaznam>>, StubError> {
+    crate::catalog::zsj(pool).await.map(Json)
+}
 pub async fn get_zsj(
     ContractQuery(_params): ContractQuery<requests::ZsjQuery>,
 ) -> Result<GeoJson<dto::MapaDosahu>, StubError> {
@@ -456,6 +466,7 @@ pub fn router(pool: DbPool) -> Router {
         .route("/skoly/{redizo}", get(get_skola))
         .route("/student/skoly", get(list_student_skoly))
         .route("/student/trasa", get(get_student_trasa))
+        .route("/zsj/seznam", get(list_zsj))
         .route("/zsj", get(get_zsj))
         .route("/obory", get(list_obory))
         .route("/obory/{kod}", get(get_obor))

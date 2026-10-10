@@ -585,5 +585,42 @@
         "importovano": "2026-10-10T08:00:00+02:00"
       }
     }
+  },
+  {
+    "path": "/zsj/seznam",
+    "request": "/api/v1/zsj/seznam",
+    "media_type": "application/json",
+    "body": [
+      {
+        "kod": "000019",
+        "nazev": "Abertamy",
+        "lat": 50.37,
+        "lon": 12.82,
+        "boundary": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                12.81,
+                50.36
+              ],
+              [
+                12.83,
+                50.36
+              ],
+              [
+                12.83,
+                50.38
+              ],
+              [
+                12.81,
+                50.36
+              ]
+            ]
+          ]
+        },
+        "kod_obce": "554979"
+      }
+    ]
   }
 ]

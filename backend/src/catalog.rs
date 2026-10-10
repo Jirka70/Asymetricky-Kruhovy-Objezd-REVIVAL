@@ -45,6 +45,42 @@ pub(crate) fn database_error(error: diesel::result::Error) -> StubError {
     internal_error()
 }
 
+pub(crate) async fn zsj(pool: DbPool) -> Result<Vec<dto::ZsjZaznam>, StubError> {
+    read(pool, |connection| {
+        use schema::zsj;
+        let rows = zsj::table
+            .order(zsj::kod)
+            .select((
+                models::Zsj::as_select(),
+                // Suppress CRS metadata and retain polygon precision in WGS 84.
+                diesel::dsl::sql::<diesel::sql_types::Text>("ST_AsGeoJSON(boundary, 15, 0)"),
+            ))
+            .load::<(models::Zsj, String)>(connection)
+            .map_err(database_error)?;
+        rows.into_iter()
+            .map(|(row, boundary)| {
+                if !row.lat.is_finite() || !row.lon.is_finite() {
+                    return Err(internal_error());
+                }
+                let boundary =
+                    serde_json::from_str::<dto::ZsjBoundary>(&boundary).map_err(|error| {
+                        tracing::error!(%error, kod = %row.kod, "Invalid ZSJ polygon");
+                        internal_error()
+                    })?;
+                Ok(dto::ZsjZaznam {
+                    kod: row.kod,
+                    nazev: row.nazev,
+                    lat: row.lat,
+                    lon: row.lon,
+                    boundary,
+                    kod_obce: row.kod_obce,
+                })
+            })
+            .collect()
+    })
+    .await
+}
+
 pub(crate) async fn schools(
     pool: DbPool,
     params: requests::SkolyQuery,
