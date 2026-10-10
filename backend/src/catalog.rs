@@ -10,7 +10,7 @@ use bigdecimal::ToPrimitive;
 use diesel::prelude::*;
 use std::collections::{BTreeMap, BTreeSet};
 
-fn internal_error() -> StubError {
+pub(crate) fn internal_error() -> StubError {
     api_error(
         StatusCode::INTERNAL_SERVER_ERROR,
         "interni_chyba",
@@ -18,7 +18,7 @@ fn internal_error() -> StubError {
     )
 }
 
-async fn read<T: Send + 'static>(
+pub(crate) async fn read<T: Send + 'static>(
     pool: DbPool,
     operation: impl FnOnce(&mut PgConnection) -> Result<T, StubError> + Send + 'static,
 ) -> Result<T, StubError> {
@@ -40,7 +40,7 @@ async fn read<T: Send + 'static>(
     })?
 }
 
-fn database_error(error: diesel::result::Error) -> StubError {
+pub(crate) fn database_error(error: diesel::result::Error) -> StubError {
     tracing::error!(%error, "Catalog database query failed");
     internal_error()
 }

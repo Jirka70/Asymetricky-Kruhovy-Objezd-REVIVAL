@@ -183,7 +183,15 @@ paths:
     get:
       tags: [Pro kraj]
       operationId: listObory
-      summary: Obory s bilancí – seznam pro výběr i tabulka pro úředníky
+      summary: Katalog oborů s nabídkou, přihláškami a poptávkou trhu práce
+      description: |
+        Vrací obory s alespoň jednou nabídkou ve zvolené formě studia; stupen filtruje úroveň vzdělání.
+        Kapacita a přihlášky jsou součty všech odpovídajících nabídek, pocet_skol počítá různé REDIZO.
+        Katalog neobsahuje demografické ani dojezdové výpočty. Parametry max_min a scenar se ignorují.
+        Trh práce používá mapování NSP s vhodností 1 i 2 a vynechává místa vyžadující terciární vzdělání.
+        Bez mapování jsou počty trhu práce null; s mapováním bez poptávky jsou 0.
+        Více signálů se kombinuje jako OR. Poměry mají při nulové kapacitě hodnotu null.
+        Číselné řazení ponechává null na konci v obou směrech; shody rozhoduje název a kód oboru.
       parameters:
         - $ref: '#/components/parameters/Stupen'
         - $ref: '#/components/parameters/Forma'
@@ -191,18 +199,18 @@ paths:
         - $ref: '#/components/parameters/Scenar'
         - name: signal
           in: query
-          description: Jen obory s daným signálem; více hodnot oddělit čárkou.
-          schema: { type: string, example: 'pretlak,spatna_dostupnost' }
+          description: Jen obory s některým ze signálů pretlak, nizky_zajem, poptavka_trhu; více hodnot oddělit čárkou.
+          schema: { type: string, pattern: '^(pretlak|nizky_zajem|poptavka_trhu)(,(pretlak|nizky_zajem|poptavka_trhu))*$', example: 'pretlak,poptavka_trhu' }
         - name: razeni
           in: query
           description: Pole pro řazení; mínus = sestupně.
           schema:
             type: string
-            enum: [nazev, index_pretlaku, -index_pretlaku, deti_bez_oboru, -deti_bez_oboru,
-                   mist_na_100_deti, -mist_na_100_deti, volna_mista_na_misto, -volna_mista_na_misto]
+            enum: [nazev, index_pretlaku, -index_pretlaku, volna_mista_na_misto, -volna_mista_na_misto]
             default: nazev
       responses:
-        '501': { $ref: '#/components/responses/Neimplementovano' }
+        '500': { $ref: '#/components/responses/InterniChyba' }
+        '503': { $ref: '#/components/responses/DatabazeNedostupna' }
         '200':
           description: Řádek za každý obor.
           content:
@@ -213,8 +221,8 @@ paths:
                 properties:
                   data:
                     type: array
-                    items: { $ref: '#/components/schemas/BilanceOboru' }
-                  meta: { $ref: '#/components/schemas/MetaBilance' }
+                    items: { $ref: '#/components/schemas/OborPrehled' }
+                  meta: { $ref: '#/components/schemas/OboryMeta' }
         '422': { $ref: '#/components/responses/NeplatnyParametr' }
 
   /obory/{kod}:
@@ -734,6 +742,43 @@ components:
                 v_limitu:
                   type: array
                   items: { $ref: '#/components/schemas/VLimitu' }
+
+    OborPrehled:
+      type: object
+      required: [kod, nazev, stupen, pocet_skol, kapacita, prihlasky, prihlasky_na_misto, index_pretlaku, zamestnavatelu, volna_mista, volna_mista_na_misto, signaly]
+      properties:
+        kod: { $ref: '#/components/schemas/KodOboru' }
+        nazev: { type: string }
+        stupen: { $ref: '#/components/schemas/Stupen' }
+        pocet_skol: { type: integer }
+        kapacita: { type: integer }
+        prihlasky: { type: integer }
+        prihlasky_na_misto: { type: [number, 'null'], description: Přihlášky / kapacita; null při nulové kapacitě. }
+        index_pretlaku: { type: [number, 'null'], description: Přihlášky na místo / 2.66. }
+        zamestnavatelu: { type: [integer, 'null'], description: Různá IČO s odpovídající poptávkou; null bez mapování NSP. }
+        volna_mista: { type: [integer, 'null'], description: Součet odpovídajících míst; null bez mapování NSP. }
+        volna_mista_na_misto: { type: [number, 'null'], description: Volná pracovní místa / kapacita; null bez mapování nebo při nulové kapacitě. }
+        signaly:
+          type: array
+          items: { type: string, enum: [pretlak, nizky_zajem, poptavka_trhu] }
+
+    OboryMeta:
+      type: object
+      required: [prumer_prihlasek_na_misto, prijimaci_rizeni, prahy]
+      properties:
+        prumer_prihlasek_na_misto: { type: number, example: 2.66 }
+        prijimaci_rizeni:
+          type: object
+          properties:
+            rok: { type: integer, example: 2026 }
+            kolo: { type: integer, example: 1 }
+        prahy:
+          type: object
+          required: [pretlak, nizky_zajem, poptavka_trhu]
+          properties:
+            pretlak: { type: number, example: 1.5, description: index_pretlaku >= pretlak. }
+            nizky_zajem: { type: number, example: 0.5, description: index_pretlaku <= nizky_zajem. }
+            poptavka_trhu: { type: number, example: 2, description: volna_mista_na_misto >= poptavka_trhu. }
 
     BilanceOboru:
       type: object

@@ -21,7 +21,7 @@ docker compose exec backend obor-backend migrate-status
 docker compose up -d --build backend
 ```
 
-The existing six analytical endpoints still return 501. Automatic migrations apply only to container startup; local Cargo runs retain the explicit migration step below.
+The remaining five analytical endpoints still return 501. Automatic migrations apply only to container startup; local Cargo runs retain the explicit migration step below.
 
 ## Run locally with Cargo
 
@@ -43,7 +43,7 @@ cargo run -- migrate
 cargo run -- serve
 ```
 
-`serve` is the default command. It refuses to start with pending migrations. Migrations are an explicit step and are embedded into the binary; `build.rs` ensures SQL edits trigger recompilation. Never log or commit `.env`. `DB_POOL_SIZE` defaults to 8; `BIND_ADDRESS` defaults to `127.0.0.1:8000`.
+`serve` is the default command. It refuses to start with pending migrations. Migrations are an explicit step and are embedded into the binary; `build.rs` ensures SQL edits trigger recompilation. After updating to include migrations 8–9, run `cargo run -- migrate` before local serving, or rebuild the Compose backend to apply them at container startup. Never log or commit `.env`. `DB_POOL_SIZE` defaults to 8; `BIND_ADDRESS` defaults to `127.0.0.1:8000`.
 
 ## Migrations
 
@@ -56,8 +56,16 @@ cargo run -- serve
 | 5 | `scripts/sql/insert_profesni_skupiny.sql` | `PROFESNI_SKUPINY` |
 | 6 | `scripts/sql/insert_poptavka_profesi.sql` | `POPTAVKA_PROFESI` |
 | 7 | `scripts/sql/insert_obor_profese.sql` | `OBOR_PROFESE` |
+| 8 | `scripts/insert_demografie_zsj.sql` | `DEMO_SKUPINA`, `DATA_DEMOGRAFIE_ZSJ`, `ZSJ.kod_obce` |
+| 9 | `scripts/sql/insert_dojezdy.sql` | `DOJEZDOVE_DOBY` |
 
-The migrations preserve the original schema, constraints, indexes and seed data. Only outer `BEGIN` / `COMMIT` statements are removed because Diesel manages each migration transaction. The program/offer import is a prerequisite for `OBOR_PROFESE` and therefore included despite being outside `scripts/sql`. The SELECT examples and JSON verification reports are not migrations. The separate demographic import is not part of this backend's initial migrations.
+The first seven migrations preserve the original schema, constraints, indexes and seed data. Only outer `BEGIN` / `COMMIT` statements are removed because Diesel manages each migration transaction. The program/offer import is a prerequisite for `OBOR_PROFESE` and therefore included despite being outside `scripts/sql`. The SELECT examples and JSON verification reports are not migrations. Demographic and travel-time imports are embedded as migrations 8 and 9. An existing backend database with migrations 1–7 applied receives only the two new migrations.
+
+The demographic seed includes 21 age groups and 17,619 estimates for 839 ZSJ in 2021 (279,103 people), plus municipality codes for aggregation. Its source checks preserve totals by ZSJ and municipality. These are modeled age estimates, not current observed population. The `10-14` group is `1300100014`; estimating a school-entry cohort will require dividing its population by five.
+
+The travel-time seed includes all 28,526 ZSJ × school pairs for arrival slot `07:00-08:00`. Migration 9 converts the source's legacy integer ZSJ identifiers to six-character text codes and corrects the school foreign key to `stredni_skoly`. Times are minutes; NULL preserves the source's missing result (no qualifying route or a routing error), rather than a zero-minute journey. Negative and non-finite times are rejected. The table retains `slot_prijezdu`; the API's `rano` scenario will use the morning slot when analytical handlers are implemented. No `SCENAR` table is introduced by these imports.
+
+Both tables have typed Diesel schemas/models and foreign-key joins. Municipality and year/age-group indexes support later catchment queries. The imports support future accessibility calculations; analytical endpoints are implemented separately.
 
 Use a fresh database for initial setup. The existing scripts replace demand and program/profession mapping snapshots and remove employers absent from the snapshot; migrating an already populated database will retain that behavior. `down.sql` drops the corresponding tables and data in reverse dependency order and retains the shared PostGIS extension. Existing tables are not automatically marked as already migrated. Back up an existing database before adopting this migration history. Do not run standalone seed imports and migrations as competing initialization mechanisms.
 
@@ -75,13 +83,14 @@ Database reads are implemented for:
 
 - `GET /skoly`: GeoJSON school points, filtered offerings (`obor`, CSV `stupen`, `forma`), and offering/capacity/application totals. Without `obor` or `stupen`, schools without matching offerings remain included. Municipality names and pressure indices are omitted until the supporting lookup/calculation is implemented.
 - `GET /skoly/{redizo}`: school details and study offerings. Catchment data is still uncomputed (`spadovost: {}`); `max_min` and `scenar` do not yet affect this response.
+- `GET /obory`: catalog of programs with at least one offering in the selected `forma` (default `den`), optionally filtered by CSV `stupen`. Sums capacity and applications over all matching offerings and counts distinct schools. Ratios return explicit null for zero capacity. Pressure index is applications per place divided by the contract's fixed regional baseline of 2.66. Job totals use both NSP suitability levels and exclude tertiary-only education categories, matching the employer endpoint defaults; companies are counted by distinct IČO, including workplaces without coordinates. No profession mapping gives null job counts; a mapping with no matching demand gives zero. Signals are `pretlak` (pressure index ≥ 1.5), `nizky_zajem` (index ≤ 0.5), and `poptavka_trhu` (jobs per place ≥ 2); CSV signal filters match any requested signal. Supports sorting by name, pressure index, or jobs per place; numeric sorts put null last in both directions with name/code tie-breaks. `max_min` and `scenar` are ignored, including invalid or repeated values. The response uses catalog-specific DTOs and contains no accessibility fields or travel metadata. Queries run in a consistent read-only database snapshot and need no demographic or travel-time tables.
 - `GET /obory/{kod}/zamestnavatele`: profession mappings joined to demand and workplaces, filtered by `vhodnost` and `jen_ss`. Education categories are summed per profession/workplace without double-counting. Metadata includes distinct company/workplace counts, jobs, and workplaces without coordinates grouped by municipality. No mapping means `existuje: null`; a mapping with no matching demand means `existuje: false`. Workplace IDs are strings to retain integer precision.
 
-The other six operations remain **stubs**: valid requests return documented HTTP **501** with the `Chyba` error schema and `error.kod = neimplementovano`. They require travel-time, demographic, bilance, or simulation logic. The read handlers are in `src/contract.rs`, with catalog queries in `src/catalog.rs`; synchronous Diesel work runs on blocking threads and does not call OTP.
+The other five operations remain **stubs**: valid requests return documented HTTP **501** with the `Chyba` error schema and `error.kod = neimplementovano`. They require travel-time, demographic, bilance, or simulation logic. The read handlers are in `src/contract.rs`, with catalog queries in `src/catalog.rs` and `src/programs.rs`; synchronous Diesel work runs on blocking threads and does not call OTP.
 
 Invalid parameters return **422** in the same error format. Parameters are validated directly against the YAML schemas, including required values, identifier patterns, enums and numeric bounds. Implemented detail routes return **404** for missing records. Database connection failures return **503**; query or required-data failures return **500**. Geographic/domain checks for analytical routes still require their business implementation.
 
-`src/requests.rs` defines query structs for every operation, plus Redizo/KodOboru identifier newtypes and Scenar/Uroven/Forma/Format/Razeni enums. The `ContractQuery<T>` extractor validates raw values against OpenAPI, then deserializes them and applies defaults: `max_min = 120`, `scenar = rano`, `kandidatu = 5`, `razeni = nazev`, and `format = slovnik` on the corresponding endpoints. `stupen=H,M` becomes `Stupne(Vec<Stupen>)`; `signal=pretlak,spatna_dostupnost` becomes a SignalFilter list. Signals remain extensible according to their string schema; Scenar is now an enum allowing only rano. Forma defaults to den, and Uroven defaults to obec. The employer endpoint uses numeric Vhodnost (1 or 2, default 2) and jen_ss (default true). The school, program and employer detail routes use typed path identifiers separately from their query structs.
+`src/requests.rs` defines query structs for every operation, plus Redizo/KodOboru identifier newtypes and Scenar/Uroven/Forma/Format/Razeni enums. The `ContractQuery<T>` extractor validates raw values against OpenAPI, then deserializes them and applies defaults: `max_min = 120`, `scenar = rano`, `kandidatu = 5`, `razeni = nazev`, and `format = slovnik` on the corresponding endpoints. `stupen=H,M` becomes `Stupne(Vec<Stupen>)`; `signal=pretlak,poptavka_trhu` becomes a SignalFilter list. The program catalog validates its three supported signals; Scenar is now an enum allowing only rano. Forma defaults to den, and Uroven defaults to obec. The employer endpoint uses numeric Vhodnost (1 or 2, default 2) and jen_ss (default true). The school, program and employer detail routes use typed path identifiers separately from their query structs.
 
 `src/types.rs` defines numeric NSP suitability values shared by requests and employer response models. The simulation dictionary is keyed by `jednotky` (4–6 digit area codes); GeoJSON map/simulation responses use territory levels and travel bands. Required nullable fields preserve explicit JSON null and reject missing keys.
 
@@ -91,11 +100,12 @@ Swagger UI: `http://localhost:8000/docs`. The specification is served at `/opena
 
 ```sh
 curl -i http://localhost:8000/api/v1/skoly
+curl -i 'http://localhost:8000/api/v1/obory?stupen=H,M&razeni=-index_pretlaku'
 curl -i 'http://localhost:8000/api/v1/student/skoly?lat=50.2312&lon=12.8711'
 cargo test --test openapi_contract
 ```
 
-The fifteen contract tests run without PostgreSQL or OTP. They compare route/operation coverage and every success response media type; compare all response DTO properties and query fields, Rust field types, enums, required fields and query defaults with the specification; validate independent representative fixtures before and after Rust serialization; and exercise actual stub/error responses, database-unavailable responses, and documentation routes. The disposable-database test additionally validates real read responses against OpenAPI and checks catalog filters, counts, missing coordinates, mapping semantics, and required-data failures. Negative cases check missing fields, nullable/non-nullable values, identifiers, coordinate dimensions, dates, enums, dictionary keys and array limits. Numeric bounds, formats, patterns and nullability are checked by the YAML JSON Schema validator; plain Rust String/Vec types do not encode every value constraint. These tests verify structural contracts and representative payloads, not business calculations or correctness for every possible future response.
+The sixteen contract tests run without PostgreSQL or OTP. They compare route/operation coverage and every success response media type; compare all response DTO properties and query fields, Rust field types, enums, required fields and query defaults with the specification; validate independent representative fixtures before and after Rust serialization; and exercise actual stub/error responses, database-unavailable responses, and documentation routes. The disposable-database test verifies upgrading from seven to nine migrations, demographic totals, typed travel-time/demographic joins, normalized identifiers, NULL times, invalid-time rejection, rollback and reapplication. It additionally validates real read responses against OpenAPI and checks catalog filters, counts, missing coordinates, mapping semantics, and required-data failures. Negative cases check missing fields, nullable/non-nullable values, identifiers, coordinate dimensions, dates, enums, dictionary keys and array limits. Numeric bounds, formats, patterns and nullability are checked by the YAML JSON Schema validator; plain Rust String/Vec types do not encode every value constraint. These tests verify structural contracts and representative payloads, not business calculations or correctness for every possible future response.
 
 ## Verification
 

@@ -24,7 +24,12 @@ async fn migrations_and_api() {
         existing.count, 0,
         "Test refused: database must have no application tables"
     );
-    assert_eq!(db::migrate(&mut connection).unwrap(), 7);
+    // Exercise upgrading a database with the original seven migrations applied.
+    let migrations = connection.pending_migrations(db::MIGRATIONS).unwrap();
+    for migration in &migrations[..7] {
+        connection.run_migration(migration.as_ref()).unwrap();
+    }
+    assert_eq!(db::migrate(&mut connection).unwrap(), 2);
     assert_eq!(db::migrate(&mut connection).unwrap(), 0);
     assert_eq!(
         zsj::table
@@ -97,6 +102,8 @@ async fn migrations_and_api() {
     assert_eq!(school.kod_zsj.as_deref(), Some("000540"));
     assert!(school.lat.is_some());
 
+    analytical_data(&mut connection);
+
     let app = contract::router(db::pool(&url, 2).unwrap());
     catalog_api(&app, &mut connection).await;
 
@@ -105,9 +112,13 @@ async fn migrations_and_api() {
             .revert_all_migrations(db::MIGRATIONS)
             .unwrap()
             .len(),
-        7
+        9
     );
-    assert_eq!(db::migrate(&mut connection).unwrap(), 7);
+    let remaining = diesel::sql_query("SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('ZSJ', 'DEMO_SKUPINA', 'DATA_DEMOGRAFIE_ZSJ', 'DOJEZDOVE_DOBY')")
+        .get_result::<Count>(&mut connection).unwrap();
+    assert_eq!(remaining.count, 0);
+    assert_eq!(db::migrate(&mut connection).unwrap(), 9);
+    analytical_data(&mut connection);
     assert_eq!(
         zsj::table
             .count()
@@ -124,6 +135,130 @@ async fn migrations_and_api() {
     );
 }
 
+// Check real seeded data, typed joins, identifier normalization, and constraints.
+fn analytical_data(connection: &mut PgConnection) {
+    assert_eq!(
+        demo_skupina::table
+            .count()
+            .get_result::<i64>(connection)
+            .unwrap(),
+        21
+    );
+    assert_eq!(
+        data_demografie_zsj::table
+            .count()
+            .get_result::<i64>(connection)
+            .unwrap(),
+        17_619
+    );
+    assert_eq!(
+        data_demografie_zsj::table
+            .select(diesel::dsl::sum(data_demografie_zsj::populace))
+            .first::<Option<i64>>(connection)
+            .unwrap(),
+        Some(279_103)
+    );
+    assert_eq!(
+        zsj::table
+            .filter(zsj::kod_obce.is_not_null())
+            .count()
+            .get_result::<i64>(connection)
+            .unwrap(),
+        839
+    );
+    assert_eq!(
+        zsj::table
+            .select(zsj::kod_obce)
+            .distinct()
+            .load::<Option<String>>(connection)
+            .unwrap()
+            .len(),
+        134
+    );
+    let children = data_demografie_zsj::table
+        .inner_join(demo_skupina::table)
+        .inner_join(zsj::table)
+        .filter(demo_skupina::vek_od_do.eq("10-14"))
+        .filter(data_demografie_zsj::rok.eq(2021))
+        .select(DemografieZsj::as_select())
+        .load::<DemografieZsj>(connection)
+        .unwrap();
+    assert_eq!(children.len(), 839);
+    assert!(
+        children
+            .iter()
+            .map(|row| i64::from(row.populace))
+            .sum::<i64>()
+            > 0
+    );
+    let group = demo_skupina::table
+        .find("1300100014")
+        .select(DemoSkupina::as_select())
+        .first::<DemoSkupina>(connection)
+        .unwrap();
+    assert_eq!(group.vek_od_do, "10-14");
+    assert_eq!(
+        dojezdove_doby::table
+            .count()
+            .get_result::<i64>(connection)
+            .unwrap(),
+        28_526
+    );
+    assert_eq!(
+        dojezdove_doby::table
+            .inner_join(zsj::table)
+            .inner_join(stredni_skoly::table)
+            .count()
+            .get_result::<i64>(connection)
+            .unwrap(),
+        28_526
+    );
+    assert_eq!(
+        dojezdove_doby::table
+            .select(dojezdove_doby::slot_prijezdu)
+            .distinct()
+            .load::<String>(connection)
+            .unwrap(),
+        vec!["07:00-08:00"]
+    );
+    let time = dojezdove_doby::table
+        .find(("000019", "600022854", "07:00-08:00"))
+        .select(DojezdovaDoba::as_select())
+        .first::<DojezdovaDoba>(connection)
+        .unwrap();
+    assert!((time.doba_jizdy.unwrap() - 73.48).abs() < 0.001);
+    let no_route = dojezdove_doby::table
+        .find(("000019", "600008975", "07:00-08:00"))
+        .select(DojezdovaDoba::as_select())
+        .first::<DojezdovaDoba>(connection)
+        .unwrap();
+    assert!(no_route.doba_jizdy.is_none());
+    // With unique keys and valid references, 839 * 34 rows prove full coverage.
+    for invalid in ["-1", "'Infinity'::real", "'NaN'::real"] {
+        let result = diesel::sql_query(format!(
+            "INSERT INTO public.\"DOJEZDOVE_DOBY\" VALUES ('000019', '600022854', 'invalid-test', {invalid})"
+        )).execute(connection);
+        assert!(matches!(
+            result,
+            Err(diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            ))
+        ));
+    }
+    let result = diesel::sql_query(
+        "INSERT INTO public.\"DOJEZDOVE_DOBY\" VALUES ('19', '600022854', 'invalid-test', 1)",
+    )
+    .execute(connection);
+    assert!(matches!(
+        result,
+        Err(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+            _
+        ))
+    ));
+}
+
 // Validate actual HTTP bodies against the YAML, not only serialized DTO fixtures.
 async fn contract_response(
     app: &axum::Router,
@@ -138,11 +273,12 @@ async fn contract_response(
         .await
         .unwrap();
     assert_eq!(response.status(), status, "{uri}");
-    let media = if status == StatusCode::OK && path != "/skoly/{redizo}" {
-        "application/geo+json"
-    } else {
-        "application/json"
-    };
+    let media =
+        if status == StatusCode::OK && matches!(path, "/skoly" | "/obory/{kod}/zamestnavatele") {
+            "application/geo+json"
+        } else {
+            "application/json"
+        };
     assert_eq!(response.headers()["content-type"], media);
     let body: serde_json::Value =
         serde_json::from_slice(&to_bytes(response.into_body(), 2_000_000).await.unwrap()).unwrap();
@@ -344,6 +480,8 @@ async fn catalog_api(app: &axum::Router, connection: &mut diesel::PgConnection) 
     )
     .await;
 
+    program_catalog_api(app, connection).await;
+
     // A nullable DB field required by the API must fail visibly, not become 0.
     diesel::update(stredni_skoly::table.find("600008975"))
         .set(stredni_skoly::lat.eq(None::<bigdecimal::BigDecimal>))
@@ -363,6 +501,218 @@ async fn catalog_api(app: &axum::Router, connection: &mut diesel::PgConnection) 
         StatusCode::INTERNAL_SERVER_ERROR,
     )
     .await;
+}
+
+async fn program_catalog_api(app: &axum::Router, connection: &mut PgConnection) {
+    use diesel::connection::SimpleConnection;
+    use serde_json::{Value, json};
+    use std::collections::BTreeSet;
+    let body = contract_response(app, "/api/v1/obory", "/obory", StatusCode::OK).await;
+    assert_eq!(body["meta"]["prumer_prihlasek_na_misto"], 2.66);
+    assert_eq!(
+        body["meta"]["prijimaci_rizeni"],
+        json!({"rok":2026, "kolo":1})
+    );
+    assert!(body["meta"].get("max_min").is_none());
+    assert!(body["meta"].get("scenar").is_none());
+    // Check against raw offerings for every program, including form/level combinations.
+    let offers = nabidka_oboru::table
+        .select(NabidkaOboru::as_select())
+        .load::<NabidkaOboru>(connection)
+        .unwrap();
+    for (uri, form, levels) in [
+        ("/api/v1/obory", "den", vec![]),
+        ("/api/v1/obory?forma=dal", "dal", vec![]),
+        ("/api/v1/obory?stupen=H,M", "den", vec!["H", "M"]),
+        ("/api/v1/obory?forma=dal&stupen=H", "dal", vec!["H"]),
+    ] {
+        let expected: Vec<_> = offers
+            .iter()
+            .filter(|offer| {
+                offer.forma_studia == form
+                    && (levels.is_empty() || levels.contains(&&offer.kod_oboru[6..7]))
+            })
+            .collect();
+        let expected_codes: BTreeSet<_> = expected
+            .iter()
+            .map(|offer| offer.kod_oboru.as_str())
+            .collect();
+        let actual = contract_response(app, uri, "/obory", StatusCode::OK).await;
+        let rows = actual["data"].as_array().unwrap();
+        assert_eq!(
+            rows.iter()
+                .map(|row| row["kod"].as_str().unwrap())
+                .collect::<BTreeSet<_>>(),
+            expected_codes
+        );
+        assert_eq!(rows.len(), expected_codes.len());
+        for row in rows {
+            let matching: Vec<_> = expected
+                .iter()
+                .filter(|offer| row["kod"] == offer.kod_oboru)
+                .collect();
+            let capacity: i64 = matching
+                .iter()
+                .map(|offer| i64::from(offer.pocet_prijimanych))
+                .sum();
+            let applications: i64 = matching
+                .iter()
+                .map(|offer| i64::from(offer.loni_pocet_prihlasek))
+                .sum();
+            assert_eq!(row["kapacita"], capacity);
+            assert_eq!(row["prihlasky"], applications);
+            assert_eq!(
+                row["pocet_skol"],
+                matching
+                    .iter()
+                    .map(|offer| &offer.redizo)
+                    .collect::<BTreeSet<_>>()
+                    .len()
+            );
+            if capacity > 0 {
+                let ratio = applications as f64 / capacity as f64;
+                assert!((row["prihlasky_na_misto"].as_f64().unwrap() - ratio).abs() < 1e-9);
+                assert!((row["index_pretlaku"].as_f64().unwrap() - ratio / 2.66).abs() < 1e-9);
+            }
+            for field in [
+                "deti_v_dosahu",
+                "deti_bez_oboru",
+                "podil_deti_v_dosahu",
+                "mist_na_100_deti",
+            ] {
+                assert!(row.get(field).is_none());
+            }
+        }
+    }
+    connection.batch_execute(r#"
+        INSERT INTO "OBORY" (kod, nazev) VALUES
+            ('99-99-H/04', 'Zero capacity'), ('99-99-H/05', 'No offerings');
+        INSERT INTO "NABIDKA_OBORU" (id, redizo, kod_oboru, forma_studia, delka_studia, pocet_prijimanych, loni_pocet_prihlasek) VALUES
+            ('99000000-0000-0000-0000-000000000001', '600008975', '99-99-H/01', 'den', 3, 5, 50),
+            ('99000000-0000-0000-0000-000000000002', '600008975', '99-99-H/01', 'den', 3, 7, 70),
+            ('99000000-0000-0000-0000-000000000003', '600022854', '99-99-H/01', 'den', 3, 0, 0),
+            ('99000000-0000-0000-0000-000000000004', '600008975', '99-99-H/01', 'dal', 3, 3, 1),
+            ('99000000-0000-0000-0000-000000000005', '600008975', '99-99-H/02', 'den', 3, 10, 0),
+            ('99000000-0000-0000-0000-000000000006', '600008975', '99-99-H/03', 'den', 3, 10, 40),
+            ('99000000-0000-0000-0000-000000000007', '600008975', '99-99-H/04', 'den', 3, 0, 1);
+    "#).unwrap();
+    let body = contract_response(app, "/api/v1/obory?stupen=H", "/obory", StatusCode::OK).await;
+    let rows = body["data"].as_array().unwrap();
+    let row = |code: &str| rows.iter().find(|row| row["kod"] == code).unwrap();
+    let mapped = row("99-99-H/01");
+    assert_eq!(mapped["pocet_skol"], 2);
+    assert_eq!(mapped["kapacita"], 12);
+    assert_eq!(mapped["prihlasky"], 120);
+    assert_eq!(mapped["prihlasky_na_misto"], 10.0);
+    // Two workplaces with the same ICO count as one company; tertiary jobs are excluded.
+    assert_eq!(mapped["zamestnavatelu"], 1);
+    assert_eq!(mapped["volna_mista"], 32);
+    assert!((mapped["volna_mista_na_misto"].as_f64().unwrap() - 32.0 / 12.0).abs() < 1e-9);
+    assert_eq!(mapped["signaly"], json!(["pretlak", "poptavka_trhu"]));
+    for field in ["zamestnavatelu", "volna_mista", "volna_mista_na_misto"] {
+        assert!(row("99-99-H/02").get(field).unwrap().is_null());
+    }
+    assert_eq!(row("99-99-H/02")["signaly"], json!(["nizky_zajem"]));
+    assert_eq!(row("99-99-H/03")["volna_mista"], 0);
+    assert_eq!(row("99-99-H/03")["zamestnavatelu"], 0);
+    assert_eq!(row("99-99-H/03")["volna_mista_na_misto"], 0.0);
+    assert!(row("99-99-H/04")["prihlasky_na_misto"].is_null());
+    assert!(row("99-99-H/04")["index_pretlaku"].is_null());
+    assert_eq!(row("99-99-H/04")["signaly"], json!([]));
+    assert!(!rows.iter().any(|row| row["kod"] == "99-99-H/05"));
+    let dal = contract_response(app, "/api/v1/obory?forma=dal", "/obory", StatusCode::OK).await;
+    let mapped_dal = dal["data"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["kod"] == "99-99-H/01")
+        .unwrap();
+    assert_eq!(mapped_dal["pocet_skol"], 1);
+    assert_eq!(mapped_dal["kapacita"], 3);
+    assert_eq!(mapped_dal["prihlasky"], 1);
+    assert_eq!(mapped_dal["volna_mista"], 32);
+    let ignored = contract_response(
+        app,
+        "/api/v1/obory?stupen=H&max_min=garbage&max_min=0&scenar=other",
+        "/obory",
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(ignored, body);
+    for (sort, field, descending) in [
+        ("index_pretlaku", "index_pretlaku", false),
+        ("-index_pretlaku", "index_pretlaku", true),
+        ("volna_mista_na_misto", "volna_mista_na_misto", false),
+        ("-volna_mista_na_misto", "volna_mista_na_misto", true),
+    ] {
+        let sorted = contract_response(
+            app,
+            &format!("/api/v1/obory?razeni={sort}"),
+            "/obory",
+            StatusCode::OK,
+        )
+        .await;
+        let rows = sorted["data"].as_array().unwrap();
+        let mut null_seen = false;
+        let mut previous = None;
+        for row in rows {
+            if let Some(value) = row[field].as_f64() {
+                assert!(!null_seen, "null must sort last: {sort}");
+                if let Some(previous) = previous {
+                    assert!(if descending {
+                        value <= previous
+                    } else {
+                        value >= previous
+                    });
+                }
+                previous = Some(value);
+            } else {
+                null_seen = true;
+            }
+        }
+    }
+    for signals in [
+        "pretlak",
+        "nizky_zajem",
+        "poptavka_trhu",
+        "pretlak,poptavka_trhu",
+    ] {
+        let filtered = contract_response(
+            app,
+            &format!("/api/v1/obory?stupen=H&signal={signals}"),
+            "/obory",
+            StatusCode::OK,
+        )
+        .await;
+        let expected: BTreeSet<_> = rows
+            .iter()
+            .filter(|row| {
+                row["signaly"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|signal| signals.split(',').any(|wanted| signal == wanted))
+            })
+            .map(|row| row["kod"].as_str().unwrap())
+            .collect();
+        let actual: BTreeSet<_> = filtered["data"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| row["kod"].as_str().unwrap())
+            .collect();
+        assert_eq!(actual, expected);
+    }
+    // Default name ordering is deterministic even when numeric values tie.
+    assert!(rows.windows(2).all(|pair| {
+        let key = |row: &Value| {
+            (
+                row["nazev"].as_str().unwrap().to_lowercase(),
+                row["kod"].as_str().unwrap().to_owned(),
+            )
+        };
+        key(&pair[0]) <= key(&pair[1])
+    }));
 }
 
 /// Owns one disposable PostGIS container, including cleanup when assertions panic.

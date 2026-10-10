@@ -56,14 +56,6 @@ pub enum Razeni {
     IndexPretlaku,
     #[serde(rename = "-index_pretlaku")]
     IndexPretlakuSestupne,
-    #[serde(rename = "deti_bez_oboru")]
-    DetiBezOboru,
-    #[serde(rename = "-deti_bez_oboru")]
-    DetiBezOboruSestupne,
-    #[serde(rename = "mist_na_100_deti")]
-    MistNa100Deti,
-    #[serde(rename = "-mist_na_100_deti")]
-    MistNa100DetiSestupne,
     #[serde(rename = "volna_mista_na_misto")]
     VolnaMistaNaMisto,
     #[serde(rename = "-volna_mista_na_misto")]

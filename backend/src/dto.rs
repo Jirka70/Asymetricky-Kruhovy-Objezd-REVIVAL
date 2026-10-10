@@ -824,6 +824,57 @@ pub struct SimulaceGeojson {
 
 #[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct Obory {
-    pub data: Vec<BilanceOboru>,
-    pub meta: MetaBilance,
+    pub data: Vec<OborPrehled>,
+    pub meta: OboryMeta,
+}
+
+/// Catalog-only program listing; accessibility belongs to the analytical endpoints.
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct OborPrehled {
+    pub kod: KodOboru,
+    pub nazev: String,
+    pub stupen: Stupen,
+    pub pocet_skol: i64,
+    pub kapacita: i64,
+    pub prihlasky: i64,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub prihlasky_na_misto: Option<f64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub index_pretlaku: Option<f64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub zamestnavatelu: Option<i64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub volna_mista: Option<i64>,
+    #[serde(deserialize_with = "deserialize_required_nullable")]
+    #[schemars(required)]
+    pub volna_mista_na_misto: Option<f64>,
+    pub signaly: Vec<OborSignal>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, schemars::JsonSchema)]
+pub enum OborSignal {
+    #[serde(rename = "pretlak")]
+    Pretlak,
+    #[serde(rename = "nizky_zajem")]
+    NizkyZajem,
+    #[serde(rename = "poptavka_trhu")]
+    PoptavkaTrhu,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct OboryPrahy {
+    pub pretlak: f64,
+    pub nizky_zajem: f64,
+    pub poptavka_trhu: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct OboryMeta {
+    pub prumer_prihlasek_na_misto: f64,
+    pub prijimaci_rizeni: MetaBilancePrijimaciRizeni,
+    pub prahy: OboryPrahy,
 }

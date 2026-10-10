@@ -137,7 +137,7 @@ async fn analytical_stubs_return_documented_501_and_all_routes_reject_wrong_meth
         let path = fixture["path"].as_str().unwrap();
         if !matches!(
             path,
-            "/skoly" | "/skoly/{redizo}" | "/obory/{kod}/zamestnavatele"
+            "/skoly" | "/skoly/{redizo}" | "/obory" | "/obory/{kod}/zamestnavatele"
         ) {
             check_error(uri, path, StatusCode::NOT_IMPLEMENTED, None).await;
         }
@@ -642,13 +642,9 @@ async fn query_extractor_applies_defaults_and_exposes_typed_filters_and_identifi
     assert_eq!(municipalities.scenar, Scenar::Rano);
     assert_eq!(municipalities.uroven, Uroven::Orp);
     assert_eq!(municipalities.forma, Forma::Dal);
-    let programs =
-        extract_query::<OboryQuery>("/api/v1/obory?signal=pretlak,spatna_dostupnost").await;
+    let programs = extract_query::<OboryQuery>("/api/v1/obory?signal=pretlak,poptavka_trhu").await;
     assert_eq!(programs.razeni, Razeni::Nazev);
-    assert_eq!(
-        programs.signal.unwrap().0,
-        vec!["pretlak", "spatna_dostupnost"]
-    );
+    assert_eq!(programs.signal.unwrap().0, vec!["pretlak", "poptavka_trhu"]);
     let programs = extract_query::<OboryQuery>("/api/v1/obory?razeni=-index_pretlaku").await;
     assert_eq!(programs.razeni, Razeni::IndexPretlakuSestupne);
     let program = extract_query::<OborQuery>("/api/v1/obory/23-68-H%2F01").await;
@@ -900,6 +896,7 @@ fn simulation_area_codes_bands_and_required_nullable_times_match_new_contract() 
 async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
     for (uri, path) in [
         ("/api/v1/skoly", "/skoly"),
+        ("/api/v1/obory", "/obory"),
         ("/api/v1/skoly/600008975", "/skoly/{redizo}"),
         (
             "/api/v1/obory/65-51-H%2F01/zamestnavatele",
@@ -908,4 +905,50 @@ async fn database_read_routes_return_documented_503_when_pool_is_unavailable() {
     ] {
         check_error(uri, path, StatusCode::SERVICE_UNAVAILABLE, None).await;
     }
+}
+
+#[tokio::test]
+async fn program_catalog_ignores_travel_parameters_and_validates_catalog_filters() {
+    use obor_backend::requests::*;
+    let query = extract_query::<OboryQuery>(
+        "/api/v1/obory?max_min=invalid&max_min=-1&scenar=anything&scenar=other&stupen=H,M&forma=dal",
+    ).await;
+    assert_eq!(query.forma, Forma::Dal);
+    assert_eq!(
+        query.stupen.unwrap().0,
+        vec![dto::Stupen::H, dto::Stupen::M]
+    );
+    for uri in [
+        "/api/v1/obory?signal=spatna_dostupnost",
+        "/api/v1/obory?signal=unknown",
+        "/api/v1/obory?signal=",
+        "/api/v1/obory?signal=pretlak,unknown",
+    ] {
+        check_error(
+            uri,
+            "/obory",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Some("signal"),
+        )
+        .await;
+    }
+    for uri in [
+        "/api/v1/obory?razeni=deti_bez_oboru",
+        "/api/v1/obory?razeni=mist_na_100_deti",
+    ] {
+        check_error(
+            uri,
+            "/obory",
+            StatusCode::UNPROCESSABLE_ENTITY,
+            Some("razeni"),
+        )
+        .await;
+    }
+    check_error(
+        "/api/v1/obory?forma=den&forma=dal",
+        "/obory",
+        StatusCode::UNPROCESSABLE_ENTITY,
+        Some("forma"),
+    )
+    .await;
 }

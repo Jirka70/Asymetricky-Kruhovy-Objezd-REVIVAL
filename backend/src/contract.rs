@@ -130,7 +130,7 @@ pub struct StubError {
     body: dto::Chyba,
 }
 impl StubError {
-    fn invalid(field: &str) -> Self {
+    pub(crate) fn invalid(field: &str) -> Self {
         Self {
             status: StatusCode::UNPROCESSABLE_ENTITY,
             body: dto::Chyba {
@@ -251,8 +251,30 @@ pub struct ContractQuery<T>(pub T);
 impl<T: RequestQuery, S: Send + Sync> FromRequestParts<S> for ContractQuery<T> {
     type Rejection = StubError;
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        validate_query(T::OPERATION_ID, parts.uri.query().map(str::to_owned))?;
-        Query::<T>::try_from_uri(&parts.uri)
+        // These deprecated parameters have no meaning for the catalog listing.
+        // Remove them before validation/deserialization, including repeated or invalid values.
+        let uri = if T::OPERATION_ID == "listObory" {
+            let pairs: Vec<(String, String)> =
+                serde_urlencoded::from_str(parts.uri.query().unwrap_or_default())
+                    .map_err(|_| StubError::invalid("query"))?;
+            let pairs: Vec<_> = pairs
+                .into_iter()
+                .filter(|(name, _)| name != "max_min" && name != "scenar")
+                .collect();
+            let query =
+                serde_urlencoded::to_string(pairs).map_err(|_| StubError::invalid("query"))?;
+            let mut uri = parts.uri.clone().into_parts();
+            uri.path_and_query = Some(
+                format!("{}?{query}", parts.uri.path())
+                    .parse()
+                    .map_err(|_| StubError::invalid("query"))?,
+            );
+            axum::http::Uri::from_parts(uri).map_err(|_| StubError::invalid("query"))?
+        } else {
+            parts.uri.clone()
+        };
+        validate_query(T::OPERATION_ID, uri.query().map(str::to_owned))?;
+        Query::<T>::try_from_uri(&uri)
             .map(|Query(query)| Self(query))
             .map_err(|_| StubError::invalid("query"))
     }
@@ -292,9 +314,10 @@ pub async fn get_zsj(
     Err(StubError::unimplemented("getZsj"))
 }
 pub async fn list_obory(
-    ContractQuery(_params): ContractQuery<requests::OboryQuery>,
+    State(pool): State<DbPool>,
+    ContractQuery(params): ContractQuery<requests::OboryQuery>,
 ) -> Result<Json<dto::Obory>, StubError> {
-    Err(StubError::unimplemented("listObory"))
+    crate::programs::list(pool, params).await.map(Json)
 }
 pub async fn get_simulace(
     ContractQuery(_params): ContractQuery<requests::SimulaceQuery>,

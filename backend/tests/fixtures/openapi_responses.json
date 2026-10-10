@@ -268,7 +268,7 @@
   },
   {
     "path": "/obory",
-    "request": "/api/v1/obory?razeni=-index_pretlaku&signal=pretlak,spatna_dostupnost",
+    "request": "/api/v1/obory?razeni=-index_pretlaku&signal=pretlak,poptavka_trhu",
     "media_type": "application/json",
     "body": {
       "data": [
@@ -278,31 +278,22 @@
           "stupen": "H",
           "pocet_skol": 4,
           "kapacita": 120,
-          "prihlasky": 455,
-          "prihlasky_na_misto": 3.79,
-          "index_pretlaku": 1.42,
-          "deti_v_dosahu": 300,
-          "deti_bez_oboru": 10,
-          "podil_deti_v_dosahu": 96.8,
-          "mist_na_100_deti": 40.0,
+          "prihlasky": 480,
+          "prihlasky_na_misto": 4.0,
+          "index_pretlaku": 1.5037593984962405,
           "volna_mista": null,
           "volna_mista_na_misto": null,
           "signaly": [
-            "pretlak",
-            "spatna_dostupnost"
+            "pretlak"
           ],
           "zamestnavatelu": null
         }
       ],
       "meta": {
-        "scenar": "rano",
-        "max_min": 120,
-        "deti_celkem": 310,
         "prumer_prihlasek_na_misto": 2.66,
         "prahy": {
           "pretlak": 1.5,
           "nizky_zajem": 0.5,
-          "spatna_dostupnost": 50,
           "poptavka_trhu": 2
         },
         "prijimaci_rizeni": {
