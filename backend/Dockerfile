@@ -23,6 +23,9 @@ RUN apt-get update \
     && useradd --uid 10001 --gid backend --no-create-home backend
 COPY --from=builder /out/obor-backend /usr/local/bin/obor-backend
 COPY --chmod=755 backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Normalize CRLF even when the build context came from a Windows checkout.
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+    && /bin/sh -n /usr/local/bin/docker-entrypoint.sh
 USER backend
 EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
